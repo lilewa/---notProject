@@ -1,0 +1,14 @@
+select * from (
+select sum(crkcs) crkcs,ywlx,kfbh from t_crkls where id='9787508649887001 ' group by ywlx,kfbh) a,
+(select sum(sfcs) cs,kfbh,'FH' as ywlx from t_fhmx@c_link_wl_sl where id='9787508649887001 ' group by kfbh union all
+select sum(thcs) cs,kfbh,'XT' as ywlx from t_khthmx@c_link_wl_sl where id='9787508649887001 ' group by kfbh union all
+select sum(djshsl) cs,kfbh,'DH' as ywlx from  t_dhls_jx@c_link_wl_sl where  id='9787508649887001 ' group by kfbh union all
+select sum(thcs) cs,kfbh,'ST' as ywlx from t_hythmx@c_link_wl_sl where id='9787508649887001 ' group by kfbh 
+) b,(select sum(sfcs) cs,kfbh,'FH' as ywlx from t_fhmx where id='9787508649887001 ' group by kfbh union all
+select sum(thcs) cs,kfbh,'XT' as ywlx from t_khthmx where id='9787508649887001 ' group by kfbh union all
+select sum(djshsl) cs,kfbh,'DH' as ywlx from  t_dhls_jx where  id='9787508649887001 ' group by kfbh union all
+select sum(thcs) cs,kfbh,'ST' as ywlx from t_hythmx where id='9787508649887001 ' group by kfbh union all
+select sum(decode(lx,'SY',cs,-cs)) cs ,kfbh,'CY' as ywlx from t_sy_jh where id='9787508649887001 ' group by kfbh union all
+select sum(decode(lx,'SY',cs,-cs)) cs ,kfbh,'SY' as ywlx from t_sy_jh_bak where id='9787508649887001 ' group by kfbh
+) c
+ where a.ywlx=b.ywlx(+) and a.kfbh=b.kfbh(+) and a.ywlx=c.ywlx(+) and a.kfbh=c.kfbh(+) order by a.kfbh;

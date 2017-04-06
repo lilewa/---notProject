@@ -1,0 +1,3 @@
+create or replace view v_zfzd_fh as
+select (select ysdj from t_dhdj where zdjspch=(select max(bjlsh) from t_fhmx where pfpch=nvl(a.yspfpch,a.pfpch))) ysdjh,
+a."THCS",a."TXY",a."KHLB",a."ZJXS",a."YJRQ",a."DBRQ",a."CSPC",a."YH",a."FHFS",a."SYS",a."CBJ",a."BZXH",a."SJJS",a."BZJS",a."FHZK",a."BZTH",a."BZRQ",a."SYLX",a."FHJG",a."JZTHRQ",a."YTHCS",a."SL",a."DBDH",a."ZDH",a."PFPCH",a."BJLSH",a."PFRQ",a."PFBMBH",a."FHBMBH",a."ZDQH",a."ZDXH",a."YWBMBH",a."ID",a."KFBH",a."YSCS",a."SFCS",a."PJZK",a."DH",a."JZQX",a."BZ",a."ZZPC",a."JSWC",a."HW",a."YSBBJ",a."YSBBJ_KF",a."DJLY",a."TIHFS",a."GZBJ",a."YSDBDH",a."ZL",a."CGYJ",a."LSCS",a."SDHRQ",a."CGYJ_KH",a."THL",a."GZDBDH",a."YSDBRQ",a."YSPFPCH",a."FYJHPC",a."DBBZ",a."XBBZ",a."ZDDH",a."GZ_NOTE" from   t_fhmx  a where djly='ZF';

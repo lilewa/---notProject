@@ -1,0 +1,12 @@
+create table    t_sl_yfsj170112_G100201 as   select flowid,dh,flowid_dj from t_sl_yfsj a where dh='G10020'
+          and exists (select 1 from tmp_dhdj j  where j.flowid_dj=a.flowid_dj
+          and j.flowid_tldjhz not in (select djbh from t_cbt where djbh is not null )
+          )
+     
+          Update t_sl_yfsj a  Set dh = Nvl((Select c.gzbh
+                       From tmp_dhmx b, t_guizu_fl c
+                      Where b.fl = c.flbh And b.flowid_dhmx = a.flowid And trim(c.dh) ='000446'), 
+                      (select min(gzbh) from t_guizu_fl  where trim(dh)='000446')
+                      )
+                         Where flowid_dj in( select distinct flowid_dj from t_sl_yfsj170112_G10020)
+                          and dh='G10020'

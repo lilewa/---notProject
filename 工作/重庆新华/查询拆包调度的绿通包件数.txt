@@ -1,0 +1,6 @@
+SELECT  sum(  T_TLDJHZ.SSJS),count(*)  
+  FROM T_TLDJHZ
+ WHERE (NVL(YCBBJ, '0') = '1' or YCBBJ='2') 
+   and cbrq >to_date('2016/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and cbrq <to_date('2017/1/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and djlx = 'DH' and kl_flag = '2'

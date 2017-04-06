@@ -1,0 +1,60 @@
+上报标记，0=未提交，1=录入提交，2=审批结束标记，3=接收完商流预分数据，9=已调度,5=t_sl_yfsj里面有重复的 6 = 接收数据有问题
+select * from t_dhfl1_bak where id='9787010084534001  '
+
+echo %UserProFile%
+ 
+
+152159
+
+http;//m.tb.cn/z7pots
+978753289088
+
+ 
+ update t_dfbj set  bzjs=2,sjjs=2,js=2 where bjlsh='1541402';
+  update t_dfbj_fylh set bzjs=2, js=2 where bjlsh='1541402'
+
+102795688
+
+有差异 写CY 正负不用管
+
+		If p_cysl < 0 Then
+				v_cysl := -p_cysl;
+				v_cylx := 'BS'; -- 报损
+		Else
+				v_cysl := p_cysl;
+				v_cylx := 'SY'; -- 收益
+		End If;
+		v_bj := 93;
+		Insert Into t_sy_jh
+t_sy_jh 全都是整，看lx
+
+到货分流单条 破损 写ZC
+		发货 写FH
+		cc  写kcsl
+		zp  写kcsl
+
+到货分流提交	写Dh
+
+播种		写FH
+		减kcsl
+
+发货校核		差异写负FH 写CY
+退货校核		不动kcsl ，写CY、
+
+发运退货	写ST，写t_hythmx 删t_hykcsl
+
+上架		转移写ZR +kcsl	差异不管
+		上架差异减kcsl
+
+下架 		减ltkf 减kcsl 差异 写
+		转移写ZC
+		下架写FH
+		报废 写ZC 写ZR
+		普通退货	写ZC 写ZR 写hykcsl
+		主动退货 写ZC
+
+退货分流	写XT加kcsl，写fjrwsjb写pmsjrwb ，去fjrwsj 还要再见kcsl，写ZC
+
+退货上架	写ZR ywsl ，hykcsl写实际数
+		差异 写zc ，立库写zr 写cy
+

@@ -1,0 +1,50 @@
+收货差异报表，已经审批确认的数据，需要发货单号、店名、应收数量、应收码洋、实收数量、实收码洋、更正单号、更正日期、单据类型、供货单位
+
+Select dbrq As ydrq,
+       pfpch,
+       dh,
+       zcs as yscs,
+       zmy as ysmy,
+       zcs + nvl((Select sum(sfcs)
+                   From t_fhmx
+                  Where yspfpch = a.pfpch
+                    And yjfbj = '1'),
+                 0) As sscs,
+       zmy + nvl((Select sum(b.sfcs * c.dj)
+                   From t_fhmx b, t_kcsm c
+                  Where b.id = c.id
+                    And b.yspfpch = a.pfpch
+                    And b.yjfbj = '1'),
+                 0) As ssmy,
+       (Select min(pfpch)
+          From t_fhmx
+         Where yspfpch = a.pfpch
+           And yjfbj = '1') As gzdjh,
+       (Select min(dbrq)
+          From t_fhmx
+         Where yspfpch = a.pfpch
+           And yjfbj = '1') As gzdrq,
+       decode((Select min(zl)
+                From t_fhmx
+               Where pfpch = a.pfpch
+                 And dh = a.dh),
+              0,
+              '正常',
+              1,
+              '直发',
+              2,
+              '绿通') As djlx,
+       (Select min(y.mc)
+          From t_dhdj x, t_ghdw y
+         Where x.ghdwh = y.bh
+           and x.zdjspch = a.bjlsh) As ghdwh
+  From t_fhhz a
+ Where pfpch = yspfpch
+   And Exists (Select 1
+          From t_fhmx
+         Where yspfpch = a.pfpch
+           And yjfbj = '1'
+           And Rownum = 1)
+   And a.dbrq >= Date '2016-10-01'
+   and a.dbrq < date '2016-12-24'
+   And Not Exists (Select 1 From t_gzsp_hz Where pfpch = a.pfpch);	 

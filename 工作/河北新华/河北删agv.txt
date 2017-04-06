@@ -1,0 +1,13 @@
+    Insert Into t_wl_bmzdj
+            (ysdjh, ywbmbh, dh, ckbh, rkbh, id, cs, sjkcs, qsclfs, lx, FLOWID, bz,
+             sendbmbh, senddate, recebmbh, receflag, zk)
+       select   cgyj, ywbmbh, dh, kfbh, '',  id, yssl, 0, '',  lxbh,
+             all_flowid.Nextval, 'ÏÂ¼Ü»Ø¸æ',  cybh, Sysdate,  ywbmbh, '0',
+              zk 
+         from t_agv_rw_xt where flowid_xj ='124594275';
+             
+      delete  t_agv_rw_xt where flowid_xj ='124594275';
+       delete  t_agv_rw_xt_bak where flowid_xj ='124594275';
+       update   t_agv_rw_xt a set qshqbh=(select min(hqbh)
+       from t_agv_rw_xt  where phdh=a.phdh) 
+          where phdh='1577400';

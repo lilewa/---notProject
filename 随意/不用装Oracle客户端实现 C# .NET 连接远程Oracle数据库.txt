@@ -1,0 +1,14 @@
+不用装Oracle客户端实现 C# .NET 连接远程Oracle数据库
+
+1.下载一个版本的 Instant Client for Microsoft Windows (32-bit)
+http://www.oracle.com/technetwork/topics/winsoft-085727.html
+
+2.解压后，找到如下的几个dll（可能还有其它的dll，不同版本的OIC名称有差异，可以自己试着找一下这些dll都有什么作用），将dll放到C#程序执行程序的相同目录下，如bin/Debug目录；
+oci.dll、orannzsbb10.dll、oraocci10.dll、oraociei10.dll 
+
+3.然后，引用System.Data.OracleClient
+
+4.连接字符串
+connectionString="Data Source=192.168.1.2:1521/orcl;Persist Security Info=True;User ID=scott;Password=tiger;Unicode=True";
+
+5.下面就可以使用OracleConnection连接远程Oracle了。
