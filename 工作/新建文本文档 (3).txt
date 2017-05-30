@@ -1,11 +1,5 @@
-合并同货位不同包装标准的册数
- update t_ltkf a set kccs= (select sum(kccs) from t_ltkf where ywbmbh='503' and id =a.id group by id,hw having count(*)>1 ) 
-    where  id in(select   id   from t_ltkf  where ywbmbh='503' group by id ,hw having  count(*)>1)
-    and hw='99999993' and ywbmbh='503'
 
 删除同货位不同包装标准的书，只留一条记录
-delete t_ltkf where ywbmbh='503' 
-and  id in(select   id   from t_ltkf  where ywbmbh='503' group by id ,hw having  count(*)>1)
 
        delete  t_ltkf a where ywbmbh='503'  and (id ,hw) in (
        select    id  ,hw  from t_ltkf  where ywbmbh='503' group by id ,hw having  count(*)>1 
