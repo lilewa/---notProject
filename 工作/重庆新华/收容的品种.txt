@@ -1,0 +1,8 @@
+select yssl,sm,isbn,dj ,xrrq  from t_pmsjrwb b ,t_kcsm s where s.id=b.id and b.lxbh='SR'
+and xrrq > to_date('2017/5/26 00:00:00','yyyy/mm/dd hh24:mi:ss')
+and  xrrq< to_date('2017/5/28 00:00:00','yyyy/mm/dd hh24:mi:ss')
+union all
+
+select yssl,sm,isbn,dj ,xrrq  from t_pmsjrwb_bak b ,t_kcsm s where s.id=b.id and b.lxbh='SR'
+and xrrq > to_date('2017/5/26 00:00:00','yyyy/mm/dd hh24:mi:ss')
+and  xrrq< to_date('2017/5/28 00:00:00','yyyy/mm/dd hh24:mi:ss')

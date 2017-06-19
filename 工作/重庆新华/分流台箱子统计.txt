@@ -1,0 +1,7 @@
+
+
+select  count(*)
+  from T_FLRQH
+ where createdate > to_date('2017/5/25 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and createdate < to_date('2017/5/26 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+and flqx='ZP'  

@@ -1,0 +1,2 @@
+select min(isbn) 书号,min(sm) 书名, min(b.mc) 版别,min(dj) 定价,sum(l.kccs) 数量,q.mc 货区 from t_ltkf l, t_hqdy q, t_kcsm s,t_bb b where hqlx='DT' and l.hqbh=q.bh and s.id=l.id
+and s.bb=b.bh group by q.mc,l.id having  sum(l.kccs)>30

@@ -1,0 +1,4 @@
+ select fyjhpc,min(cyrq), sum(bzjs)from t_dfbj where ywlx='ST' and dh='001044' 
+and cyrq > to_date('2016/10/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+and  cyrq< to_date('2017/1/17 00:00:00','yyyy/mm/dd hh24:mi:ss')
+group by fyjhpc

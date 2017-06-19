@@ -1,0 +1,6 @@
+select s.sm,s.dj,s.isbn,a.kccs,t.mc from t_kcsl a,t_kcsm s,t_bb t where exists (
+ select 1  from t_hyjxc@c_link_wl_sl b  where   (hybh='PK01' or hybh=  '999999' )
+       and not exists (select 1 from t_hyjxc@c_link_wl_sl where id =b.id and hybh<>'PK01' and hybh<> '999999' )
+       and id=a.id
+ )
+and s.id=a.id and kccs>0 and t.bh=s.bb

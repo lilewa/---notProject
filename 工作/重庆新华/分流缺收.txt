@@ -1,0 +1,14 @@
+select sum(jhflcs) 应收册数,
+       sum(sjflcs) 实收册数,
+       sum(jhflcs) - sum(sjflcs) 缺书数,
+     ( select trim(mc) from t_ghdw where bh= j.ghdwh),
+       j.ysdj,
+       min(sm),
+       min(dj),
+       min(isbn)
+  from t_dhfl1_bak b, t_kcsm s,t_dhls_jx j
+ where jhflcs > sjflcs
+   and s.id = b.id
+   and b.flowid_dhmx=j.flowid_dhmx
+ group by b.id, j.ghdwh,
+       j.ysdj

@@ -1,0 +1,10 @@
+ Update t_dpls 
+Set CQ_FLAG = '1', BZ = 'ÊÖ¹¤³¬ÆÚ'
+Where wcxdcs = 0 And Id In (
+ select s.id from t_kcsm s,t_kcsl l where l.id=s.id and s.ghdwh='001427'
+)
+
+ 
+    
+  
+ 

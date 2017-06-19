@@ -1,0 +1,19 @@
+ 批次产生的包件
+           Select distinct phdh
+             From t_agv_rw_xt_bak ak, t_zprw_bak zp
+            Where ak.flowid_xj = zp.flowid_zp(+)
+              And Exists
+            (Select 1
+                     From t_sl_yfsj_bak yb
+                    Where yb.flowid_yfsj = to_number(ak.pk)
+                      And yb.flowid in
+                          (select flowid_dhmx
+                           
+                             from v_following_dhmx
+                            where flowid_tldjhz in
+                                  (115723092, 115727899, 115727537, 115732727))
+                   
+                   )
+              and ak.dh = '000485'
+           
+             select * from t_fybj_bak

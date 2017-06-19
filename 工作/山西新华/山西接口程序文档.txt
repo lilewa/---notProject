@@ -1,0 +1,40 @@
+路径：GetPath 根据容器号返回路径xml文档。调用WMS_CHECK2_GETPATH，WMS_CHECK2_GETPATH调用ContainerPathXML（根据容器号形成xml文档，物流调用）写的有点啰嗦。
+
+上架：UptoAccessSystem 物流后台（分流台程序）调用本方法，返回xml文档通知上架，并更新pmsjrwb的cwh存调用gms接口的返回值。gms通过WMS_RKHG告知物流已经上架成功。
+
+下架：OutofAccessSystem 物流调用本方法按波次形成xml文档的下架任务，通知gms下架。 物流调用AotuOutofAccessSystem方法形成自动下架任务。
+
+转移：TransferAccessSystem 物流调用本方法，形成转移任务，通过xml文档通知gms转移。gms通过调用ZYCKQR回高物流转移任务完成。
+
+包件拣选完成：
+	gms调用AddAccessSystemOutFile方法通知物流包件已拣选完成。
+	拣选存在差异的包件回告通过此方法通知物流AddAccessSystemOutFileXML（与上面调用方法互斥，同一bjlsh两个方法只能调用其中一个1次。）
+
+分流台：调用MoveConveyorLine方法通知gms启动线体。
+
+终止容器方法：FinishMoveContainer （物流后台调用本方法，本方法后台调用gms的方法。用于校核完成时调用） 
+
+传送线移动容器方法:MoveContainer (物流调用本方法，后台调用gms方法。用于分流台程序)
+
+根据bch返回xml文档 OutofAccessSystemDetailXML_BCH（gms调用）
+
+根据bch、bbxlh返回xml文档 OutofAccessSystemDetailXML （gms调用）
+
+根据入库箱号形成xml文档 UptoAccessSystemXML （物流分流台程序后台调用）
+
+------------------------------------------------------------------------
+物流分流：调用 UptoAccessSystem ，MoveConveyorLine，MoveContainer ，UptoAccessSystemXML 
+
+物流调度：调用 OutofAccessSystem ，AotuOutofAccessSystem
+
+物流转移：调用 TransferAccessSystem 
+
+物流校核：调用 FinishMoveContainer 
+
+gms高架库上架：调用：WMS_RKHG
+
+gms高架库下架：调用：AddAccessSystemOutFile ，AddAccessSystemOutFileXML
+
+gms根据bch、bbxlh领取下架任务:OutofAccessSystemDetailXML_BCH ,OutofAccessSystemDetailXML 
+
+gms转移数据回告: 调用ZYCKQR
