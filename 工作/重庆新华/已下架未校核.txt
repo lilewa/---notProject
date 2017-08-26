@@ -1,0 +1,22 @@
+--数据窗口名:dw_monbitor_yxjwjh数据窗口语句:
+Select a.phdh 包号,
+
+       a.xjrq 下架日期,
+       a.dh   店号,
+trim(sm) ,
+       sjsl 数量,
+       dj   定价,
+       sjsl*dj 码洋,
+       isbn,
+       a.id ,
+       xhao 箱号
+
+  From t_agv_rw_xt_bak a, t_kcsm b, t_dfbj c
+ Where a.id = b.id
+   And a.phdh = c.bjlsh
+
+   and nvl(c.ybzbj, '0') = '0'
+
+   and c.wcbj = '1'
+   and ywlx = 'FH'
+   and xjrq < to_date('2017/07/27 00:00:00', 'yyyy/mm/dd hh24:mi:ss')

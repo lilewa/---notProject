@@ -1,0 +1,3 @@
+select sum(yssl) 册数,ln_zp_hw 货位,dh 店号,(select trim(dm) from t_dm where dh=a.dh) 点名 from t_zprw_bak a where
+        bzrq>  to_date('2017/05/18 00:00:00','yyyy/mm/dd hh24:mi:ss')
+      group by ln_zp_hw,dh order by ln_zp_hw

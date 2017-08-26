@@ -1,0 +1,4 @@
+select s.sm,s.dj,s.isbn,s.changdu,s.gaodu,s.kuandu
+    from     ( select  distinct id from t_dhls_jx t where exists (select 1 from t_dhdj where flowid_dj=t.flowid_dj and zfzd='1') ) a,
+t_kcsm s where a.id=s.id
+and s.changdu=1

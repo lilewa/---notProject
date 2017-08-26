@@ -1,0 +1,19 @@
+select *
+  from t_sl_exe t
+ where proclock = 'N'
+   and (exists (select 1
+                  from user_objects
+                 where t.proc_name = object_name
+                   and status <> 'VALID')
+         or exists
+        (select 1
+           from user_objects
+          where object_name =
+                (substr(t.proc_name,
+                        1,
+                        greatest(instr(t.proc_name, '.') - 1, 0)))
+            and status <> 'VALID'))
+
+
+ select *from t_wl_exe t where proclock='N'
+and exists (select 1 from user_objects where t.proc_name=object_name and status<>'VALID')

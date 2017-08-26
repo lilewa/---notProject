@@ -1,0 +1,12 @@
+select isbn,sm, b.mc ,dj,  hw, kccs   from t_ltkf l,t_kcsm s  ,t_bb b
+  where   l.id=s.id  and b.bh=s.bb
+  and
+  not exists
+(select 1 from t_hythmx  where  id=l.id) and
+not exists
+(select 1 from t_dhls_jx  where id=l.id) and
+not exists
+(select 1 from t_fhmx where  id=l.id)
+and
+not exists
+(select 1 from t_agv_rw_xt_bak where  id=l.id)
