@@ -1,0 +1,20 @@
+select * from tmp_dhmx_xtw where flowid_dj=117456200;
+select * from t_sl_yfsj_bak where flowid =117456876;
+select * from t_agv_rw_xt_bak where pk='58691420'  
+ 
+
+       select phdh
+         from t_agv_rw_xt_bak a
+        where exists
+        (select 1
+                 from t_sl_yfsj_bak b
+                where flowid_yfsj = a.pk
+                  and exists (select 1
+                         from tmp_dhmx_xtw
+                        where flowid_dj = 117456200
+                          and b.flowid = flowid_dhmx
+                       
+                       )
+               
+               )
+          and dh in (select dh from t_dm where fatherdh = '000447')

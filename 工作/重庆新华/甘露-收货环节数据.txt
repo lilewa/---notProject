@@ -1,0 +1,46 @@
+ 收货录入环节
+
+select tllrybh 操作员代码,
+       name 姓名,
+       tlrq 操作时间,
+       flowid_tldjhz 批次号,
+       (select listagg(ysdj, ',') within Group(Order By Null)
+        
+         from (   select  ysdj  from tmp_dhdj  
+          where flowid_tldjhz = z.flowid_tldjhz
+          union  all
+          select ysdj
+          from tmp_dhdj_xtw  
+          where flowid_tldjhz = z.flowid_tldjhz)
+          ) 订单号,
+       g.mc 供商名称,
+       ssjs 件数, 
+       decode(kl_flag, '0', '正常', '2', '绿通') 投单类型,
+       y.bh 运输公司代码及名称,
+       y.mc 运输公司名称
+  from t_tldjhz z, t_user u, t_ghdw g, t_ysdw_sh y
+ where kl_flag <> '1'
+   and djlx = 'DH'
+   and u.usr_id = z.tllrybh
+   and g.bh = z.dh
+   and y.bh = z.fhr
+
+ 
+比对环节
+
+select usr_id 操作员代码, u.name 姓名, ysrq 操作时间, ysdj 订单号, id 品种代码, ghdwh 供货商, mc 供货商, dj 定价, yssl 册数
+  from tmp_dhmx x, dbsl.t_user u, tmp_dhdj j, t_ghdw g
+ where x.lrczybh = u.usr_id
+   and g.bh = ghdwh
+   and j.flowid_dj = x.flowid_dj
+   and j.zfzd <> '1'
+   union all  
+select usr_id 操作员代码, u.name 姓名, ysrq 操作时间, ysdj 订单号, id 品种代码, ghdwh 供货商, mc 供货商, dj 定价, yssl 册数
+  from tmp_dhmx_xtw x, dbsl.t_user u, tmp_dhdj_xtw j, t_ghdw g
+ where x.lrczybh = u.usr_id
+   and g.bh = ghdwh
+   and j.flowid_dj = x.flowid_dj
+   and j.zfzd <> '1'
+ 
+ 
+  

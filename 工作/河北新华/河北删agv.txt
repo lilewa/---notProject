@@ -1,4 +1,7 @@
-    Insert Into t_wl_bmzdj
+select * from t_agv_rw_xt where xhao='515101';
+select * from t_agv_rw_xt a,t_ltkf f where xhao='515101' and a.hwh=f.hw and a.id=f.id 
+
+   Insert Into t_wl_bmzdj
             (ysdjh, ywbmbh, dh, ckbh, rkbh, id, cs, sjkcs, qsclfs, lx, FLOWID, bz,
              sendbmbh, senddate, recebmbh, receflag, zk)
        select   cgyj, ywbmbh, dh, kfbh, '',  id, yssl, 0, '',  lxbh,
