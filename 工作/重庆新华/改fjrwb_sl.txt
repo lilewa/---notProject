@@ -1,0 +1,34 @@
+select * from t_dm where dh='000464'
+create table t_thbj (bjlsh char(12))
+select * from t_khthtp_state where tph='311618';
+select * from t_khthbj  where bjlsh='000000070657'
+     insert into t_thbj values('000000070657')
+  select bjlsh from t_khthbj  where tpid=126761158
+
+  select * from t_fjrwb_sl where ywlx='SJ'
+  
+  select * from t_
+  
+  
+  
+  
+  select * from t_fjrwb_sl1030 a ;
+  
+    select * from t_fjrwb1030  a ;
+    
+     select * from t_khthbj1030  ;
+  
+  
+  select * from t_khthbj  a where exists (select 1 from t_thbj where bjlsh=a.bjlsh);
+  
+    delete t_fjrwb  a where exists (select 1 from t_thbj where bjlsh=a.ysxm)
+    
+    update   t_fjrwb_sl  a  set ywlx='SJ',flqx='CC',yflbj='0' where exists (select 1 from t_thbj where bjlsh=a.ysxm)
+        
+        
+        
+      create table  t_fjrwb_sl1030 as    select * from t_fjrwb_sl a where exists (select 1 from t_thbj where bjlsh=a.ysxm);
+
+      create table  t_fjrwb1030 as    select * from t_fjrwb a where exists (select 1 from t_thbj where bjlsh=a.ysxm);
+
+      create table  t_khthbj1030 as    select * from t_khthbj a where exists (select 1 from t_thbj where bjlsh=a.bjlsh);

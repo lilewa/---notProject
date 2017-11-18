@@ -1,0 +1,9 @@
+
+服务器地址(URL)
+http://218.56.59.13/wx/Entrance.ashx
+令牌(Token)
+haha
+消息加解密密钥(EncodingAESKey)
+ZvmMxqjqh2TLQK74GKV9L4FaVMhcgGg2p881rUJx0zA
+消息加解密方式
+明文模式

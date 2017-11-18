@@ -1,0 +1,36 @@
+做任务界面 
+Select t_agv_rw_xt.id, min(t_bb.mc) mc, min(t_kcsm.isbn) isbn, min(t_kcsm.sm) sm, min(t_kcsm.dj) dj, min(t_kcsm.kb) kb,
+          t_agv_rw_xt.phdh As phxsdh, t_agv_rw_xt.hwh, min(t_agv_rw_xt.cwh) cwh, min(t_agv_rw_xt.xhao) xhao,
+          sum(t_agv_rw_xt.yssl) yssl, sum(t_ltkf.kccs) kccs
+          From t_agv_rw_xt
+          Inner Join t_kcsm
+          On t_kcsm.id = t_agv_rw_xt.id
+          Inner Join t_ltkf
+          On t_ltkf.id = t_kcsm.id And t_ltkf.hw = t_agv_rw_xt.hwh And
+          t_ltkf.zl = t_agv_rw_xt.zl And t_ltkf.kfbh = t_agv_rw_xt.kfbh And
+          t_ltkf.ywbmbh = t_agv_rw_xt.ywbmbh And t_ltkf.dbbz = t_agv_rw_xt.dbbz And
+          t_ltkf.xbbz = t_agv_rw_xt.xbbz
+          Inner Join t_bb
+          On t_bb.bh = t_kcsm.bb
+          where  hqbh = '12' And xjczybh = :xjczybh And t_agv_rw_xt.cybh = :cybh And jxfs = :jxfs
+          group by phdh, t_agv_rw_xt.id,hwh  Order By hwh
+          
+          
+          seleCt * from t_agv_rw_xt where xhao='516326'
+          
+领任务界面
+           Select Distinct *
+          From (Select phdh phxsdh,
+          (Select trim(dm)
+          From t_dm
+          Where dh = t_agv_rw_xt.dh And t_agv_rw_xt.lxbh <>'ST'
+          Union
+          Select trim(mc)
+          From t_ghdw
+          Where bh = t_agv_rw_xt.dh And t_agv_rw_xt.lxbh = 'ST') dmjc, ywbmbh, xhao, cwh,
+          xjczybh,
+          decode(lxbh, 'FH', '发货', 'ST', '退货', 'ZY', '转移', 'BF', '报废', '其它') lxbh
+          From t_agv_rw_xt
+          Where  
+          ((hqbh = '12' And xjczybh = '12') Or
+          (qshqbh = '12' And hqbh = '12' And xjczybh Is Null)))
