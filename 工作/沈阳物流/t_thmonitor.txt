@@ -1,0 +1,26 @@
+  ---101      
+  update t_thmonitor t set zfsl=(select sum(sjsl) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb  and gkh='101' )
+  ,zfmy=(select sum(sjsl*dj) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb and gkh='101'  ) where 
+  exists (select 1 from v_fjrwb_xf2 where   flowid_fjrwb=t.flowid_fjrwb and gkh='101');
+  
+  update t_thmonitor t set hjsl=(select sum(sjsl) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb  and sjflqx='CC' )
+  ,hjmy=(select sum(sjsl*dj) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb and sjflqx='CC'  ) where 
+  exists (select 1 from v_fjrwb_xf2 where   flowid_fjrwb=t.flowid_fjrwb and sjflqx='CC' );
+  
+  update t_thmonitor set ywmy=ywsl*dj where ywmy is null 
+  
+ update t_thmonitor t set jtsl=(select sum(sjsl) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb  and sjflqx='JT' )
+  ,jtmy=(select sum(sjsl*dj) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb and sjflqx='JT'  ) where 
+  exists (select 1 from v_fjrwb_xf2 where   flowid_fjrwb=t.flowid_fjrwb and sjflqx='JT' );
+  
+ update t_thmonitor t set xfsl=(select sum(sjsl) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb  and sjflqx='ST' and gkh<>'101' )
+  ,xfmy=(select sum(sjsl*dj) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb and sjflqx='ST' and gkh<>'101' ) where 
+  exists (select 1 from v_fjrwb_xf2 where   flowid_fjrwb=t.flowid_fjrwb   and sjflqx='ST' and gkh<>'101');

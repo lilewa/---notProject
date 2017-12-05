@@ -1,0 +1,2 @@
+select * from T_KCSM_BZBZ t where id='9787119111612001  '
+select * from t_kcsm where  sm like '习近平谈治国理政%'

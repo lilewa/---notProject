@@ -1,0 +1,54 @@
+--数据窗口名:dw_monitor_dhdthy数据窗口语句:
+Select yh,
+       tlrq,
+       cbrq,
+       jsrq,
+       dh,
+       (Select mc From t_ghdw Where bh = a.dh) hymc,
+       (Select ywybh
+          From t_ghdw_ywbm
+         Where ghdwh = a.dh
+           And ywbmbh = a.ywbmbh) As ywybh,
+       (Select Name
+          From t_user
+         Where usr_id = (Select ywybh
+                           From t_ghdw_ywbm
+                          Where ghdwh = a.dh
+                            And ywbmbh = a.ywbmbh)) As ywyxm,
+       ysjs,
+       ssjs,
+       djsl,
+       round((Sysdate - jsrq) * 24, 0) As clsj,
+       (Select dm From t_dm Where dh = a.ywbmbh) bmmc,
+       (Select dm From t_dm Where dh = a.cybh) cymc,
+       (select max(ysdj)
+          from tmp_dhdj
+         where tmp_dhdj.flowid_tldjhz = a.flowid_tldjhz) ysdj,
+       cfhw,
+       (select sum(ydpz) from tmp_dhdj where flowid_tldjhz = a.flowid_tldjhz) zpz,
+       kl_flag,
+       (select count(*)
+          from tmp_dhmx c, tmp_dhdj b
+         where c.flowid_dj = b.flowid_dj
+           and b.flowid_tldjhz = a.FLOWID_TLDJHZ
+           and c.tybj = '1') as tyjls,
+       (select count(*)
+          from tmp_dhmx c, tmp_dhdj b
+         where c.flowid_dj = b.flowid_dj
+           and b.flowid_tldjhz = a.FLOWID_TLDJHZ
+           and c.tybj = '5') as hyjls,
+       (select count(*)
+          from tmp_dhmx c, tmp_dhdj b
+         where c.flowid_dj = b.flowid_dj
+           and b.flowid_tldjhz = a.FLOWID_TLDJHZ
+           and c.tybj = '3') as xtywtyjls,
+       FLOWID_TLDJHZ,
+       (select max(trim(b.name))
+          from t_user b, t_tldjhz_cbr c
+         where b.USR_ID = c.CZYBH
+           and c.FLOWID_TLDJHZ = a.FLOWID_TLDJHZ) as cbr
+  from v_tldjhz a
+ where type = '到货未分流'
+   and a.ywbmbh like :as_ywbmbh
+   and a.cybh like :as_cybh
+

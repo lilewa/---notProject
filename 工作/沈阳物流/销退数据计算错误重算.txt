@@ -1,0 +1,25 @@
+
+select * from t_xhdthdj where  ytpch='BP2017112908'
+
+select * from t_xhdthdj_czy where  ytpch='BP2017112908'
+
+select * from t_khthlr_mx  where  ytpch='BP2017112909'
+  select * from t_dm  where  dh='23003'
+update  t_xhdthdj set dh='23003' where  ytpch='BP2017112909';
+update  t_khthlr_mx set dh='23003' where  ytpch='BP2017112909'
+
+
+  select * from t_fjrwb where ysxm='A90085'  BP2017112909
+                            
+      select  * from t_khthbj where  ytpch=  'BP2017112909' for update 
+
+    --  PROC_ROLLBACK_YTSJ_DEL
+
+  insert into t_xhdytsj_sl(flowid_xhdytsj,drrq,ytrq,shrq,ytpch,ysxm,dh,ywbmbh,id,bh,yts,kts_zc,kts_cq,bkts_cl,bkts_cq,bkts_ps,
+              yclbj,kfbh,sm,dj,isbn,state,khfypch)
+              select       lsd_allflowid.Nextval@c_link_wl_sl,sysdate,sysdate,sysdate,ysdjh,rqh,dh,ywbmbh,id,bh,cs,0,0,0,0,0,'0','2001',sm,dj,isbn,'0','BP2017112909'
+              from t_khthlr_mx 
+              where ytpch = 'BP2017112909' and dh='23003' and ywbmbh=p_ywbmbh ;
+         
+              
+    select * from    t_xhdytsj_sl where      khfypch=   'BP2017112909'

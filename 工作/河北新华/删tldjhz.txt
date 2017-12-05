@@ -1,0 +1,5 @@
+ delete T_TLDJHZ  where flbj='1' and tlrq < 
+to_date('2017/1/1 00:00:00','yyyy/mm/dd hh24:mi:ss') and flbj='1'
+insert into T_TLDJHZ_old   select * from T_TLDJHZ  
+ where flbj='1' and tlrq < 
+to_date('2017/1/1 00:00:00','yyyy/mm/dd hh24:mi:ss') and flbj='1'

@@ -1,0 +1,14 @@
+
+--更正
+select  trim(s.sm) 书名, isbn, dj 定价, f.sfcs 册数, sfcs*dj 码洋,dbrq 日期 ,trim(dm)  from
+ t_fhmx f,t_kcsm s ,t_dm d where f.gzbj='1' and cspc='2033' and f.id=s.id
+and f.dh=d.dh 
+
+--更正
+select  trim(s.sm) 书名, isbn, dj 定价, x.djshsl 册数, djshsl*dj 码洋,shrq 日期 ,trim(mc) 
+from T_DHLS_JX x,t_kcsm s,t_ghdw g where gzbj='1' and lrczybh='2033' and x.id=s.id  and g.bh=x.ghdwh
+
+--虚拟发货
+select * from t_fhmx  where cgyj_kh='发货补单' and yh='2033'
+--虚拟到货
+ select * from T_DHLS_JX where gzbj='0' and lrczybh='2033' and remark='虚拟到货'

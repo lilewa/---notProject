@@ -1,0 +1,41 @@
+select * from T_LTKF_BAK 
+
+select distinct pkpc  from t_pkls_sl20171125 
+
+
+
+
+create table t_pkdz2 as 
+
+select id,hw,pkcs from t_pkls_sl20171125 
+
+insert into  t_pkdz2 
+(id,hw,pkcs,yscs)
+select  id,hw,0,kccs from  T_LTKF_BAK a 
+where not exists (select 1 from  t_pkls_sl20171125 where hw=a.hw and id=a.id)
+
+ 
+select    *  from t_pkls_sl20171125 
+
+          update t_pkdz2  a
+          set yscs=(select kccs from  T_LTKF_BAK where hw=a.hw and id=a.id )
+          where exists (select 1 from  T_LTKF_BAK where hw=a.hw and id=a.id)
+          
+          update t_pkdz2 set yscs=0 where yscs is null 
+        
+  select trim(s.sm) 书名,
+                 isbn,
+                 dj 定价,
+                 p.hw 货位,
+                 pkcs 盘点数,
+                 yscs 原册数,
+                 q.mc 货区,
+                 p.id,
+                 q.bh
+            from t_pkdz2 p, t_hqdy q, t_kcsm s
+           where abs(pkcs - yscs) > 50
+             and p.hqbh = q.bh
+             and s.id = p.id
+
+
+ 

@@ -1,0 +1,8 @@
+select station  from t_ghdw_ywbm@c_link_wl_sl  where ghdwh='30604'
+ 
+update t_ghdw set gkh='24'  where bh='30604'
+select * from t_station where bh ='A141'
+
+select gkh ,s.mc from  t_ghdw g,  t_ghdw_ywbm@c_link_wl_sl  y ,t_station  s
+
+where g.bh=y.ghdwh and y.ywbmbh='000001' and y.station=s.bh
