@@ -52,3 +52,54 @@ Select yh,
    and a.ywbmbh like :as_ywbmbh
    and a.cybh like :as_cybh
 
+
+   SELECT  yh,
+       tlrq,
+       cbrq,
+       jsrq,
+       dh,
+       (Select mc From t_ghdw Where bh = a.dh) hymc, 
+       (Select Name
+          From t_user
+         Where usr_id = (Select ywybh
+                           From t_ghdw_ywbm
+                          Where ghdwh = a.dh
+                            And ywbmbh = a.ywbmbh)) As ywyxm,
+       ysjs,
+       ssjs,
+       djsl,
+       round((Sysdate - jsrq) * 24, 0) As clsj,
+      
+       (select ysdj 
+          from tmp_dhdj
+         where tmp_dhdj.flowid_tldjhz = a.flowid_tldjhz and rownum=1) ysdj,
+       cfhw,
+       (select sum(ydpz) from tmp_dhdj where flowid_tldjhz = a.flowid_tldjhz) zpz,
+       kl_flag,
+       (select count(*)
+          from tmp_dhmx c, tmp_dhdj b
+         where c.flowid_dj = b.flowid_dj
+           and b.flowid_tldjhz = a.FLOWID_TLDJHZ
+           and c.tybj = '1') as tyjls,
+       (select count(*)
+          from tmp_dhmx c, tmp_dhdj b
+         where c.flowid_dj = b.flowid_dj
+           and b.flowid_tldjhz = a.FLOWID_TLDJHZ
+           and c.tybj = '5') as hyjls,
+       (select count(*)
+          from tmp_dhmx c, tmp_dhdj b
+         where c.flowid_dj = b.flowid_dj
+           and b.flowid_tldjhz = a.FLOWID_TLDJHZ
+           and c.tybj = '3') as xtywtyjls,
+       FLOWID_TLDJHZ 
+      
+           
+     FROM t_tldjhz a
+    WHERE     ddbj = '1'
+          AND flbj = '0'
+          and ycbbj='1'
+         AND EXISTS (select 1 from t_dm where lxbh='1' and kflx='TS' and dh=a.ywbmbh)
+          AND NOT EXISTS
+                 (SELECT 1
+                    FROM t_cbt
+                   WHERE djbh = a.flowid_tldjhz)

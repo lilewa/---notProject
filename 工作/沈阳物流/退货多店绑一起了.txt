@@ -1,0 +1,10 @@
+ select ytpch,khfypch from(
+ select ytpch,khfypch,dh from t_xhdytsj_sl_bak where ytpch in ( select ytpch from t_xhdytsj_sl_bak   group by ytpch   having count( distinct dh)>1)
+ group by  ytpch,khfypch,dh 
+ ) t group by   ytpch,khfypch having count(*)>1
+ 
+ select* from t_xhdthdj  where ytpch='BP2017112109'
+
+select  * From t_fjrwb where ytpch='BP2017112109' and ysxm='Y000000372YT'
+   ;
+select  * From t_fjrwb where ytpch='BP2017112109' and ysxm='Y000000370YT'

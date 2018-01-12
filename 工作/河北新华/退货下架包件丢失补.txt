@@ -1,0 +1,13 @@
+ select * from t_thjh_bak  where ywpch='C170000119TJ'
+
+insert into t_dfbj   select * from t_dfbj_bak3 where bjlsh in( 
+ select distinct phdh  from t_agv_rw_xt_bak  where ph='C170000119TJ')
+
+
+update  t_dfbj t   set 
+    (ZPZ  ,  ZCS  , ZMY  , ZSY ,    zzl)
+          =(select count(distinct p.id),nvl(sum(kccs),0), nvl(sum(kccs*dj),0),
+          nvl(sum(ROUND(ZJXS * thZK * kccs / 100, 2)),0),nvl(sum(p.zl),0) from t_hykcsl p,t_kcsm s where bjlsh=t.bjlsh and kccs >0 and p.id=s.id)    
+    
+  where bjlsh in( 
+ select distinct phdh  from t_agv_rw_xt_bak  where ph='C170000119TJ')

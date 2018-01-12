@@ -1,0 +1,31 @@
+seleCt * from t_agv_rw_xtdl  WHERE  HQBH='24';
+
+delete  t_agvhz  WHERE   flowid in( 
+seleCt  zrhq from T_AGV_RW_XT  WHERE  HQBH='24')
+
+create table t_agv_rw_xtdl as 
+ delete T_AGV_RW_XT  WHERE   zrhq in( 
+seleCt  flowid from T_AGVhzdel   )
+ 
+
+select  * from t_agv_rw_xtdl 
+
+ seleCt * from T_AGV_RW_XT_bak   t where exists (select 1 from t_agvhzdel where flowid=t.zrhq)
+ 
+ 
+  Insert Into T_FHRWB
+                (FLOWID_FHRW, YSDJH, DH, ID, KFBH, YWBMBH, CYBH, DBBZ, XBBZ, DJSL, FHZK,
+                 SYLX, ZJXS, DJLY, QSTS, FHFS, DDCZYBH, FYFSH, DJ, cgyj, sdhrq, xszq,
+                 qsclfs, fhyxj, cgyj_kh, thl, PHBZ, rq)
+                Select ALL_FLOWID.Nextval,  
+    t.YSDJH,t.DH,t.ID,t.KFBH,t.YWBMBH,t.CYBH,t.DBBZ,t.XBBZ,t.DJSL,t.FHZK,t.SYLX,t.ZJXS,t.DJLY,t.QSTS,t.FHFS,'',t.FYFSH,t.DJ,t.cgyj,
+    t.sdhrq,t.xszq,t.QSCLFS,t.fhyxj,t.cgyj_kh,3  ,t.PHBZ,t.rq
+                
+ from T_PF_TEMP_lvb t,t_agv_rw_xtdl a   where t.flowid_fhrw=a.flowid_xj  
+ 
+ select * from t_ltkf  where zycs>0
+ 
+ update t_ltkf t set zycs=zycs-(select sum(yssl) from t_agv_rw_xtdl where hwh=t.hw and id=t.id) 
+ where exists (select 1 from t_agv_rw_xtdl group by hwh,id)
+ 
+ select * from t_ltkf where hqbh='15'

@@ -24,3 +24,71 @@
   ,xfmy=(select sum(sjsl*dj) from v_fjrwb_xf2 
   where   flowid_fjrwb=t.flowid_fjrwb and sjflqx='ST' and gkh<>'101' ) where 
   exists (select 1 from v_fjrwb_xf2 where   flowid_fjrwb=t.flowid_fjrwb   and sjflqx='ST' and gkh<>'101');
+
+-------
+  update t_thmonitor t set zfsl=(select nvl(sum(sjsl),0) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb  and gkh='101' )
+  ,zfmy=(select nvl(sum(sjsl*dj),0) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb and gkh='101'  ) where 
+     finish='0';
+  
+  update t_thmonitor t set hjsl=(select nvl(sum(sjsl),0) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb  and sjflqx='CC' )
+  ,hjmy=(select nvl(sum(sjsl*dj),0) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb and sjflqx='CC'  ) where 
+  
+     finish='0';
+  
+  update t_thmonitor set ywmy=ywsl*dj where ywmy is null 
+  
+ update t_thmonitor t set jtsl=(select nvl(sum(sjsl),0) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb  and sjflqx='JT' )
+  ,jtmy=(select nvl(sum(sjsl*dj),0) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb and sjflqx='JT'  ) where 
+   
+  
+     finish='0';
+  
+ update t_thmonitor t set xfsl=(select nvl(sum(sjsl),0) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb  and sjflqx='ST' and gkh<>'101' )
+  ,xfmy=(select nvl(sum(sjsl*dj),0) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb and sjflqx='ST' and gkh<>'101' ) where    finish='0';
+  
+  
+  select * from t_thmonitor where ywsl<xfsl+zfsl+hjsl+jtsl and  ywsl>0
+
+
+update t_thmonitor t set xfsl=(select nvl(sum(sjsl),0) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb  and sjflqx='ST' and gkh<>'101' and chacuoflag='0' )
+  ,xfmy=(select nvl(sum(sjsl*dj),0) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb and sjflqx='ST' and gkh<>'101' and  chacuoflag='0' )
+   where    
+   xfsl<>(select nvl(sum(sjsl),0) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb  and sjflqx='ST' and gkh<>'101' and chacuoflag='0' )
+  
+  update t_thmonitor t set jtsl=(select nvl(sum(sjsl),0) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb  and sjflqx='JT'  and chacuoflag='0' )
+  ,jtmy=(select nvl(sum(sjsl*dj),0) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb and sjflqx='JT'  and  chacuoflag='0' )
+   where    
+   jtsl<>(select nvl(sum(sjsl),0) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb  and sjflqx='JT'   and chacuoflag='0' )
+  
+  
+  select * from  t_thmonitor t where  hjsl<>(select nvl(sum(sjsl),0) from v_fjrwb_xf2 
+  where   flowid_fjrwb=t.flowid_fjrwb  and sjflqx='CC'    and chacuoflag='0' )
+
+update t_thmonitor t
+   set qdjtsl =
+       (select nvl(sum(sjsl), 0)
+          from v_fjrwb_xf2
+         where flowid_fjrwb = t.flowid_fjrwb
+           and sjflqx = 'JT'
+           and chacuoflag = '0' and ywsl>0),
+       qdjtmy =
+       (select nvl(sum(sjsl * dj), 0)
+          from v_fjrwb_xf2
+         where flowid_fjrwb = t.flowid_fjrwb
+           and sjflqx = 'JT'
+           and chacuoflag = '0'  and ywsl>0)
+ 

@@ -1,0 +1,1 @@
+select  * from t_agv_rw_xt_bak where xjczybh='6013' and xhao='400360' and ph='D170000150TJ'

@@ -1,0 +1,14 @@
+--数据窗口名:d_gzjh_dtj_hz_xtw数据窗口语句:
+SELECT T_FHXTST_GZ_XTW.GZLX,
+       T_FHXTST_GZ_XTW.GZJHDH,
+       sum(T_FHXTST_GZ_XTW.YSSL) yssl,
+       count(T_FHXTST_GZ_XTW.ID) pz,
+       sum(T_FHXTST_GZ_XTW.NEWCS) xsl
+  FROM T_FHXTST_GZ_XTW
+ where t_fhxtst_gz_xtw.czybh = '3000'
+ group by t_fhxtst_gz_xtw.gzlx, t_fhxtst_gz_xtw.gzjhdh
+-----------------
+ select ywpch from t_hythmx h where flowid in
+ (Select  dbdh From t_fhxtst_gz_xtw
+                Where czybh = '3000'  ) 
+                and exists (select 1 from t_hykcsl_bak b, t_dpls p where b.cgyj=p.dbdh and bjlsh=h.ywpch)

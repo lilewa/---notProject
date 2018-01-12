@@ -1,0 +1,11 @@
+select  bh,isbn,sm,dj,sjsl Çåµ¥,0 ²îÒì, 0 ÒÑÍË, 0 Î´ÍË ,khdh from v_fjrwb_xf2 where ytpch='' and ywsl>0;
+ union all
+ select  bh,isbn,sm,dj,0 Çåµ¥, -sjsl ²îÒì, 0 ÒÑÍË, 0 Î´ÍË ,khdh from v_fjrwb_xf2 where ytpch='' and chacuoflag='0';
+ union all
+ select  bh,isbn,sm,dj,0 Çåµ¥, sjsl ²îÒì, 0 ÒÑÍË, 0 Î´ÍË ,khdh from v_fjrwb_xf2 where ytpch='' and ywsl=0;
+ union all
+ select  bh,isbn,sm,dj,0 Çåµ¥, 0 ²îÒì, sjsl ÒÑÍË, 0 Î´ÍË ,khdh from v_fjrwb_xf2 where ytpch='' and sjflqx<>'JT' and chacuoflag='0';
+ union all
+ select  bh,isbn,sm,dj,0 Çåµ¥, 0 ²îÒì, 0 ÒÑÍË, sjsl Î´ÍË ,khdh from v_fjrwb_xf2 where ytpch='' and sjflqx='JT' and chacuoflag='0';
+ union all  --µÖ¿Û¾ÜÍË¸´ºË²îÒì
+ select  bh,isbn,sm,dj,0 Çåµ¥, jhcs -sdsl  ²îÒì, 0 ÒÑÍË, jhcs -sdsl Î´ÍË ,khdh from T_KHTHMX_JT_JHCLEAR  where ytpch=''  and jhcs<>sdsl ;

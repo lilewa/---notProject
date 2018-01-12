@@ -1,0 +1,65 @@
+
+小乐，要写总结了，麻烦帮我查几个数据嘛，就是2016.12.21-2017.12.18日，
+1、连锁店修改的收货差异码洋、笔数；
+2、我们审核通过的码洋、笔数；
+3、审核否决的码洋、笔数。
+4、收容上架的总码洋。
+要分图书、音像、电教、大中专
+select  sum(sfcs*dj) ,ywbmbh from t_fhmx f, t_kcsm s where  yjfbj='1' and dbrq> to_date('2016/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+and  dbrq< to_date('2017/12/18 00:00:00','yyyy/mm/dd hh24:mi:ss') and s.id=f.id  group by ywbmbh
+---354994.1
+
+
+拆包调度  26130单 232512.1 件
+ 加急 10876  69727.35
+ 普通 15254   162784.75  
+ 绿通 2476  6829.45
+退社计划 1411单 130492 品种 54475153 码洋 540968次
+
+按店调度 40225单  33951品种 168967次 
+特殊调度 7单	  7品种	    15次 
+
+二配 	72821件   退社 86706件  客退验收 71911件
+
+ 工帮我调下数据，2016年12月21日到11月30日
+1、散货区新货下架，次数，品种，册数，码洋
+2、散货区新货上架，件数，品种，册数，码洋
+3、收容上架件数、品种、册数、码洋
+4、返货区退社下架，件数，次数，品种，册数，码洋
+5、返品区上架件数，品种。册数，码洋
+
+seleCt count(distinct t.id) 品种,
+       sum(sjsl) 册数,
+       sum(sjsl * dj) 码洋,
+       ywbmbh,
+       (select trim(mc) from t_hqdy where bh = t.hqbh),
+       hqbh
+  from t_agv_rw_xt_bak t, t_kcsm s
+ where lxbh = 'ST'
+   and jxfs = 'AD'
+   and xjrq > to_date('2016/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and xjrq < to_date('2017/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and s.id = t.id
+ group by hqbh, ywbmbh
+
+select sum(times),  ywbmbh,
+       (select trim(mc) from t_hqdy where bh = t.hqbh),
+       hqbh from  (
+   select  1 times ,ywbmbh,hqbh  from    t_agv_rw_xt_bak  a  where lxbh = 'ST'
+   and jxfs = 'AD'
+   and xjrq > to_date('2016/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and xjrq < to_date('2017/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')  group by 
+    id,phdh,hwh,ywbmbh,hqbh )   t   group by hqbh, ywbmbh-- 540968
+
+select sum(tm),ywbmbh from ( 
+ select ywbmbh,1 tm from t_pmsjrwb_bak b  where lxbh<>'TH'
+       and sjrq > to_date('2016/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and sjrq < to_date('2017/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')   
+   group by ywbmbh,trunc(sjrq,'hh'),tm) t group by ywbmbh
+
+    select sum(sjsl) 册数, sum(sjsl*dj) 码洋,count(distinct b.id) 品种,ywbmbh ,
+    (select trim(mc) from t_hqdy where bh = b.hqbh) 货区 ,hqbh from t_pmsjrwb_bak b, t_kcsm s where lxbh='DH'
+       and sjrq > to_date('2016/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and sjrq < to_date('2017/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+   and b.id=s.id  and hqbh<>'18'
+   group by ywbmbh,hqbh

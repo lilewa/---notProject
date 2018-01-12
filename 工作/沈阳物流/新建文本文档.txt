@@ -1,0 +1,33 @@
+  t_fjrwb111 as 
+select * from t_fjrwb111 t where  sjsl >0
+exists (select 1 from t_khthbj where zt='1' and bjlsh=t.ysxm and ytpch=t.ytpch and dh=t.dh)
+and exists (select 1 from 
+t_fjrwb_sl where flowid_fjrwb=t.flowid_fjrwb_sl and yflbj='1')
+
+  
+delete t_thmonitor t where exists (select 1 from t_fjrwb111 where flowid_fjrwb=t.flowid_fjrwb)
+
+update t_fjrwb_sl t set yflbj='0' where  exists (select 1 from t_fjrwb111 where flowid_fjrwb_sl=t.flowid_fjrwb)
+
+
+select  * from v_fjrwb_xf2 where  ytpch = 'BP2017112866'
+
+select ytpch,xtpch,dh from v_fjrwb_xf2 a where
+          ytpch = 'BP2017112866'  and sjflqx <> 'JT'  group by ytpch,xtpch,dh   
+          
+      
+  
+ select * from    v_fjrwb_xf2 t where exists (select 1 from 
+    t_khthmx where t.flowid_fjrwb=flowid) and  ytpch = 'BP2017112866'
+    
+    
+     select sum(ywsl) from t_fjrwb_bak where  ytpch = 'BP2017112806'
+    
+
+ select * from    t_xhdthdj_czy   where  ytpch = 'BP2017102702' 
+    
+ 
+  select * from     t_fjrwb  where  ytpch = 'BP2017102702'
+ select * from    t_fjrwb  t where exists (select 1 from 
+    t_khthmx where t.flowid_fjrwb=flowid)  
+    

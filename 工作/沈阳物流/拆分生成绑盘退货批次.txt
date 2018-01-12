@@ -1,0 +1,26 @@
+seleCt * from t_dfbj where cgyj='XF1212027-5' for update 
+    
+    update  t_dfbj set cgyj='XF1212062-5' where cgyj='XF1212027-5' and dh='00666'
+select * from t_ghdw where bh='00339 ' or bh='00666 ';
+00666 
+select * from t_bindpc where   bindpc='XF1212027-5'
+
+select * from t_bindpc where  createday= to_date('2017/12/12','yyyy/mm/dd') and print ='未打印' for update 
+
+   select  sum(zmy),sum(zcs),sum(zsy),min(dh)  into v_js,v_zmy ,v_zcs,v_zsy,v_ghdw from t_dfbj d,t_bindbj t where d.bjlsh=t.bjlsh ;
+   
+   中国人民大学出版社有限公司                                                                          
+                                                                        
+
+        update T_BINDPC t  set (zmy ,zcs ,zsy )=
+        
+         ( select  sum(zmy),sum(zcs),sum(zsy)    from t_dfbj where  trim(cgyj)=trim(t.bindpc))
+          
+           where  createday= to_date('2017/12/12','yyyy/mm/dd') and print ='未打印'
+           
+           
+           select * from t_dfbj where cgyj='XF1217034-10' for update
+           
+        select * from t_hykcsl where bjlsh='5253061     ';
+        
+                select * from t_khthbj where zt='2'

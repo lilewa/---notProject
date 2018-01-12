@@ -1,0 +1,9 @@
+select * from T_THFLCF  where shelfno ='01' and flqx='ST';
+
+select * from  t_Thcfshelf 
+
+insert into T_THFLCF(shelfno,gkh,flqx)
+select '20',gkh,flqx from T_THFLCF  where shelfno ='01' and flqx='ST';
+
+insert into T_THFLCF(shelfno,gkh,flqx)
+   select '20',null,null from dual connect by rownum<=30;

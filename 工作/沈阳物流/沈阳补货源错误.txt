@@ -1,0 +1,12 @@
+  select * from t_fjrwb_stxfdel 
+ 
+               insert into t_khthbj (bjlsh, dh,bindczy,bindrq,ywbmbh,zt,ytpch )
+              select ysxm, '2002','9996',sysdate,'000001','1','BP2016010101'   from t_fjrwb_stxfdel
+              group by ysxm;
+              
+              insert into t_xhdytsj_sl(flowid_xhdytsj,drrq,ytrq,shrq,ytpch,ysxm,dh,ywbmbh,id,bh,yts,kts_zc,kts_cq,bkts_cl,bkts_cq,bkts_ps,
+              yclbj,kfbh,sm,dj,isbn,state,khfypch)
+              select /*lsd_allflowid.Nextval@c_link_wl_sl,*/sysdate,sysdate,sysdate,null,ysxm,'2002','000001',id,'1',ywsl,0,0,0,0,0,'0','2002',sm,dj,isbn,'0','BP2016010101'
+              from t_fjrwb_stxfdel 
+            
+     

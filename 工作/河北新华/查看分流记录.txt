@@ -1,0 +1,15 @@
+
+select * from t_dhfl1 where flowid_dhmx in(select flowid_dhmx from tmp_dhmx where isbn='9787500794141 ')
+
+select * from t_dhfl1 where flowid_dhmx in(select flowid_dhmx from tmp_dhmx where isbn='9787500794608 ')
+
+
+   select * from t_dhfl1 where id in(select  id from t_kcsm where isbn='9787500794141  ')
+   
+   select  xbbz,dbbz,sm  from t_kcsm where isbn='9787500794141'
+   
+     select  xbbz,dbbz,sm  from tmp_dhmx where isbn='9787500794141'
+      
+      select  xbbz,dbbz,sm  from tmp_dhmx@c_link_wl_sl where isbn='9787500794141'
+            
+     select  xbbz,dbbz,sm  from t_kcsm@c_link_wl_sl where isbn='9787500794141'

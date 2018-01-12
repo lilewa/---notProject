@@ -1,0 +1,25 @@
+   update t_dfbj t set (station,dz,lxr,tel,fyjb)=(
+ select  trim(c.mc)  ,   trim(dz),lxr,tele,bh from   t_ghdw_ywbm@c_link_wl_sl x  , t_station@c_link_wl_ex  c
+   where    c.bh=x.station and x.ywbmbh='000001' and x.ghdwh=t.dh)  
+   where  station is null and cgyj='Î´Ð£ºË' 
+   
+    select c.mc
+   from t_ghdw_ywbm@c_link_wl_sl x  left join t_station@c_link_wl_ex  c
+                  on    c.bh=x.station and x.ywbmbh='000001'
+                  where  x.ghdwh='00787' ;  
+
+ select  trim(c.mc)  ,   trim(dz),lxr,tele,bh from   t_ghdw_ywbm@c_link_wl_sl x  , t_station@c_link_wl_ex  c
+   where    c.bh=x.station and x.ywbmbh='000001' 
+   and ghdwh='30609'  
+    
+   
+    select  station from   t_ghdw_ywbm@c_link_wl_sl x  
+   where    x.ywbmbh='000001' 
+   and ghdwh='30609'  
+
+select  *   from t_dm@c_link_wl_sl x ,t_station@c_link_wl_ex  c
+                where  x.dh=p_ghdwh  and c.bh=x.station ;
+
+  select  station,dm  from t_dm@c_link_wl_sl  where dh='15371'
+
+             

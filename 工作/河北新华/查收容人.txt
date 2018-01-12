@@ -1,0 +1,10 @@
+  Insert Into t_crkls
+        (flowid_crkls, id, ywpch, yspch, crkrq, ywlx, kfbh, lybh, cybh, ywbmbh, crkcs,
+         crksy, sylx, zk_jg, zjxs, bz, flowid_wl, pk)
+    Values
+        (v_flowid, v_id, v_flowid, v_flowid, Sysdate, 'CY', v_kfbh, v_kfbh, v_cybh,
+         v_ywbmbh, v_sjcs, v_sys, v_sylx, v_zk, v_zjxs, 'DHSR', lde_flowid, lde_flowid);
+         
+         
+         select b.yssl,u.name from t_crkls t ,t_pmsjrwb_bak b ,t_user u where t.id='9787502335410002 ' 
+         and t.bz='DHSR' and b.flowid_sj=t.flowid_wl and b.ysczybh=u.usr_id 

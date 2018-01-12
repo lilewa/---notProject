@@ -1,0 +1,21 @@
+
+
+insert into  t_fjrwb_xf2 
+select * from t_fjrwb_xf2_bak 
+where flowid in(
+select flowid from t_khthmx_jt where bjlsh='7063307'
+)
+
+update t_fjrwb_xf2 set 
+mdxm=null,zt='0' where 
+  flowid in(
+select flowid from t_khthmx_jt where bjlsh='7063307'
+)
+
+delete  t_khthmx_jt_jhclear   where 
+  flowid in(
+select flowid from t_khthmx_jt where bjlsh='7063307'
+)
+
+
+delete  t_khthmx_jt where bjlsh='7063307'

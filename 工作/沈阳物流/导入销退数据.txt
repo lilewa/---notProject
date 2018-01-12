@@ -1,0 +1,49 @@
+
+
+
+create table t_khthmx_jtdel as select * from t_khthmx_jt  where (dh,rqh) in
+(select  a.dh ,rqh from t_khthmx_jt a, t_dm d where (id,a.dh) in (  select t.id,t.dh from (
+select id,dh, sum(GBSL) kt from
+t_fjrwb_sl_20171214@c_link_wl_sl a  where  A.flqxmc Is Null and GBSL >0 group by id,dh ) t left join (
+select id,dh,sum(sdsl) jt from
+t_khthmx_jt j  group by id, dh) j on j.dh=t.dh and  j.id=t.id and jt is not null ) and a.dh=d.dh
+and exists (select 1 from t_dm_ywbm where a.dh=dh and lsdbj='0' )
+group by a.dh ,rqh)
+
+select * from t_xhdthdj where ywbmbh='000001'  and xtpch='1111' for update 
+  select ytpch from t_xhdthdj where    ytpch='BP2016010102'
+  
+select *  from t_khthmx_jtdel where ywbmbh='000001' and ytpch like 'BP2016%'
+delete  t_khthmx_jt t where exists  (select 1 from  t_khthmx_jtdel  where flowid=t.flowid)
+  
+insert into t_xhdthdj
+  (xtpch, ytpch, dh, ywbmbh, cybh, kfbh, exists_ytsj, lrnum, czybh, zyczybh, ydpz, ydcs, ydmy, 
+  ydsy, xtflag, js, flag, thfs, fjfs, ysbbj, sbrq, bz, pfczybh, createdate, wcczybh, wcbj, shrq, lx)
+ 
+  select '1111',all_flowid.nextval ,t.dh, 
+  ywbmbh, cybh, kfbh, exists_ytsj, lrnum, czybh, zyczybh, ydpz, ydcs, ydmy, 
+  ydsy, xtflag, js, flag, thfs, fjfs, ysbbj, sbrq, bz, pfczybh, createdate, wcczybh, wcbj, shrq, lx
+  from t_xhdthdj x,
+  (select  a.dh  from t_khthmx_jt a, t_dm d where (id,a.dh) in (  select t.id,t.dh from (
+select id,dh, sum(GBSL) kt from
+t_fjrwb_sl_20171214@c_link_wl_sl a  where  A.flqxmc Is Null and GBSL >0 group by id,dh ) t left join (
+select id,dh,sum(sdsl) jt from
+t_khthmx_jt j  group by id, dh) j on j.dh=t.dh and  j.id=t.id and jt is not null ) and a.dh=d.dh
+and exists (select 1 from t_dm_ywbm where a.dh=dh and lsdbj='0' )
+group by a.dh ) t
+   where ywbmbh='000001' and ytpch = 'BP2016010101' 
+
+   
+    select *  from t_khthmx_jtdel 
+    
+     insert into t_khthbj (bjlsh, dh,bindczy,bindrq,ywbmbh,zt,ytpch )
+              select rqh, j.dh,'000001',sysdate,'000001','1',x.ytpch   from t_khthmx_jtdel j, t_xhdthdj  x
+               where x.dh=j.dh and x.xtpch='1111'
+              group by rqh,j.dh,x.ytpch ;
+              
+              insert into t_xhdytsj_sl(flowid_xhdytsj,drrq,ytrq,shrq,ytpch,ysxm,dh,ywbmbh,id,bh,yts,kts_zc,kts_cq,bkts_cl,bkts_cq,bkts_ps,
+              yclbj,kfbh,sm,dj,isbn,state,khfypch)
+              select lsd_allflowid.Nextval@c_link_wl_sl,sysdate,sysdate,sysdate,'1',j.rqh,j.dh,'000001',id,bh,
+              nvl(jhcs,ywsl),0,0,0,0,0,'0','2001',sm,dj,isbn,'0',x.ytpch
+              from t_khthmx_jtdel  j, t_xhdthdj  x
+              where x.dh=j.dh and x.xtpch='1111'

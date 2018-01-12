@@ -1,0 +1,12 @@
+
+ delete  t_khthmx t where exists (select 1 from v_fjrwb_xf2 where flowid_fjrwb=t.flowid  and  ytpch='BP2017110903')
+ 
+  select   distinct  ywpch  from  t_khthmx t where exists (select 1 from v_fjrwb_xf2 where flowid_fjrwb=t.flowid  and  ytpch='BP2017110903')
+  
+  D170000380XT
+D170000382XT
+D170000381XT
+
+
+select * from t_khthhz 
+delete t_khthhz where thpch='D170000380XT'

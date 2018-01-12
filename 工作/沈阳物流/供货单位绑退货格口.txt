@@ -1,3 +1,6 @@
+select * from t_khthbj where zt='2'
+
+
 select station  from t_ghdw_ywbm@c_link_wl_sl  where ghdwh='30604'
  
 update t_ghdw set gkh='24'  where bh='30604'
@@ -6,3 +9,9 @@ select * from t_station where bh ='A141'
 select gkh ,s.mc from  t_ghdw g,  t_ghdw_ywbm@c_link_wl_sl  y ,t_station  s
 
 where g.bh=y.ghdwh and y.ywbmbh='000001' and y.station=s.bh
+
+      select w.mc,w.bh,w.gkh  from t_fjrwb_sl s left join t_ghdw w on s.ghdwh=w.bh 
+      where    s. flqx = 'ST'  and s.ysxm='T00003' and khfypch='BP2017121701'
+      
+    select s.sm,s.isbn,z.hqbh,k.fl from  t_fjrwb_sl s join t_kcsm k on s.id=k.id left join t_hqfldz z on s.ywbmbh=z.ywbmbh and k.fl=z.fl
+    where  s.ysxm='T00004      ' and khfypch='BP2017121701' and  flqx = 'CC'; 

@@ -1,0 +1,3 @@
+
+select k.* from t_khthbj b, t_fjrwb_sl s,t_kcsm k where b.zt='2' and msg='没有定义货区分类对照' and s.id=k.id
+ and b.bjlsh=s.ytpch and fl='CW'

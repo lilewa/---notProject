@@ -1,0 +1,11 @@
+select * from T_FJRWB_STXFBSJ t
+
+
+delete    t_fjrwb_stxf   f  where exists (select 1 from    T_FJRWB_SL_ERR1129@c_link_wl_sl l  
+   where f.flowid_fjrwb_sl =l.flowid_fjrwb )  
+   
+   insert into T_FJRWB_STXFBSJ 
+  
+select f.*  from t_fjrwb_stxf   f,   T_FJRWB_SL_ERR1129@c_link_wl_sl l  
+   where f.flowid_fjrwb_sl =l.flowid_fjrwb   
+   

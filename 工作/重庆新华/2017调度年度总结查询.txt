@@ -1,0 +1,60 @@
+SELECT  sum(ssjs)
+  FROM T_TLDJHZ
+ WHERE   (YCBBJ='1' or YCBBJ='2' )  and djlx='DH' and 
+ kl_flag <> '1'
+  and sj_flag='0'
+  
+/* 总共 26130 232512.1
+  加急 10876  69727.35
+  普通 15254  162784.75*/
+ 
+
+
+  select ywpch from t_thjh_bak group by ywpch --1411
+    select count( distinct id ) from t_thjh_bak   --130492
+
+  select  sum(a.yssl*dj) from    t_agv_rw_xt_bak  a , t_kcsm s where jxfs='AD' and a.id=s.id  and a.lxbh='ST' --54475153
+
+  select sum(times) from  (
+   select  1 times from    t_agv_rw_xt_bak  a  where jxfs='AD' and a.lxbh='ST' group by 
+    id,phdh,hwh ) -- 540968
+  select count( distinct dd_date ) from t_thjh_bak   --1072
+
+      select count(distinct ysdjh)  from t_fhrwb_bak   where    qsclfs <> '2' and  qsclfs<> '3'       --40225
+
+    select count(distinct ysdjh)  from t_fhrwb_bak   where    qsclfs = '2' Or qsclfs = '3' --7
+    
+    select count(distinct id)  from t_fhrwb_bak  where    qsclfs = '2' Or qsclfs = '3'     --7
+
+    select count(distinct id)  from t_fhrwb_bak  where      qsclfs <> '2' and  qsclfs<> '3'     --33951
+
+     select count(distinct dd_date)  from t_fhrwb_bak  where      qsclfs <> '2' and  qsclfs<> '3'     --20440
+
+     select count(distinct dd_date)  from t_fhrwb_bak  where      qsclfs = '2' or  qsclfs= '3'     --7
+ 
+select sum(times) from  (
+ select  1 times from    t_agv_rw_xt_bak  a  where jxfs='AD' and a.lxbh='FH' group by 
+  id,phdh,hwh ) -- 168982
+  
+           select sum(bzjs) from t_dfbj where jxfs='AD'  and ywlx='FH'  --72821
+      select sum(bzjs) from t_dfbj where   ywlx='ST'  --86706
+
+       select count(*) from t_khthbj   --71911
+       
+  select  sum(a.thcs*s.dj) from    t_thjh_bak  a , t_kcsm s where    a.id=s.id  
+  
+  select * from t_fhrwb_bak
+  
+  --分流
+   Insert Into T_AGV_RW_XT_BAK （LXBH 'ZF'） JXFS ， AJ
+   
+  -- 播种
+    Insert Into T_AGV_RW_XT_BAK （LXBH 'ZP'） JXFS ， AJ
+    
+      -- 待退品下架
+    Insert Into T_AGV_RW_XT_BAK （LXBH 'ST'） JXFS ， AJ
+    
+    
+      --绿通
+    Insert Into T_AGV_RW_XT_BAK （LXBH 'FH'） JXFS ， SG
+    
