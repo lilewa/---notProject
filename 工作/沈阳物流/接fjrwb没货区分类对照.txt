@@ -1,3 +1,13 @@
+  select * from t_khthbj where zt='2'
 
 select k.* from t_khthbj b, t_fjrwb_sl s,t_kcsm k where b.zt='2' and msg='没有定义货区分类对照' and s.id=k.id
- and b.bjlsh=s.ytpch and fl='CW'
+ and b.bjlsh=s.ysxm and fl='CW'
+
+
+ 
+  update t_kcsm t set fl=nvl( (select fl from t_kcsm s,t_kcsm_ywbm y where isbn=t.isbn and s.id=y.id and y.ywbmbh='000001' and s.fl<>'CW' and rownum=1 ),'CW')
+  where id in( select k.id from t_khthbj b, t_fjrwb_sl s,t_kcsm k where b.zt='2' and msg='没有定义货区分类对照' and s.id=k.id
+ and b.bjlsh=s.ysxm and fl='CW')
+ 
+ 
+  select * from t_kcsm s,t_kcsm_ywbm y where isbn='9787531558385  ' and s.id=y.id and y.ywbmbh='000001'

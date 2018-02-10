@@ -1,6 +1,6 @@
 select  bh,isbn,sm,dj,sjsl Çåµ¥,0 ²îÒì, 0 ÒÑÍË, 0 Î´ÍË ,khdh from v_fjrwb_xf2 where ytpch='' and ywsl>0;
  union all
- select  bh,isbn,sm,dj,0 Çåµ¥, -sjsl ²îÒì, 0 ÒÑÍË, 0 Î´ÍË ,khdh from v_fjrwb_xf2 where ytpch='' and chacuoflag='0';
+ select  bh,isbn,sm,dj,0 Çåµ¥, -sjsl ²îÒì, 0 ÒÑÍË, 0 Î´ÍË ,khdh from v_fjrwb_xf2 where ytpch='' and chacuoflag='1';
  union all
  select  bh,isbn,sm,dj,0 Çåµ¥, sjsl ²îÒì, 0 ÒÑÍË, 0 Î´ÍË ,khdh from v_fjrwb_xf2 where ytpch='' and ywsl=0;
  union all

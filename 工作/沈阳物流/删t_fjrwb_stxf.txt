@@ -1,0 +1,15 @@
+  insert into t_fjrwb_stxf_bak  select * from t_fjrwb_stxf  where    ysxm
+  in(
+
+    select  distinct ysxm from t_fjrwb_stxf t where flpc =245473475 and not exists (select 1 from t_fjrwb_stxf where flpc =245473475
+    and ysxm =t.ysxm and ywsl>sjsl  ))
+    
+
+ 
+
+  delete t_fjrwb_stxf  where    ysxm
+  in(
+
+    select  distinct ysxm from t_fjrwb_stxf t where flpc =245473475 and not exists (select 1 from t_fjrwb_stxf where flpc =245473475
+    and ysxm =t.ysxm and ywsl>sjsl  ))
+    
