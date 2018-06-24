@@ -1,0 +1,1 @@
+找到注册表：HKEY_CURRENT_USER\Software\Classes\Software\Microsoft\Windows\CurrentVersion\Deployment\SideBySide\2.0\PackageMetadata，然后把原来的注册表删了，就可以安装了。

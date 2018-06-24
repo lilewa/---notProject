@@ -1,0 +1,33 @@
+Insert Into t_pxmx
+                (flowid, pxdh, bjlsh, djbh, id, ywbmbh, kfbh, cybh, dh, pxcs, sylx, zjxs,
+                 pxzk, sl, fhfs, thfs, djly, ZDH, DBBZ, XBBZ, sys, txy, cgyj, jzthrq, zl,
+                 sdhrq, yscs, cgyj_kh, thl, pfrq, pk)           
+   select 
+    v_zp.flowid_zp,b.xsdh, b.phdh, v_zp.dbdh, v_zp.id, v_zp.ywbmbh,
+                 v_zp.kfbh, v_zp.cybh, v_zp.dh, ZDXH, v_zp.sylx, v_zp.zjxs, v_zp.zk,
+                 v_zp.sl, '01', v_zp.tihfs, 'ZP', b.phdh, V_ZP.DBBZ, V_ZP.XBBZ, round(v_zp.zjxs * v_zp.zk * zdxh / 100, 2),
+                 null, v_zp.cgyj, sysdate, v_zp.zl, v_zp.sdhrq, v_zp.yssl, v_zp.cgyj_kh,
+                 v_zp.thl, sysdate, v_zp.pk 
+                 from  t_zprw_bak v_zp ,t_agv_rw_xt_bak b where  phdh='2227167'
+                 and b.flowid_xj=v_zp.flowid_zp
+                 
+                 
+         Insert Into t_dfbj
+                    (bjlsh, rqh, wcbj, pfrq, ywbmbh, ywpc, dh, hw, ybzbj, zpz, zcs, zmy,
+                     zsy, bzjs, fhbmbh, sjjs, tihfs, ln_zp_no, kfbh, ywlx, xjdbj, jxfs,
+                     fyfsh, zzl, sdhrq, JS, fhyxj, gkh)
+             
+                   
+                  select  phdh,xhao,'1',sysdate,ywbmbh ,xsdh ,dh,null, '0', 1,yssl, 
+                     null,null,1,'3001',1,tihfs,null,'2001','FH',
+                     (	Select decode(nvl(tsbj, '0'), '0', '1', '0') 
+                From t_dm_ywbm
+               Where dh = t.dh And ywbmbh = t.dh)
+                     ,'ZP',
+                      tihfs,  zl   *yssl,  sysdate, 1, 'B' ,null
+                      from t_agv_rw_xt_bak t where phdh='2227167' and rownum=1
+                      
+             
+          Update t_dfbj set  (zpz , zcs  , zmy  ,  zsy  )=
+          (select count(distinct p.id),sum(pxcs),sum(pxcs*dj) ,sum(sys) from  t_pxmx p,t_kcsm s where bjlsh ='2227167' and p.id=s.id)
+        where bjlsh ='2227167'

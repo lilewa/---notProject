@@ -1,17 +1,61 @@
-seleCt count(distinct t.id) 品种,
-       sum(sjsl) 册数,
-       sum(sjsl * dj) 码洋,
-       count(distinct phdh) 件数,
-       (select trim(mc) from t_hqdy where bh = t.hqbh),
-       hqbh
+select 1 from T_FJRWSJB_BAK  where NVL(bz,'1')<>'THZZ'
+and rwrq >   to_date('2017/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+and  rwrq< to_date('2018/03/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+group by xm, trunc(rwrq,'hh') --21991
+
+
+select count(*), sum(hgcs*dj),sum(hgcs) from T_FJRWSJB_BAK f,t_kcsm s where NVL(bz,'1')<>'THZZ'
+and rwrq >   to_date('2017/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+and  rwrq< to_date('2018/03/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+ and s.id=f.id          --	161657	17758300.52	623290
+  
+ 待退品区上架 ：箱数 次数 码洋 册数                     
+ 21991 161657  17758300.52	623290
+ 新品区上架：箱数 次数 码洋 册数 
+ --	19216	28249 16822549.1	615424
+
+返品区上架：箱数 次数 码洋 册数
+--	 3441 37380 	2921684.4	 125160
+
+
+select count(*)   from t_pmsjrwb_bak b, t_hwdy w, t_hqdy q   where 
+         sjrq > to_date('2017/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and sjrq < to_date('2018/03/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss') and  w.hw = b.sjhw 
+           and q.bh = w.hqbh
+           and  ( q.hqlx = 'DT' or  w.hqbh = '08' )
+
+select count(*),sum(zmy),sum(sjsl)
+  from t_pmsjhz t
+ where sjdate > to_date('2017/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and sjdate < to_date('2018/03/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and finished = '1'
+   and exists (select 1
+          from t_pmsjrwb_bak b, t_hwdy w, t_hqdy q
+         where id_pmsjhz = t.flowid
+           and w.hw = b.sjhw 
+           and q.bh = w.hqbh
+           and  (q.hqlx = 'DT' or  w.hqbh = '08'))
+           
+  新品区下架：箱数 次数 码洋 册数 
+ 	12114	 46287	 12052044.4	 396073
+
+
+返品区下架：箱数 次数 码洋 册数
+ 	2861	46597	 3984105.8	 172164
+
+ seleCt
+  count(distinct phdh) 件数, count(*) 品种,
+     sum(sjsl * dj) 码洋,
+       sum(sjsl) 册数 
+       
   from t_agv_rw_xt_bak t, t_kcsm s
  where lxbh = 'ST'
    and jxfs = 'AD'
-   and xjrq < to_date('2017/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
-   and xjrq > to_date('2017/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and xjrq < to_date('2018/03/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and xjrq > to_date('2017/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
    and s.id = t.id
-   and exists (select 1 from t_hqdy where bh=t.hqbh and hqlx='DT')
- group by hqbh
+   and ( exists (select 1 from t_hqdy where bh=t.hqbh and hqlx='DT'))  or hqbh='08')
+ --group by hqbh
 
 seleCt count(distinct t.id) 品种,
        sum(sjsl) 册数,
@@ -26,51 +70,3 @@ seleCt count(distinct t.id) 品种,
    and xjrq > to_date('2017/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
    and s.id = t.id
  group by hqbh
- 
-   select sum(times) ,hqbh from  (
-   select  1 times ,hqbh from    t_agv_rw_xt_bak  a  where jxfs='AD' and a.lxbh='ST'
-  and xjrq < to_date('2017/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
-   and xjrq > to_date('2017/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
- and exists (select 1 from t_hqdy where bh=a.hqbh and hqlx='DT')
-    group by 
-id,phdh,hwh ,hqbh)  group by hqbh
-
-
-select sum(册数) 册数,
-       sum(码洋) 码洋,
-       count(distinct 品种) 品种, 
-       (select trim(mc) from t_hqdy q where q.bh = t.hqbh) 货区 ,hqbh,
-       sum(cs) 次数 
-  from (select  sjsl  册数,
-                sjsl * dj  码洋,
-               b.id  品种, 
-               (select hqbh from t_hwdy w where w.hw = b.sjhw) hqbh,
-               1 cs
-          from t_pmsjrwb_bak b, t_kcsm s
-         where lxbh = 'TH'
-           and sjrq <
-               to_date('2017/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
-           and sjrq > to_date('2017/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
-           and b.id = s.id) t
- group by hqbh
-
-
-  select count(*) ,hqbh from t_pmsjhz where   finishdate <
-               to_date('2017/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
-           and finishdate > to_date('2017/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss') and lxbh='TH' group by hqbh 
-           
-           
-           
- select count(id_pmsjhz) 件,
-        (select trim(mc) from t_hqdy q where q.bh = t.hqbh) 货区,
-        hqbh
-   from (select w.hqbh, id_pmsjhz
-           from t_pmsjrwb_bak b, t_hwdy w
-          where lxbh = 'TH'
-            and sjrq <
-                to_date('2017/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
-            and sjrq >
-                to_date('2017/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
-            and w.hw = b.sjhw
-          group by w.hqbh, id_pmsjhz) t
-  group by hqbh

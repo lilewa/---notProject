@@ -1,0 +1,7 @@
+    select * from t_dfbj where jxfs='X' and ybzbj='1' and station is null and ywlx='ST'
+       
+select * from t_dfbj where gkh='ZF' and ybzbj='1' and station is null and ywlx='ST'
+
+       update t_dfbj t set station =(select trim(mc) from   t_ghdw_ywbm@c_link_wl_sl x ,t_station@c_link_wl_ex  c
+          where  x.ghdwh=t.dh and x.ywbmbh='000001' and c.bh=x.station )
+        where jxfs='X'  and ybzbj='1' and station is null and ywlx='ST'

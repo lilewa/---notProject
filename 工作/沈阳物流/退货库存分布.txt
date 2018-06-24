@@ -1,0 +1,7 @@
+select '粗分未分流', ywsl-sjsl cs , ysxm,hw,null rqh,null tph, gkh,flqx,'0' tjbj  from t_fjrwb where id ='7111393554001 ' and  ywsl-sjsl>0
+select '粗分已分流',tjsl cs,  ysxm,hw,null rqh,null tph, gkh,flqx ,tjbj from v_fjrwb_xf2 where id ='7111393554001 ' and tjbj='0';
+select '直分'  from T_HYKCSL t where hw='101'
+select '细分未分流',ywsl-sjsl cs,ysxm,hw,null rqh,null tph, gkh,flqx ,'1' from t_fjrwb_stxf where id ='7111393554001 ' and ywsl-sjsl>0
+select '细分已分流' * from T_HYKCSL t where flowid_fjrwb_xf2 is not null
+
+ 

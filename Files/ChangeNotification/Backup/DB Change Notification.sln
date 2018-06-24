@@ -1,0 +1,25 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DB Change Notification", "DB Change Notification.csproj", "{FBE43251-4D35-49C7-9AAD-C1D5EAFA8EC9}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{FBE43251-4D35-49C7-9AAD-C1D5EAFA8EC9}.Debug.ActiveCfg = Debug|.NET
+		{FBE43251-4D35-49C7-9AAD-C1D5EAFA8EC9}.Debug.Build.0 = Debug|.NET
+		{FBE43251-4D35-49C7-9AAD-C1D5EAFA8EC9}.Release.ActiveCfg = Release|.NET
+		{FBE43251-4D35-49C7-9AAD-C1D5EAFA8EC9}.Release.Build.0 = Release|.NET
+	EndGlobalSection
+	GlobalSection(SolutionItems) = postSolution
+		multiple_row_change.sql = multiple_row_change.sql
+		README.txt = README.txt
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal

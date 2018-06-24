@@ -1,0 +1,8 @@
+
+ delete      t_dhdj where flowid_dj  =142724723 ;
+  delete  t_dhls_jx where flowid_dj  =142724723 ;
+  delete t_crkls where FLOWID_CRKLS  =142724728;   'DH'
+ delete  t_dfbj  from where  bjlsh ='' 
+ delete t_pxmx where bjlsh='2071939     ' 
+ delete t_crkls  where ywpch ='2071939' or flowid =t_pxmx.flowid  'FH'
+ delete  t_wl_sjdhsj_hz    where flowid_dj =142724723 

@@ -1,0 +1,9 @@
+C:\Documents and Settings\Oracle.XP_ONE\Desktop\codesnippets\ChangeNotification\bin\Debug\Change Notification.exe
+C:\Documents and Settings\Oracle.XP_ONE\Desktop\codesnippets\ChangeNotification\bin\Debug\Change Notification.pdb
+C:\Documents and Settings\Oracle.XP_ONE\Desktop\codesnippets\ChangeNotification\obj\Debug\ResolveAssemblyReference.cache
+C:\Documents and Settings\Oracle.XP_ONE\Desktop\codesnippets\ChangeNotification\obj\Debug\NotificationSample.Form1.resources
+C:\Documents and Settings\Oracle.XP_ONE\Desktop\codesnippets\ChangeNotification\obj\Debug\Change Notification.exe
+C:\Documents and Settings\Oracle.XP_ONE\Desktop\codesnippets\ChangeNotification\obj\Debug\Change Notification.pdb
+C:\Documents and Settings\Oracle.XP_ONE\Desktop\codesnippets\ChangeNotification\bin\Debug\Change Notification.exe.config
+C:\Documents and Settings\Oracle.XP_ONE\Desktop\codesnippets\ChangeNotification\obj\Debug\GenerateResource.read.1.tlog
+C:\Documents and Settings\Oracle.XP_ONE\Desktop\codesnippets\ChangeNotification\obj\Debug\GenerateResource.write.1.tlog

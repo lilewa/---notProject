@@ -1,0 +1,10 @@
+select 1 from T_FJRWSJB_BAK  where NVL(bz,'1')<>'THZZ'
+and rwrq >   to_date('2017/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+and  rwrq< to_date('2018/03/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+group by xm, trunc(rwrq,'hh') --21991
+
+
+select count(*), sum(hgcs*dj),sum(hgcs) from T_FJRWSJB_BAK f,t_kcsm s where NVL(bz,'1')<>'THZZ'
+and rwrq >   to_date('2017/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+and  rwrq< to_date('2018/03/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+ and s.id=f.id          --	161657	17758300.52	623290

@@ -1,0 +1,2 @@
+select b.* from T_DH_YFSJ_bak f ,t_zprw b where flowid_dj=136788256  and b.pk=f.flowid
+select distinct phdh from T_DH_YFSJ_bak f ,t_agv_rw_xt_bak b where flowid_dj=136788256  and b.pk=f.flowid

@@ -1,0 +1,28 @@
+ PROC_THFL2 粗分
+  flrq 
+
+ PROC_TH_CFFX5 粗分封箱
+  update t_fjrwb_xf2 set zt='1',mdxm=p_rqh ,fxrq=sysdate
+  
+  PROC_TH_CFFB4 粗分封板
+  Update t_fjrwb_xf2 f
+       Set zt = '3', VIRTUALTPH = v_fbpc,fbrq=sysdate
+     Where zt = '1' And Exists
+     (Select 1 From t_fbrqh t Where t.rqh = f.mdxm And t.flowid = v_flowid);
+  
+  PROC_TH_CFZXF  粗分导入
+   update  t_fjrwb_stxf f set zt='1',FLPC=p_flpc ,drrq=sysdate,
+   
+  PROC_THFLXF2 细分
+  t_fjrwb_stxf_result flrq=sysdate
+  t_hykcsl.flowid=t_fjrwb_stxf_result.flowid
+  
+  PROC_TH_XFFX2 细分封箱
+  
+   t_fjrwb_stxf_result fxrq=sysdate
+
+RF_ZFJH3	直分，拒退校核
+ update t_fjrwb_xf2 set  bjlsh=v_bjlsh,jhrq =sysdate where
+
+PROC_TH_CFCOMMIT3
+Insert Into T_HYKCSL fxrq Sysdate
