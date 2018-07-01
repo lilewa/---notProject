@@ -1,0 +1,47 @@
+ seleCt
+  count(distinct phdh) 件数, count(distinct t.id ) 品种,
+     sum(sjsl * dj) 码洋,
+       sum(sjsl) 册数  ,count(*) 次数,
+       (select mc from t_hqdy where bh=t.hqbh  ) 货区
+  from t_agv_rw_xt_bak t, t_kcsm s
+ where lxbh = 'ST'
+   and jxfs = 'AD'
+   and xjrq < to_date('2018/06/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and xjrq > to_date('2018/03/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and s.id = t.id  
+  group by hqbh
+  
+  
+  select    count(distinct b.id ) 品种,
+     sum(sjsl * dj) 码洋,
+       sum(sjsl) 册数  ,count(*) 次数,
+       (select mc from t_hqdy where bh=w.hqbh  ) 货区   from t_pmsjrwb_bak b, t_hwdy w, t_hqdy q ,t_kcsm s   where 
+         sjrq > to_date('2018/03/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and sjrq <to_date('2018/06/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss') and  w.hw = b.sjhw 
+           and q.bh = w.hqbh and lxbh='DH' and s.id=b.id group by  w.hqbh
+           
+  select sum(js) , mc  from (         
+ select  1 js,( select q.mc 
+          from t_pmsjrwb_bak b, t_hwdy w, t_hqdy q
+         where id_pmsjhz = t.flowid
+           and w.hw = b.sjhw 
+           and q.bh = w.hqbh  and rownum=1 ) mc
+  from t_pmsjhz t
+ where sjdate > to_date('2018/03/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and sjdate < to_date('2018/06/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and finished = '1'
+   and exists (select 1
+          from t_pmsjrwb_bak b 
+         where id_pmsjhz = t.flowid and 
+          lxbh='DH') ) group by mc 
+
+
+			select sum(js)   from ( select 1 js from T_FJRWSJB_BAK  where NVL(bz,'1')<>'THZZ'
+and rwrq >   to_date('2018/03/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+and  rwrq<  to_date('2018/06/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+group by xm, trunc(rwrq,'hh')) --21991 )
+
+select  count(distinct f.id ) 品种,  count(*) 次数, sum(hgcs*dj) 码洋,sum(hgcs) 册数 from T_FJRWSJB_BAK f,t_kcsm s where NVL(bz,'1')<>'THZZ'
+and rwrq >  to_date('2018/03/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+and  rwrq<  to_date('2018/06/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+ and s.id=f.id     

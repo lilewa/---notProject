@@ -1,0 +1,77 @@
+ 
+ create table t_ltkf1125 as select * from t_ltkf ;
+create table t_kcsl1125 as select * from t_kcsl ;
+create table t_pkdz1125 as select * from t_pkdz ;
+
+create table t_pkdz_wl_tmp2 as  select * from  t_pkdz_wl_tmp 
+
+
+   Insert Into t_pkdz_wl_tmp2
+      (id, kfbh, ywbmbh, cybh, pkrq,
+			 wl_kccs, wl_pxmx, wl_cycs, sl_kccs, sl_cycs, pkcs)
+       
+      select id, kfbh, ywbmbh, cybh, pkrq ,0,0,0,0,0,pkcs  from  t_pkls_sl171125ps
+      
+      
+     Update (Select a.cbny As cbny1,a.lb As lb1,a.dj As dj1,a.isbn As isbn1,
+                   b.cbny As cbny2,b.lb As lb2,b.dj As dj2,b.isbn As isbn2
+                   From t_pkdz_wl_tmp2 a, t_kcsm b
+                   Where a.id=b.id )
+    Set cbny1=cbny2, lb1=lb2, dj1=dj2, isbn1=isbn2;
+
+
+    Update (Select a.sylx As sylx1,a.sl As sl1, a.pjzk As pjzk1,a.pjjj As pjjj1,
+                   b.sylx As sylx2,b.sl As sl2, b.pjzk As pjzk2,b.pjjj As pjjj2
+                   From t_pkdz_wl_tmp2 a, t_kcsm_ywbm b
+                   Where a.id=b.id And a.ywbmbh=b.ywbmbh)
+    Set sylx1=sylx2, sl1=sl2, pjzk1=pjzk2, pjjj1=pjjj2;
+    
+      Update t_pkdz_wl_tmp2 Set zjxs=decode(sylx,'0',dj,100),
+                             zkjg=decode(sylx,'0',pjzk,pjjj)£¬
+                             wl_pkpc='WPK17000007 '£¬
+                             wl_cypc='BSJ17040148'
+       
+       --------------
+      
+      --227
+       update t_pkdz a set pkcs=pkcs+( select pkcs from t_pkls_sl171125ps where id=a.id  )
+   where wl_pkpc='WPK17000007' 
+   and exists (select 1 from t_pkls_sl171125ps where  id=a.id) and kfbh='2001'
+   
+   
+
+   
+          Insert Into t_crkls
+        (flowid_crkls, ywpch, crkrq, ywlx, kfbh, lybh, cybh, ywbmbh, id, crkcs, crksy,
+         sylx, zk_jg, zjxs, dbbz, xbbz, sn_crkcs, sn_crksy, fgbj, yspch, bz, yzrcs, sl,
+         ysbbj, qx, ghdwh, jxcs, dqkfcs, cylx, gzmxkey, flowid_wl, pk)
+      Select all_flowid.nextval, 'WPK17000007', Sysdate, 'SY', kfbh, kfbh, cybh, ywbmbh, id,  pkcs ,
+          round(pkcs*zjxs*zkjg/100,2), sylx, zkjg, zjxs, 4, 10, 0, 0, '0',
+          'BSJ17040148', 'ÅÌ¿âµ÷Õû', 0, sl,
+          '1', '', '', 0, 0, 'PK', '', '', ''
+        From t_pkdz_wl_tmp2
+        
+        
+   delete t_pkdz_wl_tmp2 a where exists (select 1 from t_pkdz 
+   where a.id=id and   wl_pkpc='WPK17000007' and kfbh='2001' )
+    
+   
+    	Insert Into t_pkdz Select * From t_pkdz_wl_tmp2   
+    
+        
+        Insert Into t_kcsl
+       (id, kfbh, hw, ywbmbh, cybh, dbbz, xbbz, kccs, zycs, change)
+        Select id,kfbh, hw ,ywbmbh ,cybh , dbbz , xbbz , pkcs ,0,'0'
+          From t_pkls_sl171125ps  a where not exists (select 1 from t_kcsl where id=a.id and ywbmbh='000001')
+          
+         update t_kcsl a set kccs=kccs+(select pkcs from t_pkls_sl171125ps where id=a.id )
+         where exists (select 1 from t_pkls_sl171125ps  where id=a.id  )
+         and ywbmbh='000001'
+         
+         Insert Into t_ltkf
+				(id, hw, kfbh, dbbz, xbbz, ywbmbh, cybh, zl, kccs, zycs, hqbh)
+    Select id,hw,kfbh,dbbz,xbbz,ywbmbh,cybh,zl, pkcs ,0, '70'
+    From t_pkls_sl171125ps
+   
+
+ 

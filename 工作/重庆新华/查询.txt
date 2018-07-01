@@ -1,0 +1,145 @@
+退货上架
+select sum(册数) 册数,
+       sum(码洋) 码洋,
+       count(distinct 品种) 品种,
+       (select trim(mc) from t_hqdy q where q.bh = t.hqbh) 货区 ,hqbh,
+       sum(cs) 次数
+  from (select  sjsl  册数,
+                sjsl * dj  码洋,
+               b.id  品种,
+               (select hqbh from t_hwdy w where w.hw = b.sjhw) hqbh,
+               1 cs
+          from t_pmsjrwb_bak b, t_kcsm s
+         where lxbh = 'TH'
+           and sjrq <
+               to_date('2017/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+           and sjrq > to_date('2017/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+           and b.id = s.id) t
+ group by hqbh
+
+退货
+seleCt count(distinct t.id) 品种,
+       sum(sjsl) 册数,
+       sum(sjsl * dj) 码洋,
+       ywbmbh,
+       (select trim(mc) from t_hqdy where bh = t.hqbh),
+       hqbh
+  from t_agv_rw_xt_bak t, t_kcsm s
+ where lxbh = 'ST'
+   and jxfs = 'AD'
+   and xjrq > to_date('2016/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and xjrq < to_date('2017/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and s.id = t.id
+ group by hqbh, ywbmbh
+
+托盘的明细
+select ysxm 单号,sm 书名,isbn,dj 定价,ywsl  册数,b.tph 托盘 from t_fjrwb f  ,  t_khthbj  b
+where f.ysxm=b.bjlsh and  tpid in (135443672 ,135442970 ,135443582 ) order by 托盘 ,单号
+
+发货
+seleCt count(distinct t.id) 品种 ,sum(sjsl) 册数 ,sum(sjsl*dj) 码洋,ywbmbh,(select trim(mc) from t_hqdy where bh=t.hqbh) ,hqbh from t_agv_rw_xt_bak t,t_kcsm s  where lxbh='FH' and jxfs ='AD' and xjrq> to_date('2016/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+and  xjrq< to_date('2017/12/1 00:00:00','yyyy/mm/dd hh24:mi:ss') and s.id=t.id
+group by hqbh,ywbmbh
+
+发货更正
+select  trim(s.sm) 书名, isbn, dj 定价, f.sfcs 册数, sfcs*dj 码洋,dbrq 日期 ,trim(dm)  from
+ t_fhmx f,t_kcsm s ,t_dm d where f.gzbj='1' and (cspc='2033'or  cspc='0001' ) and f.id=s.id
+and f.dh=d.dh
+
+到货更正
+--更正
+select  trim(s.sm) 书名, isbn, dj 定价, x.djshsl 册数, djshsl*dj 码洋,shrq 日期 ,trim(mc)
+from T_DHLS_JX x,t_kcsm s,t_ghdw g where gzbj='1' and ( lrczybh='2033' or lrczybh='0001') and x.id=s.id  and g.bh=x.ghdwh
+
+客退去上架
+select t.sjrq, t.sjsl,t.sjhw ,s.sm,s.isbn from t_pmsjrwb_bak t ,t_kcsm s where exists (select 1 from t_fjrwb_bf_bak where ysxm='000000110955'
+and t.flowid_sj=flowid_fjrwb and ywlx='SJ')
+and s.id=t.id
+
+新货上架
+select sum(册数) 册数,
+       sum(码洋) 码洋,
+       count(distinct 品种) 品种,
+       (select trim(mc) from t_hqdy q where q.bh = t.hqbh) 货区 ,hqbh,
+       sum(cs) 次数
+  from (select  sjsl  册数,
+                sjsl * dj  码洋,
+               b.id  品种,
+               (select hqbh from t_hwdy w where w.hw = b.sjhw) hqbh,
+               1 cs
+          from t_pmsjrwb_bak b, t_kcsm s
+         where lxbh = 'DH'
+           and sjrq <
+               to_date('2017/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+           and sjrq > to_date('2017/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+           and b.id = s.id) t
+ group by hqbh
+
+新货下架
+seleCt count(distinct t.id) 品种,
+       sum(sjsl) 册数,
+       sum(sjsl * dj) 码洋,
+       count(distinct phdh) 件数,
+       (select trim(mc) from t_hqdy where bh = t.hqbh),
+       hqbh
+  from t_agv_rw_xt_bak t, t_kcsm s
+ where lxbh = 'FH'
+   and jxfs = 'AD'
+   and xjrq < to_date('2017/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and xjrq > to_date('2017/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and s.id = t.id
+ group by hqbh
+
+
+无收货，无库存
+select  hw,s.id,sm,isbn,dj,sum(pkcs),sum(pkcs*dj) from t_pkls_sl s,t_kcsm k
+where not exists (select 1 from T_PKLS_SL1013 where id=s.id)
+ and not exists (select 1 from t_pmsjrwb_bak where id=s.id)
+and not exists (select 1 from t_dhls_jx where id=s.id)
+and k.id=s.id
+group by hw,s.id,sm,isbn,dj
+order by sm,hw
+
+返品下架
+seleCt count(distinct t.id) 品种,
+       sum(sjsl) 册数,
+       sum(sjsl * dj) 码洋,
+       count(distinct phdh) 件数,
+       (select trim(mc) from t_hqdy where bh = t.hqbh),
+       hqbh
+  from t_agv_rw_xt_bak t, t_kcsm s
+ where lxbh = 'ST'
+   and jxfs = 'AD'
+   and xjrq < to_date('2017/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and xjrq > to_date('2017/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and s.id = t.id
+   and exists (select 1 from t_hqdy where bh=t.hqbh and hqlx='DT')
+ group by hqbh
+
+客退托盘明细
+select f.ysxm ,f.sm 书名,f.isbn,f.dj ,f.ywsl 数量,tph 托盘 from t_khthbj b,t_fjrwb f where tpid in (
+select tpid  from t_khthtp_state where tph in
+('312925' ,'312135' ,'310514' ,'313270' ,'312386' ,'310590') and zt='3')
+and b.dh=f.dh and b.bjlsh=f.ysxm order by ysxm ,sm
+
+hykcsl和货源货位绑定不一致
+select distinct trim(hw) ,trim(ghdwh) from t_hykcsl s where 
+  exists (select 1 from t_dfbj where wcbj='0' and bjlsh=s.bjlsh) 
+  and hw like'9%'
+    minus 
+  select trim(hw) ,trim(ghdwh) from t_ghdw_hythqhw where ghdwh is not null
+  
+货区库存
+select trim(sm) 书名,
+       isbn 书号,
+       trim(b.mc) 班别,
+       min(dj) 单价,
+       sum(kccs) 数量,
+       sum(dj * kccs) 码洋,
+       min(cbny) 年限
+  from t_ltkf l, t_kcsm s, t_bb b
+ where l.hqbh = '19'
+
+   and s.id = l.id
+   and b.bh = s.bb
+ group by sm, isbn, b.mc

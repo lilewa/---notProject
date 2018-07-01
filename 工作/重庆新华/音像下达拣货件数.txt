@@ -1,0 +1,11 @@
+   
+       select count(distinct phdh) from t_agv_rw_xt_bak2 where zrhq 
+       in (select  flowid
+  from t_agvhz t
+ where ywbmbh = '000002'
+   and createdate >  
+       to_date('2018/06/19 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+ and createdate < 
+       to_date('2018/06/23 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+       )
+       
