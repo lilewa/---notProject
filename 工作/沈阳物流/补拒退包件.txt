@@ -1,0 +1,22 @@
+select count(distinct id),sum(jhcs),sum(jhcs*dj) from t_khthmx_jt where bjlsh='8023908'
+
+select  dh,bjlsh from t_khthmx_jt where bjlsh='8023908'
+
+
+
+ 8023908
+
+
+        insert into t_dfbj(bjlsh,rqh,wcbj,pfrq,ywbmbh,cybh,ywpc,dh, ybzbj,bjfjbj,
+              zpz,zcs,zmy, bzjs,fhbmbh,fyfsh,zzbh, tihfs,sjjs,kfbh,jxfs,ywlx,zb,station,dz,lxr,tel,xjbj ,JHRQ,jhczybh,cgyj,
+            tyr_tele /*已打印，未打印*/,jgflag,cgyj_kh
+              )
+            select '8023908     ',null,'1',sysdate,'000001','3001','8023908     ','21788 ',  '1','0',
+              30,63,1513.4,1,'3001',1,'21788 ',1,1,'2001','JT','FH',null,
+              (select trim(mc) from t_station@c_link_wl_ex where bh =(Select station from t_dm@c_link_wl_sl where dh='21788 ')),
+              (select trim(substr(addr,1,90)) from t_dm_ywbm@c_link_wl_sl where dh = '21788 ' and ywbmbh = '000001'),
+              (select trim(substr(lxr,1,16)) from t_dm_ywbm@c_link_wl_sl where dh = '21788 ' and ywbmbh =  '000001'),
+              (select trim(tele) from t_dm_ywbm@c_link_wl_sl where dh ='21788 ' and ywbmbh = '000001'),'0',sysdate, null,'已校核','0','0',null
+              from dual  ;
+              
+              
