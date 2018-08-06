@@ -1,0 +1,53 @@
+ 
+/* select count(*) from t_khthbj  where zt='5'
+and   tjrq > to_date('2018/7/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and tjrq < to_date('2018/8/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')*/
+
+/*select sum(c) from(
+select 1 c
+  from t_pmsjrwb_bak
+ where lxbh = 'TH' and ywbmbh='000001'
+   and sjrq > to_date('2016/11/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and sjrq < to_date('2016/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+ group by tm, trunc(sjrq, 'hh'))*/
+
+/* select count(*) from t_zprw_bak where 
+ bzrq > to_date('2018/7/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and bzrq < to_date('2018/8/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')*/
+   
+    ------------------------------
+/*    select  count(*) from t_xj where xjrq is    null  
+
+create table t_xj as 
+select flowid_fhrw,ysdjh,djly,rq xjrq,  from t_pf_temp_lvb
+where hqbh is not  null and djly<>'1'
+ 
+ update t_xj set djly='ST'  where djly='2'
+ update t_xj   set djly='FH'  where djly<>'ST'  
+ 
+ update t_xj t set ywbmbh=(select ywbmbh from t_agv_rw_xt_bak2   where flowid_xj=t.flowid_fhrw)
+ where ywbmbh is null*/
+    -------------------------------
+/*    
+    select count(*) from t_xj where djly='FH' and ywbmbh='000001'
+  and   xjrq > to_date('2018/7/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and xjrq < to_date('2018/8/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')*/
+   
+    /*select  count(*) from t_tldjhz  where 
+   ywbmbh='000001' and   flbj='1' and  djlx='DH'
+   and kl_flag='0' 
+  and   flrq > to_date('2016/10/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and flrq < to_date('2016/11/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   */
+   /*
+   select  count(*) from t_tldjhz  where 
+   ywbmbh='000001' and    djlx='DH'
+   and kl_flag='0' 
+  and   cbrq > to_date('2018/7/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and cbrq < to_date('2018/8/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')*/
+
+
+ select sum(ssjs) from t_tldjhz  where 
+ djlx='DH' and kl_flag='0' and 
+ tlrq    >  to_date('2018/9/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and tlrq < to_date('2018/10/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
