@@ -51,3 +51,11 @@ where hqbh is not  null and djly<>'1'
  djlx='DH' and kl_flag='0' and 
  tlrq    >  to_date('2018/9/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
    and tlrq < to_date('2018/10/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+
+seleCt count(*)
+  from t_agv_rw_xt_bak t 
+ where lxbh = 'ST'
+   and jxfs = 'AD'
+   and ywbmbh='000001'
+   and xjrq > to_date('2016/10/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and xjrq < to_date('2016/11/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
