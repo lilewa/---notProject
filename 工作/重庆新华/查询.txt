@@ -1,3 +1,39 @@
+--收货
+select '收货' as lx,count(distinct x.ghdwh) 供货商,count(distinct x.id) 总品种,sum(djshsl) 总册数
+,sum(dj*djshsl) 总码洋,sum(sys) 总实洋, decode(zfzd, '1', '直发', '正常') 方式
+from t_dhls_jx x,t_kcsm s,
+t_dhdj j where x.flowid_dj=j.flowid_dj and x.id=s.id
+AND shrq>= to_date(:ls_date_beg,'yyyy-MM-dd')
+and  shrq< to_date(:ls_date_end,'yyyy-MM-dd')
+and  INSTR(:ls_ywbm_list, x.ywbmbh) >0            ---- x.ywbmbh in('000002','000004')
+group by  decode(zfzd, '1', '直发', '正常')
+union all
+ --发货
+select '发货' as lx, count(distinct x.dh) 客户,count(distinct x.id) 总品种,sum(sfcs) 总册数
+,sum(dj*sfcs) 总码洋,sum(sys) 总实洋, decode(x.zl, '1', '直发', '正常') 方式 from t_fhmx  x,t_kcsm s 
+ where x.id=s.id 
+ AND dbrq>=to_date(:ls_date_beg,'yyyy-MM-dd')
+and  dbrq< to_date(:ls_date_end,'yyyy-MM-dd')
+  and  INSTR(:ls_ywbm_list, x.ywbmbh) >0 
+group by  decode(x.zl, '1', '直发', '正常') 
+union all
+-- 社退
+select '社退' lx,count(distinct x.hybh) 客户,count(distinct x.id) 总品种,sum(thcs) 总册数
+,sum(dj*thcs) 总码洋,sum(sys) 总实洋,'' 方式 from t_hythmx  x,t_kcsm s 
+ where x.id=s.id 
+ AND dbrq>= to_date(:ls_date_beg,'yyyy-MM-dd')
+and  dbrq< to_date(:ls_date_end,'yyyy-MM-dd')
+  and  INSTR(:ls_ywbm_list, x.ywbmbh) >0 
+--客退
+union all
+select '客退'lx, count(distinct x.dh) 客户,count(distinct x.id) 总品种,sum(thcs) 总册数
+,sum(dj*thcs) 总码洋,sum(sys) 总实洋,'' 方式 from t_khthmx  x,t_kcsm s 
+ where x.id=s.id 
+ AND lrrq1>= to_date(:ls_date_beg,'yyyy-MM-dd')
+and  lrrq1<to_date(:ls_date_end,'yyyy-MM-dd')
+  and  INSTR(:ls_ywbm_list, x.ywbmbh) >0 
+
+
 退货上架
 select sum(册数) 册数,
        sum(码洋) 码洋,
@@ -162,3 +198,10 @@ select sum(sfcs * dj), ywbmbh,count(*)
    and dbrq < to_date('2017/12/16 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
    and s.id = f.id
  group by ywbmbh
+
+--返品区无退货
+select    trim(sm) 书名, isbn 书号, trim(b.mc) 班别 , min(dj) 单价, sum(kccs) 数量 , sum(dj*kccs) 码洋, min(cbny) 年限
+ from t_ltkf l, t_hqdy q ,t_kcsm s ,t_bb b  where
+ not exists (select 1 from t_hythmx where id=l.id) and
+  l.hqbh=q.bh and q.hqlx='DT' and s.id=l.id  and b.bh=s.bb
+  group by sm,isbn,b.mc

@@ -1,0 +1,30 @@
+SELECT T_DHLS_JX.PCH 批次号,
+
+       MIN(X.DM) AS 店名,
+
+       MIN(T_DHLS_JX.DFDH) AS 单号,
+       MIN(T_DHLS_JX.CLRQ) AS 收货日期,
+       MIN(B.DMJC) AS YWBMMC,
+
+       SUM(T_DHLS_JX.YSCS) AS 原数量,
+       SUM(T_DHLS_JX.YSCS * T_KCSM.DJ) AS  原码洋,
+       SUM(ROUND(T_DHLS_JX.YSCS * T_DHLS_JX.ZJXS * T_DHLS_JX.THZK / 100, 2)) AS 原实洋,
+       SUM(T_DHLS_JX.THCS) AS 实际数量,
+       SUM(T_DHLS_JX.THCS * T_KCSM.DJ) AS 实际码洋,
+       SUM(ROUND(T_DHLS_JX.THCS * T_DHLS_JX.ZJXS * T_DHLS_JX.THZK / 100, 2)) AS  实际实洋,
+
+       MIN(T_USER.NAME) AS 收货人
+
+  FROM T_KHTHMX T_DHLS_JX, T_KCSM, T_DM A, T_DM B, T_DM C, T_USER, T_DM X
+ WHERE T_KCSM.ID = T_DHLS_JX.ID
+   AND T_DHLS_JX.DH = X.DH(+)
+   AND T_DHLS_JX.KFBH = A.DH(+)
+   AND T_DHLS_JX.YWBMBH = B.DH(+)
+   AND T_DHLS_JX.CYBH = C.DH(+)
+   AND T_DHLS_JX.USR_ID = T_USER.USR_ID(+)
+   and t_dhls_jx.LRRQ1 >= to_date('2018-01-01', 'yyyy-mm-dd')
+   and t_dhls_jx.LRRQ1 < to_date('2018/9/13', 'yyyy-mm-dd')
+   and t_dhls_jx.clrq >= to_date('2018-01-01', 'yyyy-mm-dd')
+   and t_dhls_jx.clrq < to_date('2018/9/13', 'yyyy-mm-dd')
+   and ((t_dhls_jx.thcs - t_dhls_jx.yscs) <> 0)
+ group by t_dhls_jx.PCH order by 店名
