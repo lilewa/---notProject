@@ -1,0 +1,3 @@
+select sum(pz),sum(cs),sum(my),(select trim(mc) from t_hqdy where bh=t.hqbh) from
+(  select count(*) pz,sum(kccs) cs,sum(kccs*dj) my ,hqbh from t_ltkf f, t_kcsm s where f.id=s.id  and kccs>0 group by hqbh,hw
+) t group by hqbh

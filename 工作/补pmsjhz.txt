@@ -1,9 +1,0 @@
-select  * from t_pmsjrwb where tm='000087'
-update t_pmsjrwb  set id_pmsjhz=124051518 where tm='000087'
-
- insert into t_pmsjhz
-       (flowid, rqh, lxbh, kfbh, ywbmbh, yssl,  zpz, zmy, createczybh, createczyname,hqbh)
-       values
-       (all_flowid.nextval, '000087', 'DH', '2001', '000001', 207, 20,  0, '0119',
-       (select trim(name) from t_user where usr_id='0119'),
-     '01' )

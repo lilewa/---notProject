@@ -1,0 +1,123 @@
+ select id,fatherdh from (
+ select * from (
+  select id,t.dh ,d.fatherdh from t_pxmx t,t_dm d  where  d.dh=t.dh and isgz='1' 
+  union all
+  select id,t.dh ,d.fatherdh from  t_fhrwb t,t_dm d  where  d.dh=t.dh and isgz='1' 
+  
+   union all
+  select id,t.dh ,d.fatherdh from  t_agv_rw_xt t,t_dm d  where  d.dh=t.dh and isgz='1' 
+  
+   union all
+  select id,t.dh ,d.fatherdh from  t_zprw t,t_dm d  where  d.dh=t.dh and isgz='1' 
+  
+   union all
+  select id,t.dh ,d.fatherdh from  t_dh_yfsj t,t_dm d  where  d.dh=t.dh and isgz='1' 
+  )
+  group by id,dh ,fatherdh  ) group by id, fatherdh having count(*) >1
+-- 	75656031416       	001001
+  
+     select * from  t_dh_yfsj t where id='71211633412       '
+
+   select id,t.dh ,d.fatherdh from t_pxmx t,t_dm d  where  d.dh=t.dh and isgz='1'  and id='75656031416';
+   select id,t.dh ,d.fatherdh from t_fhrwb t,t_dm d  where  d.dh=t.dh and isgz='1'  and id='75656031416'; 
+   select id,t.dh ,d.fatherdh from t_agv_rw_xt t,t_dm d  where  d.dh=t.dh and isgz='1'  and id='75656031416'; 
+   select id,t.dh ,d.fatherdh from t_zprw t,t_dm d  where  d.dh=t.dh and isgz='1'  and id='75656031416';
+ 
+   select* from t_zprw_bak where pk=73456269
+   select * from t_fhmx where id='71211633412'and dh='001001'
+   select * from t_fhmx where    dbdh='124066743'
+   select pxcs,bjlsh, id,t.dh ,d.fatherdh from t_pxmx t,t_dm d  where  d.dh=t.dh and isgz='1'  and id='75656031416'; 
+   
+   select *¡¡from t_dfbj where bjlsh in ('1845752     ',
+'1845711',     
+'1845753',     
+'1845727     ')  
+
+select * from t_line_zp_hw2 
+where dh in('G10222',
+'G10224',
+'G10220',
+'G10223')
+
+select *from¡¡t_kcsm where  id='75656031416       '
+update t_pxmx set dh='G10224'  where bjlsh in ('1845752     ',
+'1845711',     
+'1845753',     
+'1845727     ')  and id='75656031416       '
+   
+ and exists (select 1 from  MV_XHD_KCSL m,t_dm d where  m.ywbmbh=a.zddh and d.fatherdh=a.dh and m.id=a.id and m.hqbh=d.station );
+    select id,dh from (
+    select id,t.dh ,d.gzbh from t_pxmx t ,t_gzbj d where   t.bjlsh=d.bjlsh
+    group by id,t.dh ,d.gzbh
+    ) group by id, dh having count(*) >1
+    G10224
+    
+       select id,dh from (
+    select id,t.dh ,d.gzbh from t_fhmx t ,t_gzbj d where   t.bjlsh=d.bjlsh
+    group by id,t.dh ,d.gzbh
+    ) group by id, dh having count(*) >1
+    0004
+    select * from 
+     t_dm where fatherdh='001001' 
+     select * from MV_XHD_KCSL  where id='75656031416       '
+
+
+select * from tmp_dhdj where flowid_tldjhz=124060193;
+
+select * from  tmp_dhmx where flowid_dj=124000582;
+
+select * from  t_sl_yfsj where flowid_dj=124000582
+select * from  t_dh_yfsj where flowid =73064472
+
+ update t_sl_yfsj a set zddh=trim(dh),id=(select id from tmp_dhmx where flowid_dhmx =a.flowid )
+select * from t_sl_yfsj a where dh='001002' 
+and exists (select 1 from t_dhfltask d,tmp_dhdj j where j.flowid_dj=a.flowid_dj and j.flowid_tldjhz=d.flowid_tldjhz) and not exists (select 1 from t_dh_yfsj where flowid=a.flowid_yfsj)
+
+
+
+select dh,id,zddh from t_sl_yfsj a   where dh='001006' 
+and exists (select 1 from t_dhfltask d,tmp_dhdj j where j.flowid_dj=a.flowid_dj and j.flowid_tldjhz=d.flowid_tldjhz)
+and not exists (select 1 from t_dh_yfsj where flowid=a.flowid_yfsj);
+
+
+ 
+
+ update t_sl_yfsj a set zddh=trim(dh),id=(select id from tmp_dhmx where flowid_dhmx =a.flowid ) 
+  where dh='001006' 
+and exists (select 1 from t_dhfltask d,tmp_dhdj j where j.flowid_dj=a.flowid_dj and j.flowid_tldjhz=d.flowid_tldjhz)
+and not exists (select 1 from t_dh_yfsj where flowid=a.flowid_yfsj)
+ 
+     Update t_sl_yfsj a  Set dh = Nvl((Select c.gzbh
+       From tmp_dhmx b, t_guizu_fl c
+      Where b.fl = c.flbh And b.flowid_dhmx = a.flowid And trim(c.dh) = a.dh),
+      (select min(gzbh) from t_guizu_fl  where trim(dh)=a.dh)
+      ) 
+         Where     dh='001006' 
+        and exists (select 1 from t_dhfltask d,tmp_dhdj j where j.flowid_dj=a.flowid_dj and j.flowid_tldjhz=d.flowid_tldjhz)
+        and not exists (select 1 from t_dh_yfsj where flowid=a.flowid_yfsj) 
+          and exists (select 1 from t_guizu_fl where trim(dh)=a.dh );
+
+
+ update t_sl_yfsj a set dh=(select d.dh  from MV_XHD_KCSL m,t_dm d where  m.ywbmbh=a.zddh and d.fatherdh=a.zddh and m.id=a.id and m.hqbh=d.station and rownum=1)
+          where  
+         exists (select 1 from t_dm where fatherdh='001006' and dh=a.dh)
+        and exists (select 1 from t_dhfltask d,tmp_dhdj j where j.flowid_dj=a.flowid_dj and j.flowid_tldjhz=d.flowid_tldjhz)
+        and not exists (select 1 from t_dh_yfsj where flowid=a.flowid_yfsj) 
+          and exists (select 1 from  MV_XHD_KCSL m,t_dm d where  m.ywbmbh=a.zddh and d.fatherdh=a.zddh and m.id=a.id and m.hqbh=d.station )
+         
+          
+           select * from t_dm where fatherdh='001002' 
+
+          
+          
+         001001
+001003
+001006
+001002
+
+       
+ select (select d.dh  from MV_XHD_KCSL m,t_dm d where  m.ywbmbh=a.zddh and d.fatherdh=a.zddh and m.id=a.id and m.hqbh=d.station and rownum=1) from    
+ t_sl_yfsj a  where flowid=124000585  
+         and exists (select 1 from  MV_XHD_KCSL m,t_dm d where  m.ywbmbh=a.zddh and d.fatherdh=a.zddh and m.id=a.id and m.hqbh=d.station );
+       select d.dh  from MV_XHD_KCSL m,t_dm d where  m.ywbmbh='001002' and d.fatherdh='001002' and m.id='722207887         ' and m.hqbh=d.station and rownum=1
+ 

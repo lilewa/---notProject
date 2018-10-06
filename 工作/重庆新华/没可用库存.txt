@@ -1,0 +1,7 @@
+select s.sm,s.isbn,s.dj,l.hw,l.kccs from  t_wl_bsjh@c_link_wl_ex e,t_ltkf l,t_kcsm s where receflag='4'
+      and e.id=trim(l.id)  and l.id=s.id
+
+    select * from  t_crkls  where id='9787900571625001'
+
+  select * from  t_sy_jh  where id='9787900571625001'
+ select * from  t_wl_bsjh@c_link_wl_ex where    id='9787900571625001'

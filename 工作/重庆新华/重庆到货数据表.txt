@@ -1,0 +1,15 @@
+select * from t_dhdj where dhdjlsh='132201572'
+
+select * from t_tldjhz  where flowid_tldjhz='132201572';
+
+select * from tmp_dhdj_xtw  where flowid_tldjhz='132201572';
+
+select * from t_dhdj where flowid_dj=132325318;
+
+select * from dbsl.t_dhdj where flowid_dj=132325318
+
+select * from t_dhls_jx where flowid_dj=132325318;
+
+select * from tmp_dhdj_xtw  where flowid_tldjhz='132201572';
+
+select * from tmp_dhmx_xtw  where flowid_dj=132325318;
