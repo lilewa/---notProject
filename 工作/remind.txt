@@ -1,0 +1,41 @@
+Oracle Data Provider for .NET (ODP.NET)
+Oracle Data Access Components package,
+
+CentOS 
+CoreOS 
+Debian 
+FreeBSD 
+SUSE 
+OpenSUSE 
+Ubuntu 
+
+Connect to either LocalDb ((localdb)\v11.0) or SQL Express (.\SQLEXPRESS), depending on which one you have installed, and enter DatabaseFirst.Blogging as the database name
+
+You should always use the name= syntax when you are using a connection string in the config file. This ensures that if the connection string is not present then Entity Framework will throw rather than creating a new database by convention.
+
+ 
+ infopath+SharePoint 自定义报表
+动态数据库 dymatic database
+ 
+严重性	代码	说明	项目	文件	行	禁止显示状态
+错误		要在“系统必备”对话框中启用“从与我的应用程序相同的位置下载系统必备组件”，必须将“Microsoft .NET Framework 4 (x86 和 x64)”项的文件“DotNetFX40\dotNetFx40_Full_x86_x64.exe”下载到本地计算机。有关详细信息，请参见 http://go.microsoft.com/fwlink/?LinkId=616018。	Print			
+C:\Program Files (x86)\Microsoft Visual Studio 14.0\SDK\Bootstrapper\Packages
+
+for 游标中，调用的存储过程报错引发rollback，在顶级存储过程中返回了ORA-01002: 提取违反顺序 的错误
+
+
+严重性	代码	说明	项目	文件	行	禁止显示状态
+错误		Resx 文件无效。无法加载位于行 1691、位置 5 的数据中的类型 ，原因是它在构造时引发下列异常:此方法显式使用的 CAS 策略已被 .NET Framework 弃用。若要出于兼容性原因而启用 CAS 策略，请使用 NetFx40_LegacySecurityPolicy 配置开关。有关详细信息，请参见 http://go.microsoft.com/fwlink/?LinkID=155570。	JGWL.WindowsForm	C:\wms2015\JGWL.WindowsForm\Form_Sys_Home.resx		
+
+无法读取项目文件“RfClient.csproj”。
+C:\code\重庆物流\rf\RF2\RF\RfClient\RfClient.csproj(1025,11): The imported project "C:\Windows\Microsoft.NET\Framework\v3.5\Microsoft.CompactFramework.CSharp.targets" was not found. Confirm that the path in the <Import> declaration is correct, and that the file exists on disk.
+---------------------------
+确定   取消   
+---------------------------
+
+C:\Windows\Microsoft.NET\Framework\v3.5 路径下少东西
+
+
+添加托管模块
+---------------------------
+无法在此应用程序的引用程序集中找到指定的类型。请确保已将程序集添加到此应用程序的 web.config 的 system.web/compilation 节中的程序集列表。仍要继续吗?
