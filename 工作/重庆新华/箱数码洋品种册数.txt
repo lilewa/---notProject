@@ -1,0 +1,61 @@
+select count(*) , decode(ywbmbh,'000001','图书','000002','音像')||
+                    decode(hqlx,'CC','新品','DT','返品','YX','异形')  from (
+   select  ywbmbh, hqlx   from t_pmsjrwb_bak where sjrq > to_date('2018/06/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and sjrq <to_date('2018/09/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and ( ywbmbh='000001' or  ywbmbh='000002') and hqlx<>'DL'  group by id_pmsjhz, ywbmbh, hqlx 
+ ) group by   ywbmbh, hqlx  
+ 
+   select sum(yssl*dj),sum(yssl ), count(distinct b.id),
+                     decode(ywbmbh,'000001','图书','000002','音像')||
+                    decode(hqlx,'CC','新品','DT','返品','YX','异形')   
+       from t_pmsjrwb_bak b, t_kcsm s where sjrq > to_date('2018/06/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and sjrq <to_date('2018/09/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and ( ywbmbh='000001' or  ywbmbh='000002') and hqlx<>'DL'
+   and b.id=s.id
+    group by    ywbmbh, hqlx 
+  
+
+
+select floor(sum(js)),
+       decode(ywbmbh, '000001', '图书', '000002', '音像') ||
+       decode(hqlx, 'CC', '新品', 'DT', '返品', 'YX', '异形')
+  from (select hqlx,
+               ywbmbh,
+               round(ct / sum(ct)
+                     over(partition by zrhq) *
+                     (select sum(bzjs) from t_dfbj where a.zrhq = cyr_tele),
+                     2) js
+          from (select zrhq, q.hqlx, b.ywbmbh, count(*) ct
+                  from t_agv_rw_xt_bak2 b, t_hqdy q
+                 where xjrq >
+                       to_date('2018/06/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+                   and xjrq <
+                       to_date('2018/09/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+                   and (b.ywbmbh = '000001' or b.ywbmbh = '000002')
+                   and hqlx <> 'DL'
+                   and b.hqbh = q.bh
+                 group by zrhq, hqlx, b.ywbmbh) a)
+ group by hqlx, ywbmbh
+-----------
+
+ select   sum(b.yssl*dj) ,sum(yssl), count(*) ct,
+ decode(b.ywbmbh, '000001', '图书', '000002', '音像') ||
+       decode(hqlx, 'CC', '新品', 'DT', '返品', 'YX', '异形')
+                  from t_agv_rw_xt_bak2 b, t_hqdy q ,t_kcsm s
+                 where xjrq >
+                       to_date('2018/06/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+                   and xjrq <
+                       to_date('2018/09/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+                   and (b.ywbmbh = '000001' or b.ywbmbh = '000002')
+                   and hqlx <> 'DL'
+                   and b.hqbh = q.bh
+                   and s.id=b.id
+                 group by   hqlx, b.ywbmbh
+
+
+
+   select   count(*) from t_khthbj  where tjrq>  to_date('2018/06/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and tjrq<  to_date('2018/09/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   
+   select count(distinct f.id ) 品种,  count(*) 次数, sum(ywsl*f.dj) 码洋 from t_fjrwb_bf_bak f  where tjrq>  to_date('2018/06/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and tjrq<  to_date('2018/09/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')   

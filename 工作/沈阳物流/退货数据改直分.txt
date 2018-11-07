@@ -1,0 +1,9 @@
+
+select * from t_fjrwb where isbn='9771674678185';
+
+update t_fjrwb set ywlx='TH' ,flqx='ST' where flowid_fjrwb=354250676;
+update t_thmonitor set flqx='ST' where flowid_fjrwb=354250676;
+
+
+update t_fjrwb set ywlx='TH' ,flqx='ST' where  isbn='9771674678185';
+update t_thmonitor t set flqx='ST' where exists (select 1 from t_fjrwb where isbn='9771674678185' and  flowid_fjrwb= t.flowid_fjrwb);
