@@ -1,0 +1,4 @@
+ 
+ update t_thflcf t set flqx=decode(flqx,'ST',flqx,null),rqh='0',ywbmbh=null,gkh=decode(flqx,'ST',gkh,null)
+ where    rqh='1' 
+ and not exists (select 1 from t_fjrwb_xf2 where zt='0' and gkh=t.gkh and hw=t.shelfno)
