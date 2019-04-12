@@ -1,0 +1,144 @@
+--WCS接入时，使用oracle中建立的dbpt用户登陆。
+--数据库用户名 dbpt
+--密码  dbpt
+--dbpt有直接操作下述两表的权限。下述两表建立在oracle的物流用户中。dbpt采用同义词直接访问物流用户共享的两表
+
+--输送箱子用
+ create table T_TRANSRECORD
+(
+  taskid       VARCHAR2(20),
+  rqh          CHAR(10) not null,
+  dest         VARCHAR2(10),
+  finished     CHAR(1) default 0,
+  createdate   DATE default sysdate,
+  tablepk      NUMBER,
+  tablename    VARCHAR2(30),
+  procname     VARCHAR2(30),
+  downloadtime DATE
+)
+tablespace DATA_TABLESPACE
+  pctfree 10
+  initrans 1
+  maxtrans 255
+  storage
+  (
+    initial 64K
+    next 1M
+    minextents 1
+    maxextents unlimited
+  );
+-- Add comments to the columns 
+comment on column T_TRANSRECORD.taskid
+  is '用于追溯查询时，核对确认任务指令';
+comment on column T_TRANSRECORD.rqh
+  is '容器号,  每个周转箱在WMS系统内部闭环，即提总时绑定，播撒完就解绑
+';
+comment on column T_TRANSRECORD.dest
+  is '目的地编码';
+comment on column T_TRANSRECORD.finished
+  is 'WCS是否接收到任务，‘1’接收成功，‘0未接收. 1 由WCS置，9由WMS置,当已存在未接收的同一个箱子，WMS再次写入时，将上一条置 9';
+comment on column T_TRANSRECORD.createdate
+  is '物流系统自用  WMS创建时填入
+';
+comment on column T_TRANSRECORD.tablepk
+  is '物流系统自用';
+comment on column T_TRANSRECORD.tablename
+  is '物流系统自用';
+comment on column T_TRANSRECORD.procname
+  is '物流系统自用';
+comment on column T_TRANSRECORD.downloadtime
+  is 'WCS置 接收时间';
+-- Create/Recreate indexes 
+create index IDX_TRANSRECORD on T_TRANSRECORD (TABLENAME, TABLEPK)
+  tablespace DATA_TABLESPACE
+  pctfree 10
+  initrans 2
+  maxtrans 255
+  storage
+  (
+    initial 64K
+    next 1M
+    minextents 1
+    maxextents unlimited
+  );
+create index IDX_TRANSRECORD_RQH on T_TRANSRECORD (RQH, FINISHED)
+  tablespace DATA_TABLESPACE
+  pctfree 10
+  initrans 2
+  maxtrans 255
+  storage
+  (
+    initial 64K
+    next 1M
+    minextents 1
+    maxextents unlimited
+  );
+-- Grant/Revoke object privileges 
+grant select, insert, update, delete, references, alter, index on T_TRANSRECORD to DBPT;
+
+
+--容器称重结果反馈
+-- Create table
+create table T_WEIGHTRECORD
+(
+  rqh        CHAR(10) not null,
+  zl         VARCHAR2(10) not null,
+  createdate DATE default sysdate,
+  handledate DATE,
+  zt         CHAR(1),
+  msg        VARCHAR2(50),
+  weighttime DATE
+)
+tablespace DATA_TABLESPACE
+  pctfree 10
+  initrans 1
+  maxtrans 255
+  storage
+  (
+    initial 64K
+    next 1M
+    minextents 1
+    maxextents unlimited
+  );
+-- Add comments to the columns 
+comment on column T_WEIGHTRECORD.rqh
+  is '容器号';
+comment on column T_WEIGHTRECORD.zl
+  is '重量';
+comment on column T_WEIGHTRECORD.createdate
+  is '物流系统自用 WCS创建时由oracle数据库自动填入，WCS不用处理';
+comment on column T_WEIGHTRECORD.handledate
+  is '处理时间';
+comment on column T_WEIGHTRECORD.zt
+  is '0:物流未处理，1，物流处理时忽略，2，称重未通过，3，称重通过';
+comment on column T_WEIGHTRECORD.msg
+  is '额外信息';
+comment on column T_WEIGHTRECORD.weighttime
+  is '称重时间WCS写入';
+-- Create/Recreate indexes 
+create index IDX_T_WEIGHTRECORD_DATE on T_WEIGHTRECORD (CREATEDATE)
+  tablespace DATA_TABLESPACE
+  pctfree 10
+  initrans 2
+  maxtrans 255
+  storage
+  (
+    initial 64K
+    next 1M
+    minextents 1
+    maxextents unlimited
+  );
+create index IDX_T_WEIGHTRECORD_RQH on T_WEIGHTRECORD (RQH)
+  tablespace DATA_TABLESPACE
+  pctfree 10
+  initrans 2
+  maxtrans 255
+  storage
+  (
+    initial 64K
+    next 1M
+    minextents 1
+    maxextents unlimited
+  );
+-- Grant/Revoke object privileges 
+grant select, insert, update, delete, references, alter, index on T_WEIGHTRECORD to DBPT;

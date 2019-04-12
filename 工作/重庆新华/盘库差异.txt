@@ -1,0 +1,8 @@
+select sm  ,isbn , dj ¶¨¼Û, kccs ¿â´æ, pkcs ÅÌ¿â ,pkcs-kccs ²îÒì ,
+  kccs*dj ¿â´æÂëÑó,pkcs*dj  ÅÌ¿âÂëÑó  ,(pkcs-kccs)*dj ²îÒìÂëÑó ,s.id  from (
+  select  id,  sum(kccs) kccs,sum(pkcs) pkcs from (
+    select id, 0 kccs,sum(pkcs) pkcs from t_pkls_sl   group by id
+   union all
+    select id,sum(kccs) kccs,0 pkcs from t_ltkf   group by id
+    ) group by  id   having  abs(sum(kccs)-sum(pkcs)) >10 ) a ,t_kcsm s
+    where s.id=a.id

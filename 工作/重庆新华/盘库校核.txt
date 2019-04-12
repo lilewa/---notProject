@@ -1,0 +1,20 @@
+    
+select  id, hw ,sum(kccs),sum(pkcs) from (
+    select id, hw,0 kccs,pkcs from t_pkls_sl where hqbh='06'
+   union all
+    select id, hw,kccs,0 pkcs from t_ltkf where hqbh ='06'
+    ) group by hw,id   having sum(kccs)<>sum(pkcs)
+
+ insert into  t_pkjhtask 
+  (id, hw,kccs,pkcs)
+select  id, hw ,sum(kccs),sum(pkcs) from (
+    select id, hw,0 kccs,pkcs from t_pkls_sl where hqbh='06'
+   union all
+    select id, hw,kccs,0 pkcs from t_ltkf where hqbh ='06'
+    ) group by hw,id   having sum(kccs)<>sum(pkcs);
+
+ update t_pkjhtask set hqbh='06' where hqbh is null;
+ 
+  update t_pkjhtask t set cyczy=(
+  select czybh from  t_pkls_sl where hqbh='06' and t.id=id and t.hw=hw
+  ) where hqbh ='06'

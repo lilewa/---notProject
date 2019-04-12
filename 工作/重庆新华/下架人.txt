@@ -1,0 +1,27 @@
+ select  ( select trim(dm) from t_dm where dh=t.dh) 店名,jhrq 日期,zmy 码洋,
+ (select name from t_user where usr_id=t.bzr) 包装人, bjlsh 包号,
+ ( select trim(name) from t_agv_rw_xt_bak a,t_user u where xjczybh =u.usr_id and a.phdh=t.bjlsh and rownum=1) 下架人  from t_dfbj t where jhrq >to_date('2018/01/01 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+ and   jhrq <to_date('2019/01/01 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+ and ywlx='FH'
+ and bzjs=2
+
+select (select trim(dm) from t_dm where dh = t.dh) 店名,
+       jhrq 日期,
+       zmy 码洋,
+       (select name from t_user where usr_id = t.bzr) 包装人,
+       t.bjlsh 包号,
+       (select trim(name)
+          from t_agv_rw_xt_bak a, t_user u
+         where xjczybh = u.usr_id
+           and a.phdh = t.bjlsh
+           and rownum = 1) 下架人,
+           s.sm,
+           f.sfcs 册数
+  from t_dfbj t, t_fhmx f,t_kcsm s
+ where jhrq > to_date('2018/01/01 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and jhrq < to_date('2019/01/01 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and ywlx = 'FH'
+   and t.bzjs = 2
+   and   t.bjlsh=f.bjlsh and s.id=f.id
+    and (s.changdu=1 or s.kuandu=1 or s.gaodu=1)
+    order by jhrq

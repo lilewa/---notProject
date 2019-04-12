@@ -1,0 +1,11 @@
+select  trim(s.sm) 书名, isbn, dj 定价, x.djshsl 册数, djshsl*dj 码洋,shrq 日期 ,trim(mc)
+from T_DHLS_JX x,t_kcsm s,t_ghdw g where gzbj='1'  and x.id=s.id  and g.bh=x.ghdwh
+and shrq >to_date('2017/11/24 00:00:00','yyyy/mm/dd hh24:mi:ss')
+    and  shrq< to_date('2018/11/10 00:00:00','yyyy/mm/dd hh24:mi:ss')
+
+
+select  trim(s.sm) 书名, isbn, dj 定价, f.sfcs 册数, sfcs*dj 码洋,dbrq 日期 ,trim(dm)  from
+ t_fhmx f,t_kcsm s ,t_dm d where f.gzbj='1'  and f.id=s.id
+and f.dh=d.dh
+and dbrq >to_date('2017/11/24 00:00:00','yyyy/mm/dd hh24:mi:ss')
+    and  dbrq< to_date('2018/11/10 00:00:00','yyyy/mm/dd hh24:mi:ss')

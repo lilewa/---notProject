@@ -83,3 +83,18 @@ select floor(sum(js)),
                    and b.hqbh = q.bh
                    and s.id=b.id
                  group by   hqlx, b.ywbmbh
+
+ 
+                 select sum(my) ,sum(ywsl), count(distinct id) from (
+            select ywsl*dj my,ywsl,id from t_fjrwb
+            where RECE_RQ > to_date('2018/11/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+                   and RECE_RQ <to_date('2019/03/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+            union all 
+            select ywsl*dj my,ywsl,id from t_fjrwb_bf
+             where RECE_RQ > to_date('2018/11/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+              and RECE_RQ <to_date('2019/03/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+             union all
+            select ywsl*dj my,ywsl,id from t_fjrwb_bf_bak
+             where RECE_RQ > to_date('2018/11/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+                and RECE_RQ <to_date('2019/03/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss') )
+
