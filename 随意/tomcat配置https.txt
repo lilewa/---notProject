@@ -1,0 +1,7 @@
+<Connector port="443" protocol="org.apache.coyote.http11.Http11NioProtocol"
+               maxThreads="150" SSLEnabled="true">
+        <SSLHostConfig>
+            <Certificate certificateKeystoreFile="cert/SHA256withRSA_qiuqiuni.cn.jks"
+              certificateKeystorePassword="1234" type="RSA" />
+        </SSLHostConfig>
+    </Connector>

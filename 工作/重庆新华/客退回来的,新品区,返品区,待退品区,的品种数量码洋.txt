@@ -1,0 +1,14 @@
+select count(distinct b.id) 品种,sum(sjsl) 数量,sum(sjsl*dj)  码洋 from T_PMSJRWB_bak b, t_hwdy w,t_hqdy q,t_kcsm s where lxbh='TH' and 
+sjrq < to_date('2019/6/20 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and sjrq > to_date('2019/1/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+and b.sjhw=w.hw and w.hqbh=q.bh and q.hqlx='DT' and b.id=s.id;
+
+
+ select count(distinct b.id) 品种,sum(hgcs) 数量,sum(hgcs*dj)  码洋 from t_fjrwsjb_bak  b ,t_kcsm s
+ where  
+rwrq < to_date('2019/6/20 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and rwrq > to_date('2019/1/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss') and b.id=s.id
+
+--2018.1.1--12.31
+
+--2019.1.1--6.20
