@@ -3,14 +3,14 @@
  9446189     
  select * from t_dfbj where jxfs='JT' and cgyj='已校核              ' and bjlsh='8477050     '
  
- insert into t_dfbj
- select '9446189', 'A44856', wcbj, pfrq, ywbmbh, ywpc, dh, gkh, hw, agvbj, ybzbj, bjfjbj, tph, lhrq, czybh, 
- zpz, zcs, zmy, zsy, zzl, bzjs, fhbmbh, fyjhpc, fyjhrq, fyjhpc1, jhrh, fyfsh, ch, yh, ywqrpc, yqrjs, yjsje, zzbh, zzbh1, ktbj, ktjkfs, ktpch, null, kt_czybh, zb, tihfs, xgbj, fxjb, fyjb, ln_zp_no, sjjs, sum_xhao, kfbh, jxfs, ywlx, frrq, ttxh, djbj, xjdbj, fyrh, jhczybh, jhrq, jhrqh, cydw, cyr, cyr_tele, cyrq, jkpzrq, psjs, shrq, ssjs, tylx, tynr, tyr, tyr_tele, tyrq, sdhrq, lx, yrq, fhyxj, fyth_czybh, fyth_date, jhpch, fytph, js, cgyj, lhbj, cybh, bzr, jjbj, jsjs, bjlsh_bjzy, rqh_fjj, fyjhpc_bak, zpdh, hbbj, station, dz, lxr, tel, 
+  insert into t_dfbj
+ select '9905901', 'A44856', wcbj, pfrq, ywbmbh, ywpc, dh, gkh, hw, agvbj, ybzbj, bjfjbj, tph, lhrq, czybh, 
+ zpz, zcs, zmy, zsy, zzl, bzjs, fhbmbh, fyjhpc, fyjhrq, fyjhpc1, jhrh, fyfsh, ch, yh, ywqrpc, yqrjs, yjsje, zzbh, zzbh1, ktbj, ktjkfs, '1000199823', null, kt_czybh, zb, tihfs, xgbj, fxjb, fyjb, ln_zp_no, sjjs, sum_xhao, kfbh, jxfs, ywlx, frrq, ttxh, djbj, xjdbj, fyrh, jhczybh, jhrq, jhrqh, cydw, cyr, cyr_tele, cyrq, jkpzrq, psjs, shrq, ssjs, tylx, tynr, tyr, tyr_tele, tyrq, sdhrq, lx, yrq, fhyxj, fyth_czybh, fyth_date, jhpch, fytph, js, 'JT190925013-JT', lhbj, cybh, bzr, jjbj, jsjs, bjlsh_bjzy, rqh_fjj, fyjhpc_bak, zpdh, hbbj, station, dz, lxr, tel, 
  jgflag, jgjjsj, xjbj, ejdh, ejdm, fpmt, ysdjh, bzqddyflag, bzqdsyzkflag, ybysflag, jsbj, jssj, 
- jsczy, zpfxrq, zpfxczy, sscc, cgyj_kh, jlflag, xjrq from t_dfbj
- where jxfs='JT' and cgyj='已校核              ' and bjlsh='8477050     '
+ jsczy, zpfxrq, zpfxczy, sscc, cgyj_kh, jlflag, xjrq, sfwc, tzflag from t_dfbj
+ where jxfs='JT'   and bjlsh='9703107      '
  
  update t_dfbj set (zpz,zmy,zcs)=
   
- (select count(distinct id) , sum(sdsl*dj), sum(sdsl) from t_khthmx_jt where bjlsh='9446189') 
- where bjlsh='9446189'
+ (select count(distinct id) , sum(sdsl*dj), sum(sdsl) from t_khthmx_jt where bjlsh='9905901') 
+ where bjlsh='9905901'
