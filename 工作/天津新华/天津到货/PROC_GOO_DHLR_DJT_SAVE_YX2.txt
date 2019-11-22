@@ -1,0 +1,329 @@
+CREATE OR REPLACE Procedure PROC_GOO_DHLR_DJT_SAVE_YX2(adc_flowid_tldjhz Number,
+                                                      as_editflag       Varchar2, --修改状态   增加：'add' 修改:'edit'
+                                                    
+                                                      adc_zjs           Number, --单据件数
+                                                     
+                                                      as_ysdj           Varchar2, --原始单据
+                                                      adt_ysrq          Date,
+                                                      as_ywbmbh         Varchar2, --业务部门编号
+                                                      as_ghdwh          Varchar2, --供货单位号
+                                                       
+                                                      as_remark         Varchar2,
+                                                      adc_ydpz          Number,
+                                                      adc_ydcs          Number,
+                                                      adc_ydmy          Number,
+                                                      adc_ydsy          Number,
+                                                      as_bmbh           Varchar2,
+                                                      as_user           Varchar2,
+                                                     
+                                                      as_yh             Varchar2,
+                                                      as_kfbh           Varchar2,
+                                                      as_dh             Varchar2,
+                                                      as_zfzd           Varchar2,
+                                                      adc_flowid_dj     Number,
+                                                      as_sl             Number, --进项税率
+                                                      as_tjth            Varchar2,
+                                                      p_flowid_dj_new  Out Varchar2,
+                                                      v_result          Out Number,
+                                                      v_errmsg          Out Varchar2)
+-- 2011-11-18 升级
+    --功能：音像到货录入-单据头录入－保存 created by mx on 2009-09-07
+    --执行成功v_result=0, 执行失败v_result=-1,v_errmsg返回错误信息
+ As
+    ldt_WorkDate        Date; --工作日期
+     
+    
+    ldc_count           Number; --记录数
+    ldc_flowid_dj       Number;
+     
+     
+  
+    ls_kfbh             Varchar2(6);
+    ls_sj_flag          Varchar2(1);
+    ls_kl_flag          Varchar2(1);
+    ls_lrfs             Varchar2(1); --录入方式
+    v_old_flowid_tldjhz Number;
+    v_old_zjs           Number;
+    v_bj                Number;
+    v_kl_flag           Char(1);
+    v_ywshbj            Char(1);
+    v_nofhbj            Char(1);
+    v_rows              Number;
+    v_sptz              Char(2); -- 2015-10-29 yangyi: 为验证单据头商品特征与明细商品特征不符。
+    v_kflx              Char(2);
+
+Begin
+
+    -- 2018-07-02 yangyi:
+    proc_chk_sl(as_ywbmbh,as_sl,v_result,v_errmsg);
+    If v_result<>0 Then
+       Rollback;
+       Return;
+    End If;
+    ----------------------------------------------------
+    -- 2016-09-20 add by yangyi:
+    If as_tjth Is Null Then
+        Rollback;
+        v_result := -1;
+        v_errmsg := '请录入商品特征!';
+        Return;
+    End If;
+    -----------------------------------------------------
+
+    If as_sl <= 0 Then
+
+        Rollback;
+        v_result := -1;
+        v_errmsg := '进项税率不能小于零';
+        Return;
+
+    End If;
+    select count(*) into v_rows  from t_dm_ywbm@c_link_wl_sl where tsbj='0' and ywbmbh=as_ywbmbh and dh=as_dh;
+    if v_rows>0 then
+      Rollback;
+      v_result := -1;
+      v_errmsg := '直转店名不能选择现金店！';
+        Return;
+
+    End If;
+
+    
+
+    -- 2010-12-19 yangyi:
+    -- 如果选择的运号是直发转单的，则所录入的单据也必须是直发转单的：
+    Select nvl(kl_flag, '0')
+      Into v_kl_flag
+      From t_tldjhz
+     Where flowid_tldjhz = adc_flowid_tldjhz;
+
+    If lengthb(as_ysdj) > 20 Then
+        v_result := -1;
+        v_errmsg := '原始单据号长度超长!';
+        Return;
+    End If;
+
+    If v_kl_flag = '1' And nvl(as_zfzd, '0') <> '1' Then
+        v_result := -1;
+        v_errmsg := '此运号为直发转单的运号，其相应的单据也必须是直发转单!';
+        Return;
+    End If;
+
+    If v_kl_flag = '2' And nvl(as_zfzd, '0') <> '2' And nvl(as_zfzd, '0') <> '3' Then
+        v_result := -1;
+        v_errmsg := '此运号为绿通的运号，其相应的单据也必须是绿通!';
+        Return;
+    End If;
+
+    If v_kl_flag <> '1' And nvl(as_zfzd, '0') = '1' Then
+        v_result := -1;
+        v_errmsg := '此运号不是直发转单的运号，其相应的单据不能选择直发转单!';
+        Return;
+    End If;
+    -- end add
+
+    -- 2011-06-22 add by yangyi:
+    If v_kl_flag = '0' And nvl(as_zfzd, '0') <> '0' Then
+        v_result := -1;
+        v_errmsg := '此运号为正常运号，其相应的单据也必须是正常的单据!';
+        Return;
+    End If;
+    -- end add
+
+    --v_rqh := trim(as_rqh);
+
+    v_bj := -1;
+    -- 直发转单标记 as_zfzd (0=正常,1=直发,2=绿通,3=一包一单)
+    If nvl(as_zfzd, '0') = '1' And as_dh Is Null Then
+        v_result := -1;
+        v_errmsg := '请输入直转店名!';
+        Return;
+    End If;
+
+    -- 2015-08-28 add by yangyi: 直发转单时限制直转店的合法性:
+    If nvl(as_zfzd, '0') <> '0' Then
+        Select nvl(ywshbj,'0'),nvl(nofhbj,'0') Into v_ywshbj,v_nofhbj
+          From t_dm_ywbm@c_link_wl_sl Where dh=as_dh And ywbmbh=as_ywbmbh;
+        If v_ywshbj='0' Or v_nofhbj='1' Then
+            v_result := -1;
+            v_errmsg := '此店号为禁止发货客户或未开通客户!';
+            Return;
+        End If;
+    End If;
+    
+     
+    Select lrfs,kflx Into ls_lrfs,v_kflx From t_dm Where Trim(dh) = Trim(as_ywbmbh);
+ 
+    ls_lrfs := Trim(ls_lrfs);
+    If ls_lrfs = '1' Then
+        --有数据录入
+        ls_sj_flag := '1'; --如果是有数据录入，则察看货主是否把到货数据传输过来
+        Select Count(*) Into ldc_count From t_sl_dhmx Where Trim(ysdjh) = Trim(as_ysdj);
+        If ldc_count <= 0 Then
+            ls_kl_flag := '1'; --如果没有数据，则在tmp_dhdj表中此记录不可以进行明细的录入
+        Else
+            ls_kl_flag := '0';
+        End If;
+    Else
+        ls_sj_flag := '0';
+        ls_kl_flag := '0';
+    End If;
+
+    --山东一个库存，到货录入界面不再录入库房，程序直接默认
+    If as_kfbh Is Null Then
+        Select Min(dh) Into ls_kfbh From t_dm Where lxbh = '2' And kflx = 'LK';
+    Else
+        ls_kfbh := as_kfbh;
+    End If;
+
+    If as_editflag = 'add' Then
+
+         -- 2010-12-19 yangyi:
+        Select Count(*) Into v_rows From tmp_dhdj
+           Where ghdwh=as_ghdwh And ysdj=as_ysdj And ywbmbh=as_ywbmbh;
+        If v_rows>0 Then
+            v_result := -1;
+            v_errmsg := '此单号已经录过了!';
+            Return;
+        End If;
+
+        --增加单据头
+        --(到货登记表)累加已录入件数:
+        ldt_WorkDate := Sysdate;
+        Update t_tldjhz
+           Set dhlrrq = ldt_WorkDate, yljs = NVL(yljs, 0) + adc_zjs,
+               yldjsl = nvl(yldjsl, 0) + 1,  ycbbj = '1',
+               cbtlrq = ldt_WorkDate 
+         Where flowid_TLDJHZ = adc_flowid_tldjhz;
+        If Sql%Rowcount <> 1 Then
+            Rollback;
+            v_result := -1;
+            v_errmsg := '更新提领单据汇总表已录入件数时出错！';
+            Return;
+        End If;
+
+        --记录最后一张单据（含有原始单据号的）的原始单据号
+        Select Count(*)
+          Into ldc_count
+          From t_tldjhz
+         Where flowid_tldjhz = adc_flowid_tldjhz And Trim(ysdj) = Trim(as_ysdj);
+        If ldc_count = 0 Then
+            Update t_tldjhz Set ysdj = as_ysdj Where flowid_tldjhz = adc_flowid_tldjhz;
+            If Sql%Rowcount <> 1 Then
+                Rollback;
+                v_result := -1;
+                v_errmsg := '更新提领单据汇总表的原始单据号时出错！';
+                Return;
+            End If;
+        End If;
+
+        --2012-12-25 modify by lv 增加tjth =2 代表文化用品
+        Select all_flowid.Nextval Into ldc_flowid_dj From dual;
+         p_flowid_dj_new:=ldc_flowid_dj;
+        Insert Into tmp_dhdj
+            (flowid_dj, ysdj, ysrq, ywbmbh, ghdwh,     remark, ydpz, ydcs, ydmy,
+             ydsy, cybh, djlx, lrczybh,  yh, flowid_tldjhz, kfbh, zjs, dh, sj_flag,
+             kl_flag, zfzd, sl, tjth)
+        Values
+            (ldc_flowid_dj, as_ysdj, adt_ysrq, as_ywbmbh, as_ghdwh,   
+             as_remark, adc_ydpz, adc_ydcs, adc_ydmy, adc_ydsy, as_bmbh, 'DH', as_user,
+              as_yh, adc_flowid_tldjhz, ls_kfbh, adc_zjs, as_dh, ls_sj_flag,
+             ls_kl_flag, as_zfzd, as_sl,as_tjth);--(Select nvl(Min(khlb), 0) From t_dm Where dh = as_ywbmbh)
+        If Sql%Rowcount <> 1 Then
+            Rollback;
+            v_result := -1;
+            v_errmsg := '插入到货单据临时表时出错！';
+            Return;
+        End If;
+    Else
+
+        --修改已录入单据头
+
+        ldc_flowid_dj := adc_flowid_dj;
+
+         -- 2010-12-19 yangyi:
+        Select Count(*) Into v_rows From tmp_dhdj
+           Where ghdwh=as_ghdwh And ysdj=as_ysdj And ywbmbh=as_ywbmbh And flowid_dj<>ldc_flowid_dj;
+        If v_rows>0 Then
+            v_result := -1;
+            v_errmsg := '此单号已经录过了!';
+            Rollback;
+            Return;
+        End If;
+
+        -- 2010-11-12 yangyi:
+        -- 如果改变了运号, 则将原来运号的已录单据数减1,已录件数减相应单据的件数
+        -- 新选运号的已录单据数加1，已录件数加相应单据的件数
+        -- 2015-10-29 yangyi: 为验证单据头商品特征与明细商品特征不符。
+        Select flowid_tldjhz, zjs, decode(as_tjth,'0','01','1','02','2','03')
+          Into v_old_flowid_tldjhz, v_old_zjs, v_sptz
+          From tmp_dhdj
+         Where flowid_dj = ldc_flowid_dj;
+
+        -- 2015-10-29 yangyi: 为验证单据头商品特征与明细商品特征不符。
+        Select Count(*) Into v_rows From tmp_dhmx Where flowid_dj=ldc_flowid_dj And sptz<>v_sptz;
+        If v_rows>0 Then
+            v_result := -1;
+            v_errmsg := '相应单据明细中，已经存在与单据头商品特征不符的品种! 只有将相应的明细品种删除后，方可修改!'||v_sptz;
+            Rollback;
+            Return;
+        End If;
+        -----------------------------------------------------------
+
+        If v_old_flowid_tldjhz <> adc_flowid_tldjhz Then
+
+            Update t_tldjhz
+               Set yldjsl = nvl(yldjsl, 0) - 1, yljs = NVL(yljs, 0) - v_old_zjs
+             Where flowid_tldjhz = v_old_flowid_tldjhz;
+
+            Update t_tldjhz
+               Set yldjsl = nvl(yldjsl, 0) + 1, yljs = NVL(yljs, 0) + adc_zjs
+             Where flowid_tldjhz = adc_flowid_tldjhz;
+
+        End If;
+        -- end add
+
+        --更新提领单据汇总表
+        Update t_tldjhz
+           Set dhlrrq = ldt_WorkDate
+         Where flowid_tldjhz = adc_flowid_tldjhz;
+        If Sql%Rowcount <> 1 Then
+            Rollback;
+            v_result := -1;
+            v_errmsg := '更新到货单据汇总表时出错！';
+            Rollback;
+            Return;
+        End If;
+        --更新临时到货
+        Update tmp_dhdj
+           Set ysdj = as_ysdj, ysrq = adt_ysrq, ghdwh = as_ghdwh, ywbmbh = as_ywbmbh,
+                  remark = as_remark, ydpz = adc_ydpz,
+               ydcs = adc_ydcs, ydmy = adc_ydmy, ydsy = adc_ydsy, cybh = as_bmbh,
+               lrczybh = as_user,  yh = as_yh,
+               flowid_tldjhz = adc_flowid_tldjhz, kfbh = ls_kfbh, zjs = adc_zjs,
+               dh = as_dh, sj_flag = ls_sj_flag, kl_flag = ls_kl_flag, zfzd = as_zfzd,
+               sl = as_sl,
+               -- tjth='2'
+               --这玩意由固定改为动态取值，根据业务部门的khlb来取,与商流相对应。不然商流不批. add by chd -2015-5-31
+               tjth =  as_tjth
+
+         Where flowid_dj = ldc_flowid_dj;
+        If Sql%Rowcount <> 1 Then
+            Rollback;
+            v_result := -1;
+            v_errmsg := '更新临时到货单据表时出错！';
+            Return;
+        End If;
+
+       
+    End If;
+
+     
+
+    v_result := 0;
+    v_errmsg := 'ok';
+Exception
+    When Others Then
+        Rollback;
+        v_result := -1; --执行失败
+        v_errmsg := 'sqlcode:' || to_char(Sqlcode) || ' error:' || Sqlerrm;
+End;

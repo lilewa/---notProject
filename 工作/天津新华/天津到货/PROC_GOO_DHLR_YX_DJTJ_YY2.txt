@@ -1,0 +1,161 @@
+CREATE OR REPLACE Procedure PROC_GOO_DHLR_YX_DJTJ_YY2
+ -- 2010-08-01 YANGYI:
+ -- 音像到货调拨改为整单提交了
+ --
+ -- 本过程由音像到货录入单据头提交按钮调用
+(p_flowid_dj Number,
+ p_czybh     Char,
+ errno       Out Number,
+ errtext     Out Varchar2) As
+    v_ydpz     Number;
+    v_ydsl     Number;
+    v_ydmy     Number;
+    v_ydsy     Number;
+    v_zjxs     Number;
+    v_sys      Number;
+    v_zpz      Number;
+    v_zcs      Number;
+    v_zmy      Number;
+    v_zsy      Number;
+    v_qssl     Number;
+    v_qsmy     Number;
+    v_qssy     Number;
+    v_hqbh     Char(4);
+    v_fjw      Char(3);
+    v_id1      Char(21);
+    v_id       Char(18);
+    v_hw       Char(20);
+    v_dhpch    Char(12);
+    v_dhdj     tmp_dhdj%Rowtype;
+    v_thzq     Number;
+    v_bzjmy    Number;
+    v_rs       Number;
+    v_kflx     t_dm.kflx%Type;
+    v_khlxbh   t_dm.khlxbh%Type;
+    RFDHQD_OFF t_sysset.sys_value%Type;
+    v_rows Number;
+   v_flowid number;
+   v_bdfskxz number;
+
+Begin
+
+
+    -- 首先验证明细与汇总是否相符:
+    Select * Into v_dhdj From tmp_dhdj Where flowid_dj = p_flowid_dj;
+
+     -- 2018-06-07 add yangyi: 由于财务凭证中，传媒部门按税率区分不同科目，故增加限制:
+  proc_chk_sl(v_dhdj.ywbmbh, v_dhdj.sl, errno, errtext);
+  If errno<>0  Then
+      Rollback;
+      Return;
+  End If;
+
+
+
+    Select Count(*), Sum(yssl), Sum(yssl * dj), Sum(yssy)
+      Into v_ydpz, v_ydsl, v_ydmy, v_ydsy
+      From tmp_dhmx
+     Where flowid_dj = p_flowid_dj And nvl(yssl, 0) > 0;
+
+    -- 2018-11-07 yangyi: 增加参数设置：报订方式是否允许前台设置 0=不允许，1=允许
+    select nvl(min(sys_value),0) into v_bdfskxz
+      from t_sysset@c_link_wl_sl where sys_item='BDFSKXZ' AND sys_ywbmbh=v_dhdj.ywbmbh;
+
+    if v_bdfskxz=0 and v_dhdj.zfzd<>'0' then
+        errno   := -1;
+        errtext := '当前部门已设置为只能按常规方式发货! 因此当前单据不能设置为绿通或直转!t_sysset@c_link_wl_sl.sys_item=BDFSKXZ';
+        rollback;
+        Return;
+    end if;
+
+   --2011-11-01 modify by lv 先根据业务部门取出第三方标记。t_dm表中kflx=‘3F’ 或者 khlxbh=‘1’的为第三方物流货主部门
+/*    Select kflx, nvl(khlxbh,0) Into v_kflx, v_khlxbh From t_dm Where dh = v_dhdj.ywbmbh;
+    If Trim(v_khlxbh) = '1' Or Trim(v_kflx) = '3F' Then
+        If v_ydpz <> v_dhdj.ydpz Or v_ydsl <> v_dhdj.ydcs  Or v_ydmy <> v_dhdj.ydmy Then
+            errno   := -1;
+            errtext := '此单据的明细与汇总不符!';
+            Return;
+        End If;
+    Else
+        If v_ydpz <> v_dhdj.ydpz Or v_ydsl <> v_dhdj.ydcs Or   v_ydmy <> v_dhdj.ydmy or
+           v_ydsy <> v_dhdj.ydsy Then
+            errno   := -1;
+            errtext := '此单据的明细与汇总不符!';
+            Return;
+        End If;
+    End If;
+*/
+ 
+    -------------------------------------------------------------------
+
+    --2012-01-10 modify by lv 读取RF到货清点开关
+    Select nvl(Max(sys_value), '0')
+      Into RFDHQD_OFF
+      From t_sysset
+     Where sys_item = 'RFDHQD' And sys_ywbmbh = v_dhdj.ywbmbh;
+   
+    Select nvl(Min(sys_value), 900) Into v_bzjmy From t_sysset Where sys_item = 'GPBJBZ';
+
+    
+    Insert Into t_gzl
+        (czybh, czlx, jls, cs, js, my,TABLE_NAME,FLOWID_TABLE,YWBMBH,PROC_NAME)
+        Select lrczybh, 'DHLR', Count(*), Sum(djshsl),
+               Sum(decode(dbbz, 0.1, round(djshsl * dj / v_bzjmy, 2),
+                           round(djshsl / dbbz / xbbz, 2))), Sum(djshsl * dj),'tmp_dhdj',V_DHDJ.flowid_tldjhz,V_DHDJ.Ywbmbh,'PROC_GOO_DHLR_YX_DJTJ_YY2'
+          From tmp_dhmx
+         Where flowid_dj = p_flowid_dj
+         Group By lrczybh;
+    -- 写备份表,并删除临时表数据:
+    -- 2010-10-15 modify by yangyi:
+    -- 为了音像商流也能利用到货审批功能来关联依据
+    -- 暂不删除tmp_dhmx/tmp_dhdj了, 而是将tmp_dhdj.oklrbj='1'
+    -- 为到货录入时能屏蔽掉这些数据.
+    -- tmp_dhdj/tmp_dhmx改在商流到货审批时再删除了
+    Update tmp_dhdj
+       Set oklrbj = '1', oklrrq = Sysdate, sbbj = '1', lrqrzyczybh = p_czybh
+     Where flowid_dj = p_flowid_dj;
+    -- 2011-11-22 add by yangyi:
+    -- 为便于到货审批，替换截止退货日期、销售周期、发货缓急、是否新品:
+    -- 因为商流是根据实际收货数来进行主配的
+    -- 而商流程序是根据yssl来显示的，所以，在提交商流审批时
+    -- 需要将实际收货数量替换到yssl中，在替换前要将yssl备份到bdcs字段中
+    -- 后期接收商流审批结果时，再将yssl从bdcs中折腾回来
+    --2012-02-29 modify by lv 增加ydhcs=djshsl，物流接收商流审批数据时自动将djshsl备份到ydhcs
+    Update tmp_dhmx
+       Set bdcs = yssl, yssl = djshsl, ydhcs = djshsl, jzjtrq = Sysdate + 90, xszq = 120,
+           FHFS = 'D',
+           MFJCBJ = decode(nvl((Select Count(*)
+                                  From t_kcsm
+                                 Where isbn = tmp_dhmx.isbn And sm = tmp_dhmx.sm And
+                                       dj = tmp_dhmx.dj And rownum = 1), 0), 0, '1', '0')
+     Where flowid_dj = P_flowid_dj;
+    -- 2010-05-30 add by yangyi:
+    -- 为便于商流操作, 置默认截止进退日期和销售周期, 在审批时可手工修改
+    -- 2012-02-02 yangyi:
+    -- 改为默认进退截止日期为90天
+    Update tmp_dhmx
+       Set (jzjtrq, xszq) = (Select nvl(Min(jtqx), 90 /*180*/) + Sysdate,
+                                     nvl(Min(xszq), 120)
+                                From t_flszb@c_link_wl_sl
+                               Where fl = tmp_dhmx.fl And ywbmbh = V_DHDJ.YWBMBH)
+     Where flowid_dj = P_flowid_dj;
+    
+
+    --2014-01-13 modify by lv 增加推送
+    pkg_sjxx.PROC_GOO_YH_YX_DEAL(p_flowid_dj, errno, errtext);
+    If errno <> 0 Then
+        --errno   := -122;
+        --errtext := '推送文化用品电子单失败！';
+        Rollback;
+        Return;
+    End If;
+    errno   := 0;
+    errtext := 'OK';
+    Return;
+Exception
+    When Others Then
+        errno   := -1;
+        errtext := 'PROC_GOO_DHLR_YX_DJTJ_YY2' || Sqlerrm;
+        Rollback; -- 2014-04-18 add by yangyi
+        Return;
+End PROC_GOO_DHLR_YX_DJTJ_YY2;

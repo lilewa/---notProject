@@ -1,0 +1,57 @@
+CREATE OR REPLACE Procedure PROC_YFSJ_GUIZU(p_flowid_tldjhz In Number,
+                                            errno           Out Number,
+                                            errtext         Out Varchar2)
+
+ As
+
+    -- 2019-06-01 add yangyi:
+    -- 根据柜组分类对照，将商流预分数据中的店号转换为相应的柜组号
+    -- 此过程由 PROC_CREATE_WLFL_XTW4 调用
+    -- PROC_YFSJ_GUIZU(p_flowid_tldjhz,errno,errtext)
+    v_rows Number;
+
+Begin
+
+
+
+       Select Count(*)   Into v_rows
+        From t_sl_yfsj, t_guizu_fl
+        Where t_sl_yfsj.dh = t_guizu_fl.dh And
+
+              exists (select 1 from tmp_dhdj where t_sl_yfsj.flowid_dj =flowid_dj and flowid_tldjhz=p_flowid_tldjhz)
+                 And
+              t_guizu_fl.enable = '1';
+
+    If v_rows > 0 Then
+
+
+        /*    --2018-8-6增加按照连锁店品种上架货区更新
+          update t_sl_yfsj a set zddh=trim(dh),id=(select id from tmp_dhmx where flowid_dhmx =a.flowid )
+          Where  exists (select 1 from tmp_dhdj where a.flowid_dj =flowid_dj and flowid_tldjhz=p_flowid_tldjhz);
+           --2018-8-6*/
+
+           Update t_sl_yfsj a  Set dh = Nvl((Select c.gzbh
+       From tmp_dhmx b, t_guizu_fl c
+      Where b.fl = c.flbh And b.flowid_dhmx = a.flowid And trim(c.dh) = a.dh),
+      (select min(gzbh) from t_guizu_fl  where trim(dh)=a.dh)
+      )
+         Where  exists (select 1 from tmp_dhdj where a.flowid_dj =flowid_dj and flowid_tldjhz=p_flowid_tldjhz)
+          and exists (select 1 from t_guizu_fl where trim(dh)=a.dh );
+
+      /*    --2018-8-6增加按照连锁店品种上架货区更新
+          update t_sl_yfsj a set dh=(select d.dh  from MV_XHD_KCSL m,t_dm d where  m.ywbmbh=a.zddh and d.fatherdh=a.zddh and m.id=a.id and m.hqbh=d.station and rownum=1)
+          where  exists (select 1 from tmp_dhdj where a.flowid_dj =flowid_dj and flowid_tldjhz=p_flowid_tldjhz)
+          and exists (select 1 from  MV_XHD_KCSL m,t_dm d where  m.ywbmbh=a.zddh and d.fatherdh=a.zddh and m.id=a.id and m.hqbh=d.station );
+          ---2018-8-6*/
+      End If;
+
+    errno   := 0;
+    errtext := 'ok';
+
+Exception
+    When Others Then
+        errno   := -1;
+        errtext := Sqlerrm||'-- PROC_YFSJ_GUIZU';
+        Rollback;
+
+End PROC_YFSJ_GUIZU;

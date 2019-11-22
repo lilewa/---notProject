@@ -1,0 +1,63 @@
+-- Create table
+create table T_DH_YFSJ
+(
+  flowid        NUMBER not null,
+  flowid_dhmx   NUMBER,
+  flowid_dj     NUMBER,
+  dh            CHAR(6),
+  id            CHAR(18),
+  yfsl          NUMBER,
+  sjsl          NUMBER,
+  flqx          CHAR(2),
+  flqxmc        VARCHAR2(120),
+  detailqx      CHAR(6),
+  active        CHAR(1) default 1,
+  cgyj          VARCHAR2(30),
+  cgyj_kh       VARCHAR2(30),
+  finished      NUMBER default 0,
+  djly          VARCHAR2(2),
+  fhzk          NUMBER(9,2),
+  sdhrq         DATE,
+  yxj           CHAR(1),
+  hw            CHAR(20),
+  xh            NUMBER,
+  qsclfs        CHAR(1),
+  flowid_tldjhz NUMBER,
+  sl            NUMBER,
+  sys           NUMBER,
+  ywbmbh        CHAR(6),
+  bjlsh         CHAR(12),
+  pfrq          DATE
+)
+tablespace DATA_TABLESPACE
+  pctfree 10
+  initrans 1
+  maxtrans 255
+  storage
+  (
+    initial 64K
+    next 8K
+    minextents 1
+    maxextents unlimited
+  );
+-- Create/Recreate primary, unique and foreign key constraints 
+alter table T_DH_YFSJ
+  add constraint PK_DH_YFSJ primary key (FLOWID)
+  using index 
+  tablespace DATA_TABLESPACE
+  pctfree 10
+  initrans 2
+  maxtrans 255
+  storage
+  (
+    initial 64K
+    next 1M
+    minextents 1
+    maxextents unlimited
+  );
+-- Create/Recreate check constraints 
+alter table T_DH_YFSJ
+  add constraint DH_YFSJ
+  check (CASE WHEN FLQX='ZP' AND sjsl >yfsl THEN 0
+    when FLQX='FH' AND sjsl >yfsl THEN 0
+     ELSE 1 END=1);
