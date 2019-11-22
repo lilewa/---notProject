@@ -1,0 +1,63 @@
+
+
+      select sum(js)   from ( select 1 js from T_FJRWSJB_BAK  where NVL(bz,'1')<>'THZZ'
+and rwrq >   to_date('2018/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+and  rwrq<  to_date('2019/11/9 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+group by xm, trunc(rwrq,'hh')) --21991 )
+
+select  count(distinct f.id ) 品种,  count(*) 次数, sum(hgcs*dj) 码洋,sum(hgcs) 册数 from T_FJRWSJB_BAK f,t_kcsm s where NVL(bz,'1')<>'THZZ'
+and rwrq >  to_date('2018/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+and  rwrq<  to_date('2019/11/9 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+ and s.id=f.id     
+
+
+select count(*) ,   decode(hqlx,'CC','新品','DT','返品','YX','异形')  from (
+   select  q.hqlx   from t_pmsjrwb_bak b , t_hwdy w, t_hqdy q  where sjrq > to_date('2018/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and sjrq < to_date('2019/11/9 00:00:00', 'yyyy/mm/dd hh24:mi:ss')  and  q.hqlx<>'DL'  and w.hw = b.sjhw 
+           and q.bh = w.hqbh      group by id_pmsjhz,  q.hqlx 
+ ) group by   hqlx  
+ 
+  
+  select  sum(yssl*dj),sum(yssl ), count(distinct b.id), decode(q.hqlx,'CC','新品','DT','返品','YX','异形')
+   from t_pmsjrwb_bak b , t_hwdy w, t_hqdy q, t_kcsm s   where sjrq > to_date('2018/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and sjrq < to_date('2019/11/9 00:00:00', 'yyyy/mm/dd hh24:mi:ss')  and  q.hqlx<>'DL'  and w.hw = b.sjhw 
+           and q.bh = w.hqbh  and s.id=b.id     group by    q.hqlx 
+           
+           
+   select floor(sum(js)), 
+       decode(hqlx, 'CC', '新品', 'DT', '返品', 'YX', '异形')
+  from (select hqlx,
+               
+               round(ct / sum(ct)
+                     over(partition by zrhq) *
+                     (select sum(bzjs) from t_dfbj where a.zrhq = cyr_tele),
+                     2) js
+          from (select zrhq, q.hqlx,  count(*) ct
+                  from t_agv_rw_xt_bak2 b, t_hqdy q
+                 where xjrq >
+                       to_date('2018/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+                   and xjrq <
+                       to_date('2019/11/9 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+                   and hqlx <> 'DL'
+                   and b.hqbh = q.bh
+                 group by zrhq, hqlx) a)
+ group by hqlx  
+-----------
+
+ select   sum(b.yssl*dj) ,sum(yssl), count(*) ct, 
+       decode(hqlx, 'CC', '新品', 'DT', '返品', 'YX', '异形')
+                  from t_agv_rw_xt_bak2 b, t_hqdy q ,t_kcsm s
+                 where xjrq >
+                       to_date('2018/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+                   and xjrq <
+                       to_date('2019/11/9 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+                   
+                   and hqlx <> 'DL'
+                   and b.hqbh = q.bh
+                   and s.id=b.id
+                 group by   hqlx 
+                 
+                 
+              select sum(bzjs),sum(zmy) from t_dfbj where ywlx='ST'
+ and jhrq > to_date('2018/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+ and jhrq< to_date('2019/11/9 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 

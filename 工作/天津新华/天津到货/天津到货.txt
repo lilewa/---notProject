@@ -1,0 +1,14 @@
+PROC_CONFIRMTLDJHZ
+PROC_Sch_CB2
+PROC_GOO_DHLR_DJT_SAVE_YX2
+PROC_GOO_DHLR_YX_MX_SAVE_YY2 要改dbbz默认1
+proc_interface_dbsl3
+PROC_YFSJ_GUIZU
+t_dh_yfsj.flqxmc
+t_dh_yfsj_bak.flqxmc
+t_menu 增加 查询统计-到货打印
+
+PROC_GOO_DHLR_YX_DJTJ_YY2
+
+select * from T_DHFLTASK t where flowid_tldjhz=124865573; 
+select * from t_dh_yfsj_bak t where flowid_tldjhz=124865401
