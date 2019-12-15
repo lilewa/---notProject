@@ -1,0 +1,2 @@
+select s.sm 书名,s.dj,s.isbn,(select trim(dm) from t_dm where dh=t.dh)店名 ,   yfsl,sjsl from t_dh_yfsj_bak t,tmp_dhdj_xtw x ,t_kcsm s where t.flowid_dj=x.flowid_dj and  ywbmbh='000006'
+and (t.flqx='ZP' or t.flqx='FH') and yfsl>sjsl and t.id=s.id

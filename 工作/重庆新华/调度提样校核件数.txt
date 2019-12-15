@@ -1,0 +1,12 @@
+select sum(bzjs) from t_dfbj where jhrq>to_date('2019/12/9 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and jhrq< to_date('2019/12/13 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and ywbmbh='000006';
+select * from t_splitbagtask
+select count(*),sum(zjs) from t_splitbagtask where 
+plandate>to_date('2019/12/9 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and plandate< to_date('2019/12/13 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and ywbmbh='000006';
+  select sum(zpz) from t_samplebooktask where  
+tyfinishdate>to_date('2019/12/9 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and tyfinishdate< to_date('2019/12/13 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and ywbmbh='000006'
