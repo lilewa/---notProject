@@ -1,0 +1,59 @@
+CREATE OR REPLACE Procedure PROC_GOO_DHLR_DJT_DEL2(p_flowid_dj Number,
+                                                  p_czy       Char,
+                                                  errno      Out Number,
+                                                  errtext      Out Varchar2)
+--功能：到货录入-单据头录入－删除 created by mx on 2009-09-08
+    --执行成功errno=0, 执行失败errno=-1,errtext返回错误信息
+ As
+    ldc_flowid_tldjhz Number;
+    
+    v_lrczybh   char(4);
+    
+Begin
+    
+    select lrczybh into  v_lrczybh from tmp_dhdj where flowid_dj= p_flowid_dj;
+    if v_lrczybh<>p_czy then
+       select '单据是由'|| trim(name)||'录入的' into errtext from t_user
+        where usr_id=v_lrczybh;
+        errno := -1;
+        return;
+
+    end if;
+    
+    Select   flowid_tldjhz
+      Into   ldc_flowid_tldjhz
+      From tmp_dhdj
+     Where flowid_dj = p_flowid_dj;
+    
+   
+    Update t_tldjhz
+       Set yldjsl = yldjsl - 1   
+     Where flowid_tldjhz = ldc_flowid_tldjhz And yldjsl > 0;
+    If Sql%Rowcount < 1 Then
+        errno := -1;
+        errtext := '修改提领单据汇总表失败！';
+        Return;
+    End If;
+ 
+    Insert Into tmp_dhdj_del
+        Select * From tmp_dhdj Where flowid_dj = p_flowid_dj; --add by chd(解决删除数据无法找的问题)
+    Delete tmp_dhdj Where flowid_dj = p_flowid_dj;
+    If Sql%Rowcount < 1 Then
+        errno := -1;
+        errtext := '删除临时到货单据失败！';
+        Return;
+    End If;
+    
+    insert into tmp_dhmx_del   Select * From tmp_dhmx Where flowid_dj = p_flowid_dj;
+    Delete tmp_dhmx Where flowid_dj = p_flowid_dj;
+   
+   
+    errno := 0;
+    errtext:='ok';
+    
+Exception
+    When Others Then
+        Rollback;
+        errno := -1; --执行失败
+        errtext := 'sqlcode:' || to_char(Sqlcode) || ' error:' || Sqlerrm;
+End;

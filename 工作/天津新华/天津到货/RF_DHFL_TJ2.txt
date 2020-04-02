@@ -65,11 +65,10 @@ Begin
         Return;
    end if ;
 
- -- t_dhfltask  0:未领取   1:已领取  2:正在分流   3:开始分流,已取消   4:完成,,9:分流任务异常
-    update t_dhfltask set zt='4',finishdate=sysdate,finished='1' ,
-    flczybh=p_czy,
-    flczyname=(select trim(name) from t_user where usr_id=p_czy)
-    where  flowid_tldjhz = p_flowid_tldjhz and finished='0';
+ -- zt 已登记，登记提交, 已拆包，录入提交，审批完成，未分流确认，分流确认
+    update t_wl_monitor set zt='分流确认',flrq=sysdate ,  flczy=p_czy,
+    flczynm=(select trim(name) from t_user where usr_id=p_czy)
+    where  flowid = p_flowid_tldjhz and zt='未分流确认';
     if sql%notfound then
         errno   := -1;
         errtext := p_flowid_tldjhz||'任务已提交或不存在';
@@ -244,7 +243,7 @@ Begin
                 v_sys := round(curMx.sjsl * curMx.fhzk, 2);
             End If;
             
-            update t_dh_yfsj set sys=v_sys,bjlsh=v_bjlsh ,pfrq=sysdate  where flowid=curMx.flowid;
+            update t_dh_yfsj set sys=v_sys  ,pfrq=sysdate  where flowid=curMx.flowid;
             
             If v_snswbj = '0' Then
                 v_sncrkcs := curMx.sjsl;
@@ -259,7 +258,7 @@ Begin
                  CRKSY, SYLX, ZK_JG, ZJXS, BZ, DBBZ, XBBZ, SL, sn_crkcs, sn_crksy, id,
                  flowid_wl, pk)
             Values
-                (v_flowid_new, V_BJLSH, V_BJLSH, Sysdate, 'FH', '2001', cur.DH,
+                (v_flowid_new, cur.bjlsh, cur.bjlsh, Sysdate, 'FH', '2001', cur.DH,
                  '3001', curMx.ywbmbh, curMx.sjsl, v_sys, curMx.sylx, curMx.fhzk,
                  v_zjxs, 'DHZF', curMx.dbbz, curMx.xbbz, curMx.sl, v_sncrkcs, v_sncrksy,
                  curMx.id, curMx.flowid_dhmx, curMx.flowid);
@@ -268,9 +267,9 @@ Begin
                  pxzk, sl, fhfs, thfs, djly, ZDH, DBBZ, XBBZ, sys, txy, cgyj, yscs,
                  cgyj_kh,   sdhrq, zl, pk)
             Values
-                (v_flowid_new, v_bjlsh, v_bjlsh,    curMx.id, curMx.ywbmbh,
+                (v_flowid_new, cur.bjlsh, cur.bjlsh,    curMx.id, curMx.ywbmbh,
                  '2001', '3001', cur.dh, curMx.sjsl,curMx.sjsl, curMx.sylx, v_zjxs,
-                 curMx.fhzk, curMx.sl, '01', '01', curMx.djly, V_BJLSH, curMx.dbbz,
+                 curMx.fhzk, curMx.sl, '01', '01', curMx.djly, cur.bjlsh, curMx.dbbz,
                  curMx.xbbz, v_sys, '', Trim(curMx.cgyj),  curMx.sjsl,
                  curMx.cgyj_kh,  curMx.sdhrq, curMx.zl, curMx.flowid);
             v_bj := -997;
@@ -281,8 +280,8 @@ Begin
                  ZJXS, CLTZ, XJRQ, XJCZYBH, WCBJ, YSCZYBH, DBBZ, XBBZ, CWH, JXFS, DJLY,
                  DBDH, ZRCYBH, SJSL, LHQHW, xdrq, cgyj_kh,   zl, cgyj, pk)
             Values
-                (v_flowid_new, v_bjlsh, curMx.id, 'ZF', '',  '2001', curMx.ywbmbh,
-                 '3001', cur.dh, v_bjlsh, v_bjlsh, '01', curMx.dh,
+                (v_flowid_new, cur.bjlsh, curMx.id, 'ZF', '',  '2001', curMx.ywbmbh,
+                 '3001', cur.dh, cur.bjlsh, cur.bjlsh, '01', curMx.dh,
                  'FH', '901', '', '', '', '', curMx.sjsl, 13, curMx.fhzk,
                  curMx.sylx, v_zjxs, 1, Sysdate, p_czy, '0', p_czy, curMx.dbbz,
                  curMx.xbbz, '', 'AJ', curMx.djly, Null, '', curMx.sjsl, '', Sysdate,
@@ -375,7 +374,7 @@ Begin
 
  /*   select sum(cs) into v_flcs from T_FLRecord where   flowid_tldjhz=p_flowid_tldjhz;
     if v_flcs >0 then*/
-      select  zcs into v_zcs from t_dhfltask where    flowid_tldjhz=p_flowid_tldjhz;
+      select  zcs into v_zcs from t_wl_monitor where    flowid =p_flowid_tldjhz;
        insert into t_gzl2
        (czybh,    pz, js, id_job, proc, tablename, tablepk)
      select

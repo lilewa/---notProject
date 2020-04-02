@@ -1,0 +1,172 @@
+CREATE OR REPLACE Procedure PROC_JSDHSJ_AUTO_TIANJIN(p_flowid_tldjhz In Number,
+                                                  err_code    Out Number,
+                                                  err_text    Out Varchar2) Is
+
+    -- 2017-07-05 createted by yangyi:
+    --
+    -- 本过程将根据商流临时表的到货数据中的一张单据生成物流的正式到货数据
+    -- 这里不处理直发转单的到货数据，
+    --
+    -- 直发转单还是通过特殊接收到货过程(PROC_SX_JSDHSJ_ZFZDCL)处理
+    --
+    -- 绿通到货接收过程 PROC_SX_JSDHSJ_LSTDCL 已经封掉了，都走到货分流了
+    --
+    -- 本过程由PROC_JSDHSJ_AUTO调用
+    --
+
+    v_dhdj  tmp_dhdj%Rowtype;
+    v_dhpch Char(12);
+    v_zpz   Number;
+    v_zcs   Number;
+    v_zmy   Number;
+    v_zsy   Number;
+    v_qssl  Number;
+    v_qsmy  Number;
+    v_qssy  Number;
+    v_sjsl Number;
+    v_zjxs number;
+Begin
+
+     for c1 in (select * from tmp_dhdj where flowid_tldjhz=p_flowid_tldjhz)
+      loop
+
+           --select * into v_dhdj from  tmp_dhdj where flowid_dj=c1.flowid_dj;
+
+            -- 生成到货批次号：
+            dlgetlsh(c1.cybh, c1.kfbh, 'DH', v_dhpch);
+            If v_dhpch Is Null Then
+                err_code := -1;
+                err_text := 'PROC_JSDHSJ_AUTO 生成到货批次号错误!';
+                Rollback;
+                Return;
+            End If;
+
+            -- 写t_dhls_jx
+            Insert Into t_dhls_jx
+                (flowid_dj, flowid_dhmx, id, cybh, ywbmbh, ghdwh, kfbh,
+                 ysdj, ysrq, chych, flowid_tldjhz, thdh, yh, sl, jhfs, lsdzjhbj, lsddh, sylx, jhzk, fhzk, dbbz,
+                 xbbz, mkzl, yssl, djshsl, pssl,qssl ,yjrq, cqjtbl, xszq, remark, lrczybh, oklrrq,
+                 shczybh, shqrrq, shrq, dhpch, zjxs, flowid, jzjtrq, sys)
+            Select flowid_dj, x.flowid_dhmx, id, c1.cybh, c1.ywbmbh, c1.ghdwh, c1.kfbh,
+                   c1.ysdj, c1.ysrq, '', c1.flowid_tldjhz, c1.thdh, substrb(c1.yh,1,8), c1.sl,
+                   '01', c1.lsdzjhbj, c1.dh, sylx, jhzk, fhzk, dbbz,
+                 xbbz, mkzl, yssl, nvl(sjsl,0), pssl,yssl- nvl(sjsl,0),yjrq, cqjtbl, xszq, remark, lrczybh, Sysdate,
+                 shczybh, c1.oklrrq, Sysdate, v_dhpch, decode(sylx,'0',dj,100), x.flowid_dhmx, jzjtrq,
+                 round(nvl(sjsl,0) * decode(sylx,'0',dj,100)* jhzk / 100, 2)
+              From tmp_dhmx x left join 
+              (select sum(sjsl) sjsl ,flowid_dhmx from t_dh_yfsj where flowid_dj=c1.flowid_dj group by flowid_dhmx ) t
+              on x.flowid_dhmx=t.flowid_dhmx
+             Where flowid_dj=c1.flowid_dj;
+
+            -- 写t_crkls
+            Insert Into t_crkls
+                (FLOWID_CRKLS, YWPCH, YSPCH, CRKRQ, YWLX, KFBH, LYBH, CYBH, YWBMBH, ID,
+                 CRKCS, SYLX, CRKSY, ZK_JG, ZJXS, DBBZ, XBBZ, SN_CRKCS, SN_CRKSY, FGBJ, SL)
+             Select x.flowid_dhmx, v_dhpch, v_dhpch, Sysdate,'DH', c1.kfbh,
+                 c1.ghdwh, c1.cybh, c1.ywbmbh, id, nvl(sjsl,0), sylx,
+                 round(nvl(sjsl,0) * decode(sylx,'0',dj,100)* jhzk / 100, 2), jhzk,
+                 decode(sylx,'0',dj,100), dbbz,xbbz, 0, 0, '0', c1.sl
+              From tmp_dhmx x left join 
+              (select sum(sjsl) sjsl ,flowid_dhmx from t_dh_yfsj where flowid_dj=c1.flowid_dj group by flowid_dhmx ) t
+              on x.flowid_dhmx=t.flowid_dhmx
+             Where flowid_dj=c1.flowid_dj;
+
+
+
+            -- 生成t_dhdj:
+            Select Count(*), nvl(Sum(a.djshsl),0), Sum(a.djshsl * b.dj),
+                   Sum(a.sys), Sum(a.yssl - a.djshsl),
+                   Sum((a.yssl - a.djshsl) * b.dj),
+                   Sum(round((a.yssl - a.djshsl) * a.zjxs * a.jhzk / 100, 2))
+              Into v_zpz, v_zcs, v_zmy, v_zsy, v_qssl, v_qsmy, v_qssy
+              From t_dhls_jx a, t_kcsm b
+             Where b.id = a.id And a.flowid_dj = c1.flowid_dj;
+
+            -- 注意：需要将gzbj置为 F, 为限制在分流结束前进行到货更正
+            Insert Into t_dhdj
+                (FLOWID_DJ, DHPCH, GHDWH, YSDJ, YSRQ, DBRQ, ZPZ, ZCS, ZMY, ZSY, QSSL, QSMY, QSSY,
+                 YWBMBH, KFBH, DHDJLSH, CHK_CZYBH, YH, REMARK, flowid_dj_ys, cybh, ysbbj, js, zfzd,
+                 dh, zdjspch, sl, gzbj)
+            Values
+                (c1.flowid_dj, v_dhpch, c1.ghdwh, c1.ysdj, c1.ysrq, Sysdate, v_zpz,
+                 v_zcs, v_zmy, v_zsy, v_qssl, v_qsmy, v_qssy, c1.ywbmbh, c1.kfbh,
+                 c1.flowid_tldjhz, 'auto', c1.yh, c1.remark, c1.flowid_dj, c1.cybh,
+                 '0', c1.zjs, c1.zfzd, c1.dh, '', c1.sl, '0');
+
+                 Insert Into t_wl_sjdhsj_hz
+                (flowid_dj, jls, sendbmbh, recebmbh, receflag, senddate, djrq)
+                Select flowid_dj, 1, cybh, ywbmbh, '0', Sysdate, oklrrq
+                  From tmp_dhdj
+                 Where flowid_dj = c1.flowid_dj;
+                 
+         for  v_dhmx in (select * from tmp_dhmx t where flowid_dj=c1.flowid_dj ) loop   
+            select nvl(sum(sjsl),0) into v_sjsl  from t_dh_yfsj where flowid_dhmx=v_dhmx.flowid_dhmx;
+          If v_sjsl - v_dhmx.pssl > 0 Then
+                
+             If v_dhmx.sylx = '0' Then
+                  v_zjxs := v_dhmx.dj;
+             Else
+                  v_zjxs := 100;
+             End If;
+                Insert Into t_fhrwb
+                    (flowid_fhrw, ysdjh, dh, id, kfbh, ywbmbh, cybh, dbbz, xbbz, djsl,
+                     fhzk, sylx, zjxs, djly, qsts, QSCLFS, FYFSH, FHFS, DJ, KJXBJ, FHYXJ,
+                     QSDS, RQ, sdhrq, yxrq, cgyj, cgyj_kh, thl, bdbj, phbz)
+                    Select all_flowid.Nextval /*flowid_yfsj*/,
+                           (Select Min(tdpch)
+                               From t_dpls
+                              Where dbdh =
+                                    substrb(Trim(t_sl_yfsj.ysdjh) || '            ', 1, 12)),
+                           dh, v_dhmx.id, c1.kfbh, c1.ywbmbh, c1.cybh, v_dhmx.dbbz,
+                           v_dhmx.xbbz, (nvl(yfsl, 0) - nvl(YQBZQCS, 0)), fhzk, sylx,
+                           v_zjxs, djly, 0, qsclfs, nvl(tihfs, '01'), nvl(tihfs, '01'),
+                           v_dhmx.dj, '1', YXJ, 0, Sysdate, SDHRQ, (Sysdate + 30), ysdjh,
+                           CGYJ_KH, THL,
+                           (Select nvl(t_dpls.spbj, '0')
+                               From t_dpls
+                              Where dbdh =
+                                    substrb(Trim(t_sl_yfsj.ysdjh) || '            ', 1, 12)),
+                           (Select t_dpls.note_gp
+                               From t_dpls
+                              Where dbdh =
+                                    substrb(Trim(t_sl_yfsj.ysdjh) || '            ', 1, 12))
+                      From t_sl_yfsj
+                     Where flowid = v_dhmx.flowid_dhmx And nvl(yfsl, 0) - v_sjsl > 0;
+            Else
+                -- 如果该品种没分流过, 将t_sl_yfsj中的记录全部写入t_wl_bmzdj:
+                -- 并将类型(LX)置为'XX', 商流将据此将t_dpls相应记录的状态恢复
+                -- 为未分书状态(参见商流proc_get_bmzdj)
+                Insert Into t_wl_bmzdj
+                    (YSDJH, YWBMBH, DH, CKBH, RKBH, ID, CS, SJKCS, QSCLFS, RQ, LX, FLOWID,
+                     BZ, SENDBMBH, SENDDATE, RECEBMBH, RECEFLAG, ZK)
+                    Select ysdjh, c1.ywbmbh, dh, c1.kfbh, '', id, yfsl, 0, qsclfs,
+                           Sysdate, 'XX', flowid_yfsj, '到货分流时未发现该品种', cybh, Sysdate,
+                           c1.ywbmbh, '0', fhzk
+                      From t_sl_yfsj
+                     Where flowid = v_dhmx.flowid_dhmx;
+            End If;
+                       
+           end loop;
+           
+            -- 2017-08-03 add by yangyi:
+      -- 商流的tmp_dhmx/tmp_dhdj由 物流分流结束后删除，商流不再进行删除处理
+      -- 商流接物流到货时，物流还未做分流，如果此时删除，将无法进行补样处理
+      insert into tmp_dhdj_bak@c_link_wl_sl select * from tmp_dhdj@c_link_wl_sl where flowid_dj=c1.flowid_dj;
+
+      insert into tmp_dhmx_bak@c_link_wl_sl select * from tmp_dhmx@c_link_wl_sl where flowid_dj=c1.flowid_dj;
+      delete from tmp_dhdj@c_link_wl_sl where flowid_dj=c1.flowid_dj;
+      delete from tmp_dhmx@c_link_wl_sl where flowid_dj=c1.flowid_dj;
+   end loop;
+     err_code := 0;
+     err_text := 'ok';
+
+
+
+Exception
+    When Others Then
+
+        err_code := -1; --执行失败
+        err_text := Sqlerrm||'--PROC_JSDHSJ_AUTO_TIANJIN';
+        Rollback;
+
+End PROC_JSDHSJ_AUTO_TIANJIN;

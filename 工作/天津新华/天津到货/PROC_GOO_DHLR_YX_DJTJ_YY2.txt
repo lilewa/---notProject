@@ -10,22 +10,8 @@ CREATE OR REPLACE Procedure PROC_GOO_DHLR_YX_DJTJ_YY2
     v_ydpz     Number;
     v_ydsl     Number;
     v_ydmy     Number;
-    v_ydsy     Number;
-    v_zjxs     Number;
-    v_sys      Number;
-    v_zpz      Number;
-    v_zcs      Number;
-    v_zmy      Number;
-    v_zsy      Number;
-    v_qssl     Number;
-    v_qsmy     Number;
-    v_qssy     Number;
-    v_hqbh     Char(4);
-    v_fjw      Char(3);
-    v_id1      Char(21);
-    v_id       Char(18);
-    v_hw       Char(20);
-    v_dhpch    Char(12);
+    v_ydsy     Number;  
+     
     v_dhdj     tmp_dhdj%Rowtype;
     v_thzq     Number;
     v_bzjmy    Number;
@@ -69,7 +55,7 @@ Begin
     end if;
 
    --2011-11-01 modify by lv 先根据业务部门取出第三方标记。t_dm表中kflx=‘3F’ 或者 khlxbh=‘1’的为第三方物流货主部门
-/*    Select kflx, nvl(khlxbh,0) Into v_kflx, v_khlxbh From t_dm Where dh = v_dhdj.ywbmbh;
+    Select kflx, nvl(khlxbh,0) Into v_kflx, v_khlxbh From t_dm Where dh = v_dhdj.ywbmbh;
     If Trim(v_khlxbh) = '1' Or Trim(v_kflx) = '3F' Then
         If v_ydpz <> v_dhdj.ydpz Or v_ydsl <> v_dhdj.ydcs  Or v_ydmy <> v_dhdj.ydmy Then
             errno   := -1;
@@ -84,7 +70,7 @@ Begin
             Return;
         End If;
     End If;
-*/
+
  
     -------------------------------------------------------------------
 
@@ -149,6 +135,13 @@ Begin
         Rollback;
         Return;
     End If;
+    
+     select count(*) into v_rows from t_tldjhz where flowid_tldjhz=v_dhdj.flowid_tldjhz and djsl=yldjsl;
+     if v_rows >0 then
+        update t_wl_monitor set zt='录入提交' ,lrtjczy=p_czybh ,lrtjrq=sysdate ,
+          lrtjczynm=(select trim(name) from t_user where usr_id=p_czybh) where flowid=v_dhdj.flowid_tldjhz;
+     end if;
+    
     errno   := 0;
     errtext := 'OK';
     Return;

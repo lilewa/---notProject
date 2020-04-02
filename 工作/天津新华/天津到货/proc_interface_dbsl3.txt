@@ -20,6 +20,9 @@ CREATE OR REPLACE Procedure proc_interface_dbsl3(errno   Out Number,
     ls_hqbh      Char(4);
     ls_flqxmc    Char(60); 
     v_hw       Char(20);
+     V_bjlsh char(12);
+     v_zjxs Number;
+     v_sys        Number;
 Begin
     ----------事务锁-----------------
     ----------事务锁-----------------
@@ -305,14 +308,19 @@ Begin
                      select v_flowid_tldjhz, sysdate,  min(ghdwh), sum(ydpz), sum(ydcs),sum(ydmy), sum(ydsy), min(zfzd),
                      v_sj_flag,v_ssjs,v_xchw   from tmp_dhdj
                      where  flowid_tldjhz=v_flowid_tldjhz;*/
-                  insert into T_DHFLTASK
+              /*    insert into T_DHFLTASK
                ( flowid_tldjhz,    zpz, zcs, zmy, ghdw,   zjs )
                
-              select min(z.flowid_tldjhz),count(distinct x.id),sum(j.ydcs),sum(j.ydmy),min(z.dh),min(z.ssjs) 
+              select min(z.flowid_tldjhz),count(distinct x.id),sum(x.yssl),sum(x.yssl*x.dj),min(z.dh),min(z.ssjs) 
               from t_tldjhz z ,tmp_dhdj j, tmp_dhmx x 
               where z.flowid_tldjhz=v_flowid_tldjhz
-              and z.flowid_tldjhz=j.flowid_tldjhz and j.flowid_dj=x.flowid_dj;
-                     
+              and z.flowid_tldjhz=j.flowid_tldjhz and j.flowid_dj=x.flowid_dj;*/
+            update t_wl_monitor set (zt,JSRQ,zpz,zcs,zmy)=
+           (select '未分流确认' zt,sysdate, count(distinct x.id) zpz ,sum(x.yssl) zcs,sum(x.yssl*x.dj) zmy 
+              from t_tldjhz z ,tmp_dhdj j, tmp_dhmx x 
+              where z.flowid_tldjhz=v_flowid_tldjhz
+              and z.flowid_tldjhz=j.flowid_tldjhz and j.flowid_dj=x.flowid_dj)
+               where flowid=v_flowid_tldjhz;     
                     
                   --生成到货 
                   PROC_JSDHSJ_AUTO_COMM(v_flowid_tldjhz,errno,errtext);
@@ -335,12 +343,12 @@ Begin
 
 
                  insert into t_dh_yfsj
-                (flowid, flowid_dhmx, flowid_dj, dh, id, yfsl, sjsl, flqx, flqxmc, detailqx, bjlsh, cgyj,
-                 cgyj_kh,djly,fhzk,SDHRQ,yxj,qsclfs,xh,flowid_tldjhz,sl,ywbmbh)
+                (flowid, flowid_dhmx, flowid_dj, dh, id, yfsl, sjsl, flqx, flqxmc, detailqx,   cgyj,
+                 cgyj_kh,djly,fhzk,SDHRQ,yxj,qsclfs,xh,flowid_tldjhz,sl,ywbmbh,zt)
               select   flowid_yfsj,  flowid, flowid_dj, dh, cur_dhmx.id, yfsl, yfsl, 'FH',
              (select trim(f.dm) from t_dm d,t_dm f where d.dh=t.dh and d.fatherdh=f.dh)||'-' || (select trim(dm) from t_dm where dh=t.dh), 
-             dh,dh, ysdjh, trim(cgyj_kh) ,DJLY,fhzk,SDHRQ,yxj,
-             qsclfs,'0',v_flowid_tldjhz,cur_dhmx.sl,cur_dhmx.ywbmbh
+             dh,  ysdjh, trim(cgyj_kh) ,DJLY,fhzk,SDHRQ,yxj,
+             qsclfs,'0',v_flowid_tldjhz,cur_dhmx.sl,cur_dhmx.ywbmbh,'未发运'
                 from T_SL_YFSJ t   where   flowid = cur_dhmx.flowid_dhmx;
 
                   l_kccs := greatest(cur_dhmx.yssl, cur_dhmx.djshsl, 0);
@@ -365,6 +373,33 @@ Begin
 
               end loop;
             
+             for cur in (select dh from t_dh_yfsj 
+   where flowid_tldjhz= v_flowid_tldjhz and flqx='FH' and sjsl>0 group by dh) loop
+          Select BJLSH_FLOWID.Nextval Into V_bjlsh From dual;
+          
+          for curMx in (select  dh,y.fhzk,sdhrq,yxj,flowid,djly,cgyj,cgyj_kh ,y.id,y.sl,
+            sjsl,x.dbbz,x.xbbz,x.sylx,y.flowid_dhmx,ywbmbh,zl,dj from t_dh_yfsj y,tmp_dhmx x
+            where y.flowid_tldjhz= v_flowid_tldjhz   and flqx='FH' and dh=cur.dh and sjsl>0 and y.flowid_dhmx=x.flowid_dhmx)
+            loop
+           
+             
+           If curMx.sylx = '0' Then
+                v_zjxs := curMx.dj;
+            Else
+                v_zjxs := 100;
+            End If;
+     
+            If curMx.sylx = '0' Then
+                v_sys := round(curMx.sjsl * v_zjxs * curMx.fhzk / 100, 2);
+            Else
+                v_sys := round(curMx.sjsl * curMx.fhzk, 2);
+            End If;
+            
+            update t_dh_yfsj set sys=v_sys,bjlsh=v_bjlsh    where flowid=curMx.flowid;
+          
+          end loop;
+          
+      end loop;
                      --更新业务提交日期
                      update  t_tldjhz  set dhlrrq =sysdate  where flowid_tldjhz=v_flowid_tldjhz;
 

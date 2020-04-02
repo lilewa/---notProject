@@ -33,7 +33,9 @@ Begin
                     PLANDATE=sysdate, PLANCZYBH=p_czybh,PLANCZYNAME=p_czyname,ZT='3',
                     xh=(select nvl(Max(xh), 0) + 1 	From t_splitbagtask  Where  plandate> trunc(sysdate) and plandate  < trunc(sysdate+1) )
   Where flowid_tldjhz = p_flowid_tldjhz;
-
+  
+  update t_wl_monitor set zt='已拆包' ,cbczy=p_czybh ,cbrq=sysdate ,
+        cbczynm=p_czyname where flowid=p_flowid_tldjhz;
 		--2013-12-16 modify by lv 新增加判断数据先行的单据需要查询tmp_dhd判断商流是否已经推送完单据然后才允许拆包调度
 		Select   djsl,  kl_flag	Into   v_djsl,v_kl_flag
 			From t_tldjhz

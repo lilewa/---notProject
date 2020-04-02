@@ -124,7 +124,12 @@ Begin
         Rollback;
         Return;
     End If;
-
+    if adc_xbbz=0 then
+       errno := -1;
+        errtext := '包册不能为0!';
+        Rollback;
+        Return;
+    end if;
     -- 2019-09-16 yangyi: 放开下述判断
     -- 验证进价/发价/零售价的合法性:
     If as_sylx = '0' Then
@@ -249,7 +254,13 @@ Begin
     ----------------------------------------------------------------
     -- 2016-09-20 add by yangyi:
     -- 验证营销分类所属的商品特征与单据头的商品特征要一致：
-    Select sptz Into v_sptz_yxfl From t_allfl Where flbh = as_fl;
+    Select min(sptz) Into v_sptz_yxfl From t_allfl Where flbh = as_fl;
+    if v_sptz_yxfl is null then
+        errno := -55;
+        errtext := 't_allfl没有这个分类!'||as_fl;
+        Rollback;
+        Return;
+    end if ;
     If v_sptz_yxfl <> v_sptz Then
         errno := -55;
         errtext := '营销分类的商品特征与单据头中录入的商品特征不一致!';

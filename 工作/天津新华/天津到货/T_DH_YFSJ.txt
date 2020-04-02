@@ -27,7 +27,9 @@ create table T_DH_YFSJ
   sys           NUMBER,
   ywbmbh        CHAR(6),
   bjlsh         CHAR(12),
-  pfrq          DATE
+  pfrq          DATE,
+  zt            VARCHAR2(10),
+  fyrq          DATE
 )
 tablespace DATA_TABLESPACE
   pctfree 10
