@@ -1,0 +1,161 @@
+create or replace procedure PROC_JOB_SPLITBAK(
+ERRNO   Out Number,
+ ERRTEXT Out Char  ) is
+
+v_flowid number;
+v_rows number;
+v_dj number;
+v_dpls t_dpls%rowtype;
+v_qxsl number;
+ v_zddh  char(6);
+ v_lt char(1);
+ v_dhmxcs number;
+  v_yfsl number;
+  v_error char(1);
+  v_dh char(6);
+  v_my number;
+begin
+
+     update t_wlsh t set fllx='PT'
+     where cbtask='0' and fllx is null ;
+
+
+--循环没有生成过拆包任务的处理批次 t_tldjhz
+     for cur in( select id,djsl,fllx,dh,kl_flag,ssjs,shhw,sj_flag,ywbmbh,wldh
+       from t_wlsh where zt='1' and djlx='DH' and cbtask='0' and fllx is not null  ) loop
+       commit;
+       --单据数量补齐
+       select count(*) into v_rows from tmp_dhdj where flowid_tldjhz=cur.id;
+       if v_rows<>cur.djsl then
+         continue;
+       end if ;
+
+       --单据中找不到和t_tldjhz 分流类型一致的单据
+  /*    select count(*) into v_rows from tmp_dhdj where flowid_tldjhz=cur.id and djlx=cur.fllx;
+      if v_rows=0 then
+         update t_wlsh set cbtask='9',CBTASKMSG='单据中找不到和t_tldjhz 分流类型一致的单据' where id =cur.id ;
+         --commit;
+         continue;
+      end if;
+
+      update t_tldjhz set dhlrrq =sysdate where flowid_tldjhz=cur.id;
+
+      select count(distinct djlx) into v_rows from tmp_dhdj where flowid_tldjhz=cur.id  ;
+      if v_rows> 1 then
+         update t_wlsh set cbtask='9',CBTASKMSG='单据类型不一致的单据' where id =cur.id ; 
+         continue;
+      end if ;*/
+     
+      v_error:='0';
+      for cur2 in(select flowid_dj from tmp_dhdj where  flowid_dj =flowid_dj and flowid_tldjhz=cur.id)
+       loop
+         PROC_SX_JSDHSJ_YFSJ(cur2.flowid_dj,errno,errtext);
+          If errno <> 0 Then
+             rollback;
+              Update tmp_dhdj    Set ywybh = '9999', sbbj = '5', note = substrb(errtext, 1, 50)
+                     Where flowid_dj = cur2.flowid_dj;
+                     
+              update t_wlsh set cbtask='9',CBTASKMSG='PROC_SX_JSDHSJ_YFSJ'||errtext where id =cur.id ;
+              v_error:='1';
+
+           end if;
+
+          select count(*) into v_rows  from t_sl_yfsj where flowid_dj=cur2.flowid_dj
+                 and ddcdbj='1' and tdpch is null;
+          if v_rows>0 then
+            rollback;
+             Update tmp_dhdj    Set ywybh = '9999', sbbj = '5', note ='ddcdbj=1 and tdpch is null'
+                     Where flowid_dj = cur2.flowid_dj;
+             update t_wlsh set cbtask='9',CBTASKMSG='ddcdbj=1 and tdpch is null' where id =cur.id ;
+             v_error:='1';
+          end if;
+
+          update t_sl_yfsj  set zddh=dh where flowid_dj=cur2.flowid_dj and trim(zddh) is null ;
+       end loop;
+
+       if v_error='1' then
+         -- commit;
+          continue;
+       end if ;
+
+
+
+       if cur.fllx ='GP' then
+        select count(distinct s.zddh ) into v_qxsl from T_SL_YFSJ s,tmp_dhdj j
+         where  j.flowid_tldjhz=cur.id  and s.flowid_dj=j.flowid_dj ;
+       else
+          insert into  t_yfsj_qx(dh,zddh, fl,ID_WLSH)
+          select s.dh,s.dh ,x.fl ,cur.id from T_SL_YFSJ s,tmp_dhdj j,tmp_dhmx x
+          where  j.flowid_tldjhz=cur.id  and s.flowid_dj=j.flowid_dj and s.flowid=x.flowid_dhmx;
+
+          for cur2 in (select dh ,fl ,rowid id from t_yfsj_qx where ID_WLSH=cur.id  ) loop
+              Select Count(*)   Into v_rows  From  t_guizu_fl
+                Where dh =cur2.dh And  enable = '1';
+               if v_rows > 0 then
+                 Select min(gzbh) into v_zddh  From  t_guizu_fl c
+                  Where flbh=cur2.fl And dh = cur2.dh;
+                  if v_zddh is null then
+                    select min(gzbh) into v_zddh  from t_guizu_fl  where  dh=cur2.dh;
+                  end if ;
+                 update t_yfsj_qx set zddh=v_zddh where rowid=cur2.id;
+               end if;
+
+          end loop;
+          select count(distinct zddh ) into v_qxsl from t_yfsj_qx where ID_WLSH=cur.id ;
+
+        end if ;
+
+       -- 青岛增加
+       select sum(ydmy) into v_my from tmp_dhdj where flowid_tldjhz=cur.id;
+       -- 青岛增加
+       
+       select on1 into  v_lt  from t_lt;
+       if v_lt='1' and v_qxsl =1   then
+
+          select   sum(yfsl),min(s.dh)  into v_yfsl,v_dh from   T_SL_YFSJ s,tmp_dhdj j
+          where  j.flowid_tldjhz=cur.id  and s.flowid_dj=j.flowid_dj ;
+
+          select sum( ydhcs) into v_dhmxcs  from tmp_dhmx s,tmp_dhdj j
+          where  j.flowid_tldjhz=cur.id  and s.flowid_dj=j.flowid_dj ;
+          if   v_yfsl=v_dhmxcs then
+            update tmp_dhdj set dh=v_dh where  flowid_tldjhz=cur.id ;
+            update t_wlsh set kl_flag ='2'  where  id=cur.id ;
+            update t_splitbagtask set kl_flag ='2'  where  flowid_tldjhz=cur.id ;
+           -- commit;
+            continue;
+          end if ;
+       end if ;
+
+      insert into t_dhfltask 
+       (flowid_tldjhz, createdate,  cfhw, zpz, zcs, zmy, ghdw,   yxj,zjs,fllx,ywbmbh,wldh )
+       select flowid_tldjhz,sysdate ,cfhw,zpz,zcs,zmy,ghdw,yxj,zjs,fllx,ywbmbh,cur.wldh
+        from t_splitbagtask where flowid_tldjhz=cur.id and flowid_tldjhz<>'126900449';
+
+        if cur.ywbmbh <>'000001' then
+          update t_dhfltask  t set device='RF' ,trans='0' where  flowid_tldjhz= cur.id ;
+        else
+              --去向少于4个，且不是馆配的用Rf分流
+          update t_dhfltask_tmp t set device='RF' where  flowid_tldjhz= cur.id
+          and   v_qxsl <4 and fllx<>'GP';
+
+          ---有单独成单的，也用RF分
+           update t_dhfltask  t set device='RF',trans='0' where  flowid_tldjhz= cur.id and
+            exists (select 1 from   T_SL_YFSJ s,tmp_dhdj j where t.flowid_tldjhz=j.flowid_tldjhz
+          and s.flowid_dj=j.flowid_dj and ddcdbj='1'  )  and fllx<>'GP';
+
+          update t_dhfltask  t set trans='0' where  flowid_tldjhz= cur.id and fllx='GP';
+
+        end if ;
+      --commit;
+
+     end loop;
+
+         ERRNO   :=0;
+        ERRTEXT := 'OK' ;
+exception
+      when others then
+         ERRNO   := -1;
+        ERRTEXT := sqlerrm|| 'PROC_JOB_SPLITBAK' ;
+       rollback;
+       return;
+ end PROC_JOB_SPLITBAK;

@@ -1,0 +1,12 @@
+ select '//'|| b.COMMENTS ||' \r\n  private ' || decode(a.data_type,
+              'VARCHAR2',
+                      'String',
+                      'NUMBER',
+                      'BigDecimal',
+                      'DATE',
+                      'Date') ||' ' ||lower(a.column_name) ||'; \r\n \r\n '
+
+    from user_tab_columns a,user_col_comments b
+
+    where lower(a.table_name) = lower('t_pub_maccountbook')
+    and a.TABLE_NAME=b.TABLE_NAME and a.COLUMN_NAME=b.COLUMN_NAME

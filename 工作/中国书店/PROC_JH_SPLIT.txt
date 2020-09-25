@@ -1,0 +1,500 @@
+CREATE OR REPLACE Procedure PROC_JH_SPLIT
+(
+ p_bjlsh    In Char,
+ p_ywlx   In Char,
+ p_czy  IN CHAR,
+ p_bzr in char,
+ p_js in number,
+ p_tp in char,
+ p_lx in char,
+ p_newbjlsh out varchar2,
+ ERRNO   Out Number,
+ ERRTEXT Out Varchar) As
+
+  V_BJ   char(1);
+  v_rows number;
+
+
+  v_ZPZ number;
+  v_ZCS number;
+  v_ZMY number;
+  v_ZSY number;
+  v_id_job varchar2(60);
+  v_flowid number;
+  v_jhtask t_jhtask%rowtype;
+   ldc_zpz      Number(10);
+    ldc_zcs      Number(10);
+    ldc_zmy      Number(10, 2);
+    ldc_zsy      Number(10, 2);
+    ll_rows      Number(10);
+    ls_empty_bjs Char(20);
+    ldc_bzjs     Number;
+    
+Begin
+
+   if trim(p_bzr) is null then
+      ERRNO   := -1;
+      ERRTEXT := '未设置包装人';
+      return;
+   end if ;
+
+   proc_chkrqh2(p_tp, 't_jhbag', errno, errtext);
+    If errno <> 0 Then
+
+        Return;
+    End If;
+
+   select  * into v_jhtask  from
+   t_jhtask where id=p_bjlsh ;
+
+/*   if p_ywlx<>v_jhtask.ywlx then
+      ERRNO   := -1;
+      ERRTEXT := '和包件的类型不一致';
+      return;
+   end if ;*/
+
+   select count(*) into v_rows from t_jhbag where zt='0' and tph=p_tp and ywlx<> v_jhtask.ywlx;
+   if v_rows >0 then
+         errNo   := -100;
+         errText := '托盘上存在其他类型的校核任务!';
+         Return;
+   end if ;
+
+
+
+
+  if v_jhtask.sjlx='FH' then
+       select count(*) into v_rows from t_fhjh where bjlsh=p_bjlsh
+       and fbbj='0' and jhcs-fbcs>0;
+       if v_rows =0 then
+          if p_lx='fb' then
+
+            errNo   := -1;
+            errText := '没有要分包的数据!';
+            Return;
+          else
+
+            ERRNO   := 0;
+            ERRTEXT := 'OK';
+            Return;
+          end if ;
+       end if;
+
+      select bjlsh_flowid.nextval into p_newbjlsh from dual;
+
+      if v_jhtask.jxfs='LT' then
+               insert into t_ltbag
+                 (id_wlsh, flowid_dj, id_jhtask, ghdwmc, ghdw, js,
+                  ywbmmc, ywbm, dh, zpz, zcs, zmy, id_jhbag, wldh,ysdj)
+                select id_wlsh, flowid_dj, id_jhtask, ghdwmc, ghdw, js,
+                  ywbmmc, ywbm, dh, zpz, zcs, zmy, p_newbjlsh, wldh,ysdj from
+                t_ltjh  where id_jhtask=p_bjlsh;
+      end if ;
+
+      for cur in (select * from t_fhjh where bjlsh=p_bjlsh
+          and fbbj='0' and jhcs-fbcs>0) loop
+
+         select all_flowid.nextval into v_flowid from dual;
+         insert into t_tree
+            (tbid, tbname, pid, pname, note, id, cs,czy )
+              values
+              (v_flowid, 't_pxmx', cur.flowid, 't_fhjh',
+              '发货校核打包,'||'包号'||p_newbjlsh||'托盘号'||trim(p_tp), cur.id,
+               cur.jhcs-cur.fbcs , p_czy);
+
+          insert into t_pxmx
+            (fhfs, bz, sl, zjxs, sylx, sys, thfs, pxdh, id, zdh, dh, pxcs,
+             pxzk, ywbmbh, kfbh, bjlsh,
+             djly, cybh, flowid, dbbz, xbbz, txy,
+              jhcs, jzthrq, zl, cgyj, yscs, sdhrq, cgyj_kh,
+              pfrq, zdqh, bzth,  pk, jhczybh, sourceid,
+              sourcetable, ysczy, zpdh, xh, zddh)
+          values
+             (
+             cur.fhfs, cur.bz, cur.sl, cur.zjxs, cur.sylx, cur.sys, cur.thfs, cur.pxdh,
+             cur.id, cur.zdh, cur.dh, cur.jhcs-cur.fbcs,
+             cur.pxzk, cur.ywbmbh, cur.kfbh, p_newbjlsh,
+             cur.djly, cur.cybh, v_flowid, cur.dbbz, cur.xbbz, cur.txy,
+              0, cur.jzthrq, cur.zl, cur.cgyj, cur.yscs, cur.sdhrq, cur.cgyj_kh,
+              cur.pfrq, cur.zdqh, cur.bzth,   cur.pk, cur.jhczybh, cur.flowid,
+              't_fhjh', cur.ysczy, cur.zpdh, cur.xh, cur.zddh
+             );
+
+             if cur.jhcs=cur.pxcs then
+
+                update t_fhjh set fbbj='1',fbcs=jhcs where flowid=cur.flowid  ;
+             else
+                update t_fhjh set fbcs=jhcs  where flowid=cur.flowid  ;
+             end if ;
+
+
+      end loop;
+
+  /*    Insert Into T_DFBJ
+              (BJLSH, RQH,tph, WCBJ, PFRQ, YWBMBH, YWPC, DH, YBZBJ, ZPZ, ZCS, ZMY, ZSY,
+                     BZJS, FHBMBH, SJJS, TIHFS, KFBH, ywlx, jxfs, fyfsh, ZZL, Sdhrq, js,
+                     Fhyxj, ttxh, Djbj,zddh,zb ,ddcdbj,tdpch,JHCZYBH)
+              select
+                   p_newbjlsh, p_bjlsh,p_tp, '1', Sysdate, f.ywbmbh, p_newbjlsh, f.dh,
+                   '1', count(distinct p.id), sum(pxcs), sum(pxcs*dj), sum(sys), p_js,  '3001', p_js, '01',
+                   '2001', 'FH', 'AD', '01', sum(pxcs*s.zl),null, p_js,
+                   yxj, 1, '1',f.dh,f.zb,f.ddcdbj,f.tdpch ,p_czy
+               from t_pxmx p,t_jhtask f,t_kcsm s where p.bjlsh=p_newbjlsh and f.id=p_bjlsh
+               and p.id=s.id;
+       if sql%notfound then
+         p_newbjlsh:=null;
+       end if;*/
+
+       Insert Into t_jhbag
+              (id, ID_JHTASK, tph,    ZPZ, ZCS, ZMY, ZSY,
+                     KFBH, ywlx, jxfs,   ZZL,  js,
+                      JHCZY,bzr,isgp,isgz,JHDATE,zt)
+              select
+                   p_newbjlsh, p_bjlsh,p_tp,
+                    count(distinct p.id), sum(pxcs), sum(pxcs*dj),
+                   sum(round( p.zjxs * p.pxcs * pxzk / 100, 2)),
+                   '2001', 'FH', 'AD',   sum(pxcs*s.zl),p_js,
+                   p_czy,p_bzr,v_jhtask.isgp,v_jhtask.isgz,sysdate,'2'
+               from t_pxmx p ,t_kcsm s where trim(p.bjlsh)=to_char(p_newbjlsh)  and p.id=s.id;
+
+
+
+         update t_jhbag set (ywbmbh ,dh,yxj,zddh,zb,ddcdbj,tdpch,sjlx,rqh)=
+         (select ywbmbh,dh ,yxj,zddh,zb,ddcdbj,tdpch,sjlx,rqh from t_jhtask where id= p_bjlsh)
+         where id =p_newbjlsh;
+
+          insert into t_rqzy
+          (bh, zydate, czy, tbname, tableid, note,qx,zylx)
+         select     p_tp, sysdate, null, 't_jhbag',
+         p_newbjlsh, trim(dm) ||'发货交接任务','FHJJ','s'
+         from t_dm where dh =v_jhtask.zddh;
+
+
+   end if;
+
+  if v_jhtask.sjlx='ST' then
+
+     select count(*) into v_rows from t_stjh where bjlsh=p_bjlsh
+       and fbbj='0' and jhcs-fbcs>0;
+       if v_rows =0 then
+          if p_lx='fb' then
+
+            errNo   := -1;
+            errText := '没有要分包的数据!';
+            Return;
+          else
+
+            ERRNO   := 0;
+            ERRTEXT := 'OK';
+            Return;
+          end if ;
+       end if;
+
+    select bjlsh_flowid.nextval into p_newbjlsh from dual;
+
+    for cur in (select * from t_stjh where bjlsh=p_bjlsh
+         and fbbj='0' and jhcs-fbcs>0) loop
+
+        select all_flowid.nextval into v_flowid from dual;
+         insert into t_tree
+            (tbid, tbname, pid, pname, note, id, cs,czy )
+              values
+            (v_flowid, 't_stmx', cur.flowid, 't_stjh',
+            '退货校核打包,'||'包号'||p_newbjlsh||'托盘号'||trim(p_tp), cur.id,
+            cur.jhcs-cur.fbcs , p_czy);
+
+          insert into t_stmx
+            (id, ywbmbh, cybh, kfbh, dbbz, xbbz, kccs, zycs, hw,
+            ghdwh, xm, sylx, zjxs, sjly, thzk, flowid,
+            ywpc, bjlsh, sl, jhcs, zl, cgyj, yscs, pk  ,sourceid,sourcetable)
+          values
+            (
+            cur.id, cur.ywbmbh, cur.cybh, cur.kfbh, cur.dbbz, cur.xbbz,cur.jhcs-cur.fbcs, cur.zycs, cur.hw,
+            cur.ghdwh, cur.xm, cur.sylx, cur.zjxs, cur.sjly, cur.thzk, v_flowid,
+            cur.ywpc, p_newbjlsh, cur.sl, 0, cur.zl, cur.cgyj, cur.yscs, cur.pk ,
+             cur.flowid,'t_stjh'
+            );
+
+           if cur.jhcs=cur.kccs then
+
+              update t_stjh set fbbj='1',fbcs=jhcs where flowid=cur.flowid  ;
+           else
+              update t_stjh set fbcs=jhcs  where flowid=cur.flowid  ;
+           end if ;
+
+
+
+    end loop;
+
+/*      Insert Into T_DFBJ
+              (BJLSH, RQH, tph,WCBJ, PFRQ, YWBMBH, YWPC, DH, YBZBJ, ZPZ, ZCS, ZMY, ZSY,
+                     BZJS, FHBMBH, SJJS, TIHFS, KFBH, ywlx, jxfs, fyfsh, ZZL, Sdhrq, js,
+                     Fhyxj, ttxh, Djbj,zddh,zb ,ddcdbj,tdpch,JHCZYBH)
+              select
+                   p_newbjlsh, p_bjlsh,p_tp, '1', Sysdate, f.ywbmbh, p_newbjlsh, f.dh,
+                   '1', count(distinct p.id), sum(kccs), sum(kccs*dj),
+                   sum(round( p.zjxs * p.kccs * zjxs / 100, 2)), p_js,  '3001',p_js, '01',
+                   '2002', 'ST', 'AD', '01', sum(kccs*s.zl),null,p_js,
+                   yxj, 1, '1',f.dh,f.zb,f.ddcdbj,f.tdpch,p_czy
+               from t_hykcsl p,t_jhtask f,t_kcsm s where p.bjlsh=p_newbjlsh and f.id=p_bjlsh
+               and p.id=s.id;
+       if sql%notfound then
+         p_newbjlsh:=null;
+       end if;*/
+          Insert Into t_jhbag
+              (id, ID_JHTASK, tph,  ZPZ, ZCS, ZMY, ZSY,
+                     KFBH, ywlx, jxfs,   ZZL,  js,
+                      JHCZY,bzr,isgp,isgz,JHDATE,zt)
+              select
+                   p_newbjlsh, p_bjlsh,p_tp,
+                    count(distinct p.id), sum(kccs), sum(kccs*dj),
+                   sum(round( p.zjxs * p.kccs * thzk / 100, 2)),
+                   '2002', 'ST', 'AD',   sum(kccs*s.zl),p_js,
+                   p_czy,p_bzr,v_jhtask.isgp,v_jhtask.isgz,sysdate,'2'
+               from t_stmx p, t_kcsm s where
+               trim(p.bjlsh)=p_newbjlsh    and p.id=s.id;
+
+          update t_jhbag set (ywbmbh ,dh,yxj,zddh,zb,ddcdbj,tdpch,sjlx,rqh)=
+         (select ywbmbh,dh ,yxj,zddh,zb,ddcdbj,tdpch,sjlx,rqh from t_jhtask where id= p_bjlsh)
+         where id =p_newbjlsh;
+
+          insert into t_rqzy
+          (bh, zydate, czy, tbname, tableid, note,QX,zylx)
+         select     p_tp, sysdate, null, 't_jhbag',
+         p_newbjlsh, trim(mc) ||'退货交接任务','THJJ','s'
+         from t_ghdw where bh =v_jhtask.dh;
+
+
+   end if;
+
+
+  if v_jhtask.sjlx='JT' then
+
+    select count(*) into v_rows from t_jtjh where bjlsh=p_bjlsh
+     and fbbj='0' and jhcs-fbcs>0;
+     if v_rows =0 then
+        if p_lx='fb' then
+
+          errNo   := -1;
+          errText := '没有要分包的数据!';
+          Return;
+        else
+
+          ERRNO   := 0;
+          ERRTEXT := 'OK';
+          Return;
+        end if ;
+     end if;
+
+    select bjlsh_flowid.nextval into p_newbjlsh from dual;
+
+      for cur in (select * from t_jtjh where bjlsh=p_bjlsh
+          and fbbj='0' and jhcs-fbcs>0) loop
+
+          select all_flowid.nextval into v_flowid from dual;
+         insert into t_tree
+            (tbid, tbname, pid, pname, note, id, cs,czy )
+              values
+            (v_flowid, 't_khthmx_jt', cur.flowid, 't_jtjh',
+            '拒退校核打包,'||'包号'||p_newbjlsh||'托盘号'||trim(p_tp), cur.id,
+            cur.jhcs-cur.fbcs , p_czy);
+
+            insert into t_khthmx_jt
+              (bh, czybh, dh, dj, flowid, isbn, reason, sdsl, sm,
+               thrq, xtpch, ytpch, ywbmbh, zjs, id, rqh, bjlsh,
+               jhczy, jhcs, pk, sourceid, sourcetable)
+             values
+             (1, cur.czybh, cur.dh, cur.dj, v_flowid, cur.isbn, cur.reason,
+             cur.jhcs-cur.fbcs, cur.sm,   cur.thrq, cur.xtpch, cur.ytpch, cur.ywbmbh,
+                cur.zjs, cur.id, cur.rqh,p_newbjlsh,
+               cur.jhczy,  cur.jhcs-cur.fbcs, cur.pk, cur.flowid, 't_fhjh');
+
+             if cur.jhcs=cur.sdsl then
+
+                update t_jtjh set fbbj='1',fbcs=jhcs where flowid=cur.flowid  ;
+             else
+                update t_jtjh set fbcs=jhcs  where flowid=cur.flowid  ;
+             end if ;
+      end loop;
+
+      Insert Into t_jhbag
+              (id, ID_JHTASK, tph,    ZPZ, ZCS, ZMY, ZSY,
+                     KFBH, ywlx, jxfs,   ZZL,  js,
+                      JHCZY,bzr,isgp,isgz,JHDATE,zt)
+              select
+                   p_newbjlsh, p_bjlsh,p_tp,
+                    count(distinct p.id), sum(sdsl), sum(sdsl*s.dj),
+                   sum(sdsl*s.dj),
+                   '2001', 'FH', 'AD',   sum(sdsl*s.zl),p_js,  p_czy,p_bzr,v_jhtask.isgp,v_jhtask.isgz,sysdate,'2'
+               from t_khthmx_jt p ,t_kcsm s where trim(p.bjlsh)=p_newbjlsh     and p.id=s.id;
+
+         update t_jhbag set (ywbmbh ,dh,yxj,zddh,zb,ddcdbj,tdpch,sjlx,rqh)=
+         (select ywbmbh,dh ,yxj,zddh,zb,ddcdbj,tdpch,sjlx,rqh from t_jhtask where id= p_bjlsh)
+         where id =p_newbjlsh;
+
+          insert into t_rqzy
+          (bh, zydate, czy, tbname, tableid, note,QX,zylx)
+         select     p_tp, sysdate, null, 't_jhbag',
+         p_newbjlsh, trim(dm) ||'拒退发运交接任务','JTJJ','s'
+         from t_dm where dh =v_jhtask.dh;
+
+
+   end if;
+
+
+
+       select zpz,zcs,zmy,zsy  into  v_ZPZ, v_ZCS, v_ZMY, v_ZSY
+         from  t_jhbag where  id=p_newbjlsh;
+
+       if v_jhtask.ywbmbh ='000001' then
+         v_id_job:='TS';
+       else
+         v_id_job:='YX';
+       end if;
+
+       if v_jhtask.ywlx='FH' then
+         v_id_job:=v_id_job||'FHBZ';
+       elsif v_jhtask.ywlx='ST' then
+         v_id_job:=v_id_job||'THBZ';
+       end if ;
+
+          insert into t_gzl2
+           (czybh,    pz, js, id_job, proc, tablename, tablepk,YWBM)
+         values
+           ( p_bzr  , v_zpz, p_js,
+           v_id_job, 'PROC_JH_SPLIT',
+                't_jhbag' ,p_newbjlsh ,v_jhtask.YWBMbh) ;
+
+
+           insert into t_gzltimes
+             (czybh,   cs, my, id_job, proc, tablename, tablepk,YWBM)
+             values(
+             p_bzr, v_zcs,v_zmy,
+             v_id_job, 'PROC_JH_SPLIT','t_jhbag',  p_newbjlsh,v_jhtask.YWBMbh
+             ) ;
+
+        ---u 发晕 
+        
+    Insert Into T_DFBJ
+              (BJLSH, RQH, tph,WCBJ, PFRQ, YWBMBH, YWPC, DH, YBZBJ, ZPZ, ZCS, ZMY, ZSY,
+                     BZJS, FHBMBH, SJJS, TIHFS, KFBH, ywlx, jxfs, fyfsh, ZZL, Sdhrq, js,
+                     Fhyxj, ttxh, Djbj,zddh,zb ,ddcdbj,tdpch,JHCZYBH,fyjhpc,fyrh,CH,cyrq,cydw,yh)
+     select
+       id, null, tph,'1', sysdate, j.YWBMBH, id, j.DH, '1', ZPZ, ZCS, ZMY, ZSY,
+       js, '3001', js, '01', KFBH, j.ywlx, jxfs, '01', ZZL, null, js,
+        yxj, 1, '1',zddh,zb ,ddcdbj,tdpch,JHCZY,p_newbjlsh,sysdate ,null,Sysdate,null,null
+        from t_jhbag j  where j.id=p_newbjlsh ;
+     
+     if v_jhtask.ywlx='FH' then
+
+        Insert Into T_FHMX
+          (FHFS, BZ, SL, ZJXS, SYLX, SYS, TIHFS, PFPCH, ID, ZDH, DH, SFCS, FHZK,
+           YWBMBH, KFBH, BJLSH, HW, DJLY,    dbdh, PFRQ, DBRQ, dbbz, xbbz,
+           pfbmbh, fhbmbh, txy, jzthrq, yh, cgyj, yscs, cgyj_kh,   zzpc, fyjhpc, zdqh,
+           bzth, zl, pk)
+          Select A.FHFS, A.BZ, A.SL, A.ZJXS, A.SYLX, A.SYS, A.THFS, sl || Trim(a.bjlsh),
+                 A.ID, ZDH,  a.dh,
+                   PXCS, PXZK,  A.YWBMBH, A.KFBH, A.BJLSH, A.Jhczybh,
+                 DJLY,    flowid, sysdate, Sysdate, a.dbbz, a.xbbz, '3001', '3001',
+                 a.txy, a.jzthrq, null, a.cgyj, a.yscs, a.cgyj_kh,   c.jsdh, p_newbjlsh,
+                 zdqh, a.bzth,
+                 Case
+                     When nvl(a.bzth, 0) = 0 Then
+                      0
+                     Else
+                      2
+                 End zl, a.pk
+            From T_PXMX A,   t_dm c
+           Where A.BJLSH = p_newbjlsh And a.dh = c.dh And a.pxcs >0; 
+           
+        insert into t_pxmx_bak select * from t_pxmx
+        Where BJLSH = p_newbjlsh;
+
+        Delete t_pxmx
+         Where  BJLSH = p_newbjlsh;
+        /* 
+          Update t_agv_rw_xt_bak
+           Set fyrq = Sysdate
+         Where phdh In (Select bjlsh From t_dfbj Where fyjhpc = v_ywpc);*/
+         
+            Insert Into t_wcbj
+        (BJLSH, RQH, PFRQ, YWBMBH, YWPC, DH, ZPZ, ZCS, ZMY, ZSY, ZZL, BZJS, FHBMBH,
+         FYJHPC, FYJHRQ, JHRH, FYFSH, CH, YH, YWQRPC, ZZBH, ZZBH1,  YWLX, FYRQ, FYRH,
+         KTRQ, TYLX, TYRQ, TYR, TYR_TELE, TYNR, CYRQ, CYR_TELE, CYR, CYDW, ssjs, psjs,
+         shrq, hw, zb, js, sdhrq, bzr, jhrq, GKH, jxfs)
+        Select BJLSH, RQH, PFRQ, YWBMBH, YWPC,  dh
+        , ZPZ, ZCS, ZMY, ZSY, ZZL, BZJS, FHBMBH,
+               FYJHPC, FYJHRQ, jhczybh  , '01', CH, YH, YWQRPC,
+                 ZZBH , null,   YWLX, Sysdate, FYRH,
+               KTRQ, TYLX, TYRQ, TYR, TYR_TELE, null, CYRQ, CYR_TELE, CYR, CYDW, ssjs,
+               psjs, shrq, hw, zb, js, sdhrq, bzr, jhrq, GKH, jxfs
+          From t_dfbj
+         Where  BJLSH = p_newbjlsh;
+      end if;   
+      
+     if v_jhtask.ywlx='ST' then
+         v_bj := 1;
+        Insert Into T_CRKLS
+            (FLOWID_CRKLS, ID, YWPCH, YSPCH, CRKRQ, YWLX, KFBH, LYBH, CYBH, YWBMBH, CRKCS,
+             CRKSY, SYLX, ZK_JG, ZJXS, BZ, SL, flowid_wl, pk)
+            Select a.flowid, a.id, a.bjlsh, a.bjlsh, sysdate, 'ST', a.kfbh, b.dh, a.cybh,
+                   b.ywbmbh, a.kccs, round(a.kccs * a.zjxs * a.thzk / 100, 2), a.sylx,
+                   a.thzk, a.zjxs, 'TH', A.SL, a.flowid, a.pk
+              From t_stmx a, t_dfbj b
+             Where a.bjlsh = b.bjlsh and a.bjlsh=p_newbjlsh ;
+
+        v_bj := 2;
+        Insert Into t_hythmx
+            (YWPCH, ID, THCS, THZK, DBRQ, SYS, SYLX, ZJXS, HYBH, YWBMBH, bjlsh, FLOWID,
+             sl, kfbh, cybh, hybh1, chych, cgyj, fyjhpc, pk)
+            Select s.sl || Trim(s.bjlsh), s.ID, Sum(KCCS), THZK,
+                   Sysdate, round(Sum(KCCS) * Min(zjxs) * thzk / 100, 2), Min(SYLX),
+                   Min(ZJXS), T_DFBJ.DH, T_DFBJ.YWBMBH, t_dfbj.bjlsh, Min(s.FLOWID),
+                   Min(sl), Min(s.kfbh), Min(s.cybh), Min(jhczybh),
+                   Trim(Min(t_dfbj.zb)), s.cgyj, p_newbjlsh, s.pk
+              From T_DFBJ, t_stmx s
+             Where t_dfbj.bjlsh = s.bjlsh And t_dfbj.bjlsh = p_newbjlsh
+             Group By s.sl || Trim(s.bjlsh), s.ID, thzk, T_DFBJ.DH,
+                      T_DFBJ.ywbmbh, t_dfbj.bjlsh, s.cgyj, s.pk;
+      
+        v_bj := 3;
+        Select Count(Distinct(s.id || s.thzk || s.ghdwh ||
+                               s.bjlsh)), Sum(s.kccs),
+               Sum(s.kccs * t_kcsm.dj),
+               Sum(round(s.kccs * s.zjxs * s.thzk / 100, 2)),
+               Max(bzjs)
+          Into ldc_zpz, ldc_zcs, ldc_zmy, ldc_zsy, ldc_bzjs
+          From t_stmx s, t_kcsm, t_dfbj
+         Where t_kcsm.id = s.id And t_dfbj.bjlsh = s.bjlsh And
+               t_dfbj.bjlsh = p_newbjlsh;
+   
+        Insert Into t_hythhz
+            (THRQ, YWPCH, HYBH, CYBH, YWBMBH, KFBH, ZPZ, ZCS, ZMY, ZSY, BJS, USR_ID, JHR,
+             FYPC, FYRQ, FYFS, YH, CH, FYR, Bz)
+            Select Max(dbrq), ywpch, hybh, Min(cybh), Min(ywbmbh), Min(kfbh), Count(*),
+                   Sum(thcs), Sum(thcs * dj), Sum(sys/*zjxs * thcs * thzk / 100*/), -- 2017-03-06 jy 由 zjxs * thcs * thzk / 100 改为取 sys
+                   decode(ldc_zmy,0,0,ldc_bzjs * Sum(thcs * dj) / ldc_zmy), p_czy, '', '', Null, '', '', '',
+                   '', ls_empty_bjs
+              From t_hythmx, t_kcsm
+             Where bjlsh = p_newbjlsh  And t_hythmx.id = t_kcsm.id
+             Group By ywpch, hybh;
+             
+          Insert Into t_stmx_bak
+
+        Select *
+          From t_stmx t
+         Where bjlsh=p_newbjlsh;
+   
+        Delete From t_stmx s
+         Where bjlsh=p_newbjlsh;
+         
+     end if ;  
+
+    ERRNO   := 0;
+    ERRTEXT := 'OK';
+Exception
+    When Others Then
+        ERRNO   := -1;
+        ERRTEXT :=V_BJ|| Sqlerrm|| '--PROC_JH_SPLIT';
+        Rollback;
+End;

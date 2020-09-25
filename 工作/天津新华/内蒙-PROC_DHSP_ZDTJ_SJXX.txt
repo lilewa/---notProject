@@ -1,0 +1,1885 @@
+CREATE OR REPLACE Procedure PROC_DHSP_ZDTJ_SJXX(as_flowid_dj Number,
+                                           as_type      Char,   -- 0表示首次调用，1表示前台二次调用
+                                           errcode      Out Number,
+                                           errtext      Out Char) Is
+
+
+    -- 前台首次调用时（as_type=0），若后台判断出有些品种的税率与单据税率不符，则errcode=100返回前台，
+    -- 由业务员判断是否继续，若业务员选择继续，则按as_type=1调用本过程，
+    -- 后台判断时，若as_type=1, 则不再判断明细税率与单据税率是否一致.
+
+    -- 2011-03-21 yangyi: 做了重大修改，调了proc_dhsp_cfcl
+
+    v_kfbh      tmp_dhdj.kfbh%Type;
+    tmpVar      Number;
+    tmpTldjhz   Number;
+    v_ywbmbh    Char(6);
+    v_ghdwh     Char(6);
+    v_ywybh     Char(4);
+    v_zfzd_flag Char(1); -- 直发转单标记
+    v_zfzd_dh   Char(6); -- 直转店号
+    v_xdcs      Number;
+    v_dbdh      Char(12);
+    v_djly      Char(2);
+    v_cybh      Char(6);
+    v_cgyj_kh   Char(20);
+    v_zjxs      Number;
+    v_tdpch     Char(12);
+    v_lsdbj     Char(1);
+    v_zdqh      Char(10);
+    v_zdxh      Number;
+    v_txy       Char(4);
+    v_newdbdh   Char(12);
+    v_cgzk      Number;
+
+    /******************************************************************************
+       NAME:       PROC_DHSP_ZDTJ
+       PURPOSE:    到货审批整单提交
+
+       REVISIONS:
+       Ver        Date        Author           Description
+       ---------  ----------  ---------------  ------------------------------------
+       1.0        2009-11-3   Bin lv       1. Created this procedure.
+
+       NOTES:
+
+       Automatically available Auto Replace Keywords:
+          Object Name:     PROC_DHSP_ZDTJ
+          Sysdate:         2009-11-3
+          Date and Time:   2009-11-3, 11:48:15, and 2009-11-3 11:48:15
+          Username:        Bin lv (set in TOAD Options, Procedure Editor)
+          Table Name:       (set in the "New PL/SQL Object" dialog)
+
+    ******************************************************************************/
+    V_BJ   Number;
+    v_ysdj Char(20);
+    v_rows Number;
+    v_ghdwmc Char(60);
+    v_jhzk_ht Number;
+    v_jhzk Number;
+
+    v_id1  char(21);
+    v_id   char(18);
+    v_fjw  char(3);
+    v_sptz  Char(2);
+    v_xxsl  Number;
+    v_djsl  Number; -- 单据的进项税率
+    v_fyshl Number;
+    v_mzcs  Number;
+    v_sm    char(60);
+
+    v_flowid Number;
+    v_sm_kcsm  char(60);
+    v_dj_kcsm  Number;
+    v_isbn_kcsm    Char(15);
+    v_id_jcfyhg    Char(18);
+    v_tybj         Char(1);  --提样标记，默认为0=不需提样，1=需提样未提
+    v_lb_kcsm      Char(3);
+    v_sptz_kcsm Char(2);
+    v_sylx_kcsm Char(1);
+    v_zjxs_kcsm Number;
+    -- 2012-03-12 yangyi:
+    -- 山西新增一个部门: 传煤公司，其特点 类似于 “音像部门”
+    --
+    -- 2012-06-27 add by yangyi:
+    --
+    -- 为限制到货审批时出现白屏，造成t_sl_yfsj数据重复，
+    -- dbex.T_SL_YFSJ表新增字段FLOWID_YFSJ1，其默认值为1
+    -- dbex.T_SL_YFSJ_BAK表新增字段FLOWID_YFSJ1，
+    --
+    -- 并对dbex.T_SL_YFSJ表按【YSDJH+FLOWID_YFSJ1】建立唯一索引
+    -- 如果到货审批提交出现数据重复时，会自动报错
+    --
+    -- 首先，商流到货审批提交写此表时，将该字段的值置为0,
+    -- 如果到货审批时出现了重复插入，则会报违反唯一约束。
+    --
+    -- 当物流分流时，如果遇到拆分新记录时，由于没有涉及这个字段，所欲，将按默认值置1
+    -- dbex, 新增触发器 TG_T_SL_YFSJ
+    -- 通过这个触发器判断如果此字段的值是1的话，自动将其置为主键，以防止多次拆分违反唯一约束
+    -- 相应地修改了dbsl.PROC_DHSP_ZDTJ, 写T_SL_YFSJ表时（两处），增加写 FLOWID_YFSJ1=0
+
+    v_tjth      tmp_dhdj.tjth%Type;  -- 到货单据的商品类型：0=图书，1=音像，2=其它商品
+    v_dhdj_sptz t_kcsm.sptz%Type; --
+    v_djbj      Char(1);
+    v_remark    tmp_dhdj.remark%Type;
+    v_dbbz_kcsm Number;
+    v_xbbz_kcsm Number;
+    v_zl_kcsm   Number;
+    v_cbny_kcsm Number;
+    v_fl_kcsm   Char(8);
+    v_dzdly     Char(1);--电子单来源，0=供应商上传，1=商流补录
+    v_zypc      Number;--作业批次
+    v_bckxdcs   Number;
+    v_zxdcs     Number;
+    v_sylx1     Char(1); -- 2014-08-18 add by yangyi
+    v_fhzj1     Number;  -- 2014-08-18 add by yangyi
+    v_rows1     Number;
+    v_version   Varchar2(10);
+    v_count_stb Number;
+    v_nofhbj    Char(1);
+    v_ywshbj    Char(1);
+    ---------------------------2015-09-09 yangyi: 考虑到固定发货折扣的情况, 对于不需提样且未固定发货折扣的品种，
+    v_gdzkbj    Char(1);----------------------    重新按固定发货折扣来设置t_dpls,t_yfsj_tmp中的发货折扣
+    v_gdfhzj    Number;
+    v_gdsylx    Char(1);
+    v_gdzjxs    Number;
+    v_kflx      Char(2); -- 2016-02-24 ADD BY YANGYI: 业务部门类型，用于区分是走“非图类”审批还是“图书类”审批
+                         --                           之前是根据商品特征来区分的，但有些部门尽管流程是按非图
+                         --                           类走的，但商品特征有可能选的是一般图书。
+    v_qpztybj   number;  -- 2019-05-30 add by yangyi: 全品种提样标记
+    
+    v_dpls_zjxs number;
+    
+Begin
+
+    -- 2012-12-11 add by yangyi:
+    -- 为限制前台点【提交】后，因为异常情况退出后再进入系统点【提交】造成数据重复
+    -- 因此，在到货审批提交时，先将flowid_dj写入一个临时表（t_dhdj_dhtj, 主键=flowid_dj），
+    -- 这样的话，如果两次提交，则在最终提交时，报主键重复。
+    --Insert Into t_dhdj_dhtj (flowid_dj) Values (as_flowid_dj);
+
+    tmpVar    := 0;
+    tmpTldjhz := 0;
+    V_BJ      := 1;
+    Select Count(*) Into tmpVar From tmp_dhdj Where flowid_dj = as_flowid_dj;
+    If tmpVar = 0 Then
+        errcode := -1;
+        errtext := '没有找到到货记录';
+        Rollback;
+        Return;
+    End If;
+
+    V_BJ := 2;
+    -- 2014-01-10 yangyi: 增加取sj_flag=>v_dzdly, (电子单来源，0=供应商上传，1=商流补录)
+    -- 此标记为0时, 如果是数据先行的, 则自动生成到货登记数据并与该单据绑定
+    Select flowid_tldjhz, ywbmbh, kfbh, ghdwh, nvl(zfzd, '0'), nvl(dh, 'NO'), cybh,
+           ysdj, sl, tjth, remark, sj_flag
+      Into tmpTldjhz, v_ywbmbh, v_kfbh, v_ghdwh, v_zfzd_flag, v_zfzd_dh, v_cybh,
+           v_ysdj, v_djsl, v_tjth, v_remark, v_dzdly
+      From tmp_dhdj
+     Where flowid_dj = as_flowid_dj;
+
+    -- 2015-07-27 add by yangyi: 限制禁止发货的店不能通过审批
+    If v_zfzd_flag<>'0' Then
+       Select nvl(nofhbj,'0'),nvl(ywshbj,'0')
+          Into v_nofhbj,v_ywshbj From t_dm_ywbm Where dh=v_zfzd_dh And ywbmbh=v_ywbmbh;
+       If v_nofhbj='1' Or v_ywshbj='0' Then
+            errcode := -1;
+            errtext := '此单据所对应的客户为禁止发货客户! 请核查!';
+            Rollback;
+            Return;
+       End If;
+    End If;
+
+    ------------------------------------------------------------------------------------
+    -- 2013-08-12 add by yangyi:
+    -- 根据单据类型转换成相应的商品特征，用于判断单头与明细的商品特征是否一致:
+    If v_tjth='0' Then
+       v_dhdj_sptz := '01';
+    Elsif v_tjth='1' Then
+       v_dhdj_sptz := '02';
+    Else
+       v_dhdj_sptz := '03';
+    End If;
+
+    --2013-12-18 jy add 如果是非图到货，调用 PROC_DHSP_ZDTJ_YXQT 过程。
+
+    --2016-02-24 yangyi: 因为非图类型的部门也可能会经营一般图书类的商品
+    --                   所以，不能通过商品特征来判定走哪条道
+    --                   而要根据业务部门的类型来区分
+    Select UPPER(kflx) Into v_kflx From t_dm Where dh=v_ywbmbh;
+    --If v_dhdj_sptz <> '01' Then
+    If v_kflx = 'YX' Or v_kflx = 'DJ' Then
+        PROC_DHSP_ZDTJ_YXQT(as_flowid_dj ,
+                            as_type      ,   -- 0表示首次调用，1表示前台二次调用
+                            errcode      ,
+                            errtext      );
+        If errcode <> 0 Then
+           Return;
+        End If;
+
+        Return;
+    End If;
+
+    Select Count(*) Into v_rows From tmp_dhmx
+        Where flowid_dj= as_flowid_dj And nvl(sptz,'AA')<>v_dhdj_sptz;
+    If v_rows>0 Then
+        errcode := -1;
+        errtext := '有些明细品种的商品特征与单据头上定义的不符!';
+        Rollback;
+        Return;
+    End If;
+    ----------------------------------------------------------------------------------
+
+    V_BJ := 211;
+    --------------------------------------------------------------------------------------------
+    -- 2012-06-10 yangyi:
+    -- 从采购合同中取得相应的进货折扣：
+    -- 同货源、同部门、相应的日期范围之内的进货折扣
+    -- 为下边判断限制进货折扣不能超过合同折扣做准备:
+    Select nvl(min(Uniform_discount),0) Into v_jhzk_ht
+      From t_Contract a
+     Where a.Provider=v_ghdwh And
+           a.Handlers_Department=v_ywbmbh And
+           a.Begin_Date<=Sysdate And a.End_Date+1>Sysdate And
+           a.lx='1' And a.approve_status='2' And a.type='01';
+
+    -- 2015-06-26 yangyi:
+    -- 如果没有签订采购合同，则取货源默认折扣
+    -- t_ghdw_ywbm中新增jhzk字段，用于设置货源的默认进货折扣
+    If v_jhzk_ht=0 Then
+        Select nvl(min(jhzk),0) Into v_jhzk_ht From t_ghdw_ywbm a Where a.ghdwh=v_ghdwh And a.ywbmbh=v_ywbmbh;
+    End If;
+    -- end add
+
+     V_BJ := 212;
+-- 2012-10-19 yangyi:
+-- 以下判断被挪动了新的过程中proc_dhsp_zdtj_chkhtzk,
+-- 前台调用proc_dhsp_zdtj_chkhtzk后，若有超合同折扣的品种，则提示是否继续?，
+-- 若前台选择继续，则再继续调proc_dhsp_zdtj过程(按as_type=0方式调用)。
+-- 所以，这里屏蔽了以下判断。
+-- 若调此过程后，出现税率与单据税率不符时，返回提示，由前台选择是否继续？
+-- 前台选择继续，则再按as_type=1, 继续调proc_dhsp_zdtj过程。
+
+/*    If v_jhzk_ht>0 Then
+       Select Count(*) Into v_rows From tmp_dhmx Where flowid_dj=as_flowid_dj And sylx='0';
+       If v_rows>0 Then
+           Select Max(jhzk) Into v_jhzk From tmp_dhmx Where flowid_dj=as_flowid_dj And sylx='0';
+           If v_jhzk>v_jhzk_ht Then
+              Select mc Into v_ghdwmc From t_ghdw Where bh=v_ghdwh;
+              errcode   := -1;
+              errtext := '['||trim(v_ghdwmc)||']的进货折扣已超过合同中规定的进货折扣!'||v_jhzk_ht;
+              Rollback;
+              Return;
+           End If;
+      End If;
+    End If;
+*/    ----------------------------------------------------------------------------------------
+
+
+--  2012-11-20 yangyi:
+--- 根据山东卢新要求，暂时屏蔽掉此判断
+/*    -- 2012-03-19 add by yangyi: 有时候单据可能会录重了。所以增加了判断：
+    Select Count(*)
+      Into v_rows
+      From t_dhdj@c_link_sl_wl
+
+     Where ywbmbh = v_ywbmbh And ghdwh = v_ghdwh And ysdj = v_ysdj;
+    If v_rows > 0 Then
+        errcode := -1;
+        errtext := '当前部门该货源此原始单号已经录过了！请仔细核查! (如果确实录重了，请点【否决】按钮)';
+        Rollback;
+        Return;
+    End If;
+    -------------------------------------------------------------------------------------------
+*/
+---------------------------------------------------------------------------------------------
+
+     -- 2019-06-01 add yangyi: 如果是全品种提样方式，则到货审批后，对新品直接生成ID
+     Select nvl(Min(sys_value), 0)
+       Into v_qpztybj
+       From t_sysset@c_link_sl_wl
+      Where sys_item = 'QPZTYBJ' And sys_ywbmbh = v_ywbmbh;
+ V_BJ := 213;
+    -- 2012-03-28 add by yangyi:
+    -- 为确保到货明细的折价系数、实样类型与分配结果保持一致
+    -- 因为到货审批主配后，有可能又改变了到货品种的定价。
+    -- 而物流后期分流时，会用到T_YFSJ_TMP.zjxs
+    -- 在整单提交时，再根据到货明细的情况，重新替换一下t_dpls和T_YFSJ_TMP
+    -- sp
+    For c_dhmx In (Select flowid_dhmx, sylx, decode(sylx,'0',dj,100) As zjxs, sptz,
+                          isbn, sm, dj, zt, wz, fl, bc, lb, jhzk, yssl, cbny, dbbz, xbbz, zl,
+                          Nvl(flowid_jcfyhg, 0) As flowid_jcfyhg, Nvl(tybj, '0') As tybj, fhzk
+                     From tmp_dhmx
+                    Where flowid_dj = as_flowid_dj)
+    Loop
+
+        v_sm_kcsm   :='';
+        v_isbn_kcsm :='';
+        v_sptz_kcsm := '';
+        v_sylx_kcsm := '';
+        v_lb_kcsm   := Null;
+        v_fl_kcsm   := Null;
+        v_cbny_kcsm := Null;
+
+        -- 2012-09-05 yangyi:
+        -- 将物流生成ID的语句挪到了商流的到货审批提交:
+        If c_dhmx.sptz Is Null Then
+          errcode := -1;
+          errtext := '有些品种没有定义商品特征!'; -- 即：图书、音像、文化用品
+          Rollback;
+          Return;
+        End If;
+
+        -- 2014-12-18 yangyi:
+        -- 限制有时候供货商上传电子单时，实洋类型可能会传错!!
+        If c_dhmx.sylx='1' And c_dhmx.jhzk>c_dhmx.dj Then
+            errcode := -1;
+            errtext := '价格方式下的进价不能大于零售价!';
+            Rollback;
+            Return;
+        End If;
+        --------------------------------------------------------
+        
+        -- 2019-09-16 yangyi: 增加下述判断
+        -- 验证进价/发价/零售价的合法性:
+        If c_dhmx.sylx = '0' Then
+        
+            If c_dhmx.jhzk > c_dhmx.fhzk and nvl(c_dhmx.fhzk,0)>0 Then
+                errcode := -1;
+                errtext := '发折不能高于进折!'||trim(c_dhmx.sm);
+                Rollback;
+                Return;
+            End If;
+        
+        Else
+            
+            if nvl(c_dhmx.fhzk,0)<=0 then
+                errcode := -1;
+                errtext := '价格方式进货的必须提供发价!'||trim(c_dhmx.sm);
+                Rollback;
+                Return;
+            end if;
+            
+            If c_dhmx.jhzk > c_dhmx.fhzk Then
+                errcode := -1;
+                errtext := '进价必须低于发价!'||trim(c_dhmx.sm);
+                Rollback;
+                Return;
+            End If;
+        
+            If c_dhmx.jhzk >= c_dhmx.dj Then
+                errcode := -1;
+                errtext := '进价必须低于零售价(定价)!'||trim(c_dhmx.sm);
+                Rollback;
+                Return;
+            End If;
+
+            If c_dhmx.fhzk >= c_dhmx.dj Then
+                errcode := -1;
+                errtext := '发价必须低于零售价(定价)!'||trim(c_dhmx.sm);
+                Rollback;
+                Return;
+            End If;
+            
+        End If;
+        
+        If c_dhmx.sylx <> '0' Then
+            If c_dhmx.jhzk >= c_dhmx.dj Then
+                errcode := -1;
+                errtext := '进价必须低于零售价(定价)!'||trim(c_dhmx.sm);
+                Rollback;
+                Return;
+            End If;
+        End If;
+
+/*        If trim(c_dhmx.lb) Is Null Then
+          errcode := -1;
+          errtext := '['||trim(c_dhmx.sm)||']的财务大类没有定义!';
+          Rollback;
+          Return;
+        End If;
+
+        If trim(c_dhmx.fl) Is Null Then
+          errcode := -1;
+          errtext := '['||trim(c_dhmx.sm)||']的营销细类没有定义!';
+          Rollback;
+          Return;
+        End If;
+*/
+        /*-- 2012-10-06 yangyi:
+        If c_dhmx.lb Is Null Then
+          errcode := -1;
+          errtext := '['||trim(c_dhmx.sm)||']的财务大类没有定义!';
+          Rollback;
+          Return;
+        End If;
+
+        -- 2013-08-28 add by yangyi:
+        -- 发现到货录入时，有些品种的分类没有录入到非底级
+        --------------------------------------
+        If length(trim(c_dhmx.fl))=2 Then
+           Select nvl(djbj,'0') Into v_djbj From t_allfl Where flbh=c_dhmx.fl;
+           If v_djbj<>'1' Then
+               errcode := -1;
+               errtext := '['||trim(c_dhmx.sm)||']的营销细类至少要输入到2级分类!';
+               rollback;
+               return;
+           End If;
+        End If;
+        ------------------------------------------
+
+        -- 2013-01-13 by yangyi: 将书名中的特殊字符替换掉：
+        c_dhmx.sm := Replace(c_dhmx.sm, '&', '-');
+        c_dhmx.sm := Replace(c_dhmx.sm, '^', '-');
+        c_dhmx.sm := Replace(c_dhmx.sm, '~', '-');
+        c_dhmx.sm := Replace(Trim(c_dhmx.sm),'''','‘');
+        c_dhmx.sm := replace(replace(c_dhmx.sm, CHR(13), ''), CHR(10), '');
+
+        PKG_PUBLIC_FUNC.PROC_GETID_YANGYI(c_dhmx.isbn,c_dhmx.sm,c_dhmx.dj,c_dhmx.zt,c_dhmx.wz,'01','',
+                                          v_ywbmbh,c_dhmx.fl,c_dhmx.bc,v_id1,errcode,errtext);
+        If errcode<>0 Then
+          Rollback;
+          Return;
+        End If;
+
+        v_fjw := substrb(v_id1,1,3);
+        v_id  := substrb(v_id1,4);*/
+
+        --2013-12-18 jy add 只有直发/转发才生成书目,直接按电子单的isbn,sm,dj生成
+        --If v_zfzd_flag <> '0' Then
+
+            -- 2014-08-14 yangyi: 因为tmp_dhmx已经设置了触发器，所以这里也就不必再做替换了。
+
+/*            -- 2013-01-13 by yangyi: 将书名中的特殊字符替换掉：
+            c_dhmx.sm := Replace(c_dhmx.sm, '&', '-');
+            c_dhmx.sm := Replace(c_dhmx.sm, '^', '-');
+            c_dhmx.sm := Replace(c_dhmx.sm, '~', '-');
+            c_dhmx.sm := Replace(Trim(c_dhmx.sm),'''','‘');
+            c_dhmx.sm := replace(replace(c_dhmx.sm, CHR(13), ''), CHR(10), '');
+            c_dhmx.sm := replace(c_dhmx.sm,CHR(9),'');
+            c_dhmx.sm := replace(Trim(c_dhmx.sm),CHR(32),'');
+
+*/
+            PKG_PUBLIC_FUNC.PROC_GETID_YANGYI(c_dhmx.isbn,c_dhmx.sm,c_dhmx.dj,c_dhmx.zt,c_dhmx.wz,'01','',
+                                              v_ywbmbh,c_dhmx.fl,c_dhmx.bc,c_dhmx.sptz,v_id1,errcode,errtext);
+            If errcode<>0 Then
+              Rollback;
+              Return;
+            End If;
+ V_BJ := 214;
+            v_fjw := upper(substrb(v_id1,1,3));
+            v_id  := substrb(v_id1,4);
+
+        --Else
+        --    v_id  := '';
+        --End If;
+
+        /*-- 2012-10-08 yangyi:
+        -- 根据财务大类取得相应的税率, 并将其替换到tmp_dhmx中,以便生成书目时使用:
+        Select nvl(sl,13) Into v_xxsl From t_lb Where bh=c_dhmx.lb;
+        If v_xxsl<>v_djsl And as_type='0' Then
+           errcode := 100;
+           errtext := '此单中有些明细品种的税率与单据头的进项税率['||v_djsl||']不一致! 如：['||Trim(c_dhmx.sm)||']的税率为['||v_xxsl||']';
+           Return;
+        End If;    */
+ V_BJ := 215;
+        Select nvl(Min(sl), 10) Into v_xxsl From t_lb Where bh=c_dhmx.lb;
+
+        If as_type='0' Then
+
+            errtext :='';
+
+            --2013-02-01 jy add 若有进货折扣大于采购折扣的记录，则给予提示，由采购员决定是否继续提交
+            SELECT NVL(MIN(JHZK), 0)
+            Into v_cgzk
+            FROM T_JCFYHG, T_JCFYHG_DHMX
+            WHERE T_JCFYHG.FLOWID = T_JCFYHG_DHMX.FLOWID AND
+                  T_JCFYHG_DHMX.FLOWID_TMP_DHMX = c_dhmx.flowid_dhmx;
+ V_BJ := 216;
+            If v_cgzk > 0 And c_dhmx.jhzk > v_cgzk Then
+               errtext := '此单中有些明细品种的进货折扣['||c_dhmx.jhzk||']大于采购折扣! 如：['||Trim(c_dhmx.sm)||']的采购折扣为['||v_cgzk||']'/*||chr(13)*/;
+            End If;
+
+            If v_xxsl<>v_djsl Then
+               If v_cgzk > 0 And c_dhmx.jhzk > v_cgzk Then
+                  errtext := '此单中有些明细品种的进货折扣['||c_dhmx.jhzk||']大于采购折扣! 如：['||Trim(c_dhmx.sm)||']的采购折扣为['||v_cgzk||']'/*||chr(13)*/||
+                             '此单中有些明细品种的税率与单据头的进项税率['||v_djsl||']不一致! 如：['||Trim(c_dhmx.sm)||']的税率为['||v_xxsl||']';
+               Else
+                  errtext := '此单中有些明细品种的税率与单据头的进项税率['||v_djsl||']不一致! 如：['||Trim(c_dhmx.sm)||']的税率为['||v_xxsl||']';
+               End If;
+            End If;
+
+            /* 2014-01-07 jy comment
+            -- 2013-07-23 jy add 增加判断大中专关联数小于采购数的情况
+            Select nvl(Sum(mzcs), 0), Count(*)
+            Into v_mzcs, v_rows
+            From t_jcfyhg_dhmx a
+            Where flowid_tmp_dhmx = c_dhmx.flowid_dhmx And
+                  Exists (Select 1 From t_jczdml Where zdqh=a.zdqh And zdxh = a.zdxh And ddlx = '04' And rownum=1);
+            If c_dhmx.yssl > v_mzcs And v_rows>0 Then
+               errtext := errtext || '此单中有些大中专明细品种的到货数量['||c_dhmx.yssl||']大于匹配订数!';-- 如：['||Trim(c_dhmx.sm)||']的匹配订数为['||v_mzcs||']'||chr(13);
+            End If;   */
+
+            If trim(errtext) Is Not Null Then
+               errcode := 100;
+               Return;
+            End If;
+
+        End If;
+
+        --2013-10-31 jy add 判断是否需不需要提样
+        --2014-01-09 20:56 jy add mzcs > 0 的判断,否则出现替换tmp_dhmx,唯一索引报错的情况
+        --2014-01-10 07:51 yy add flag = '0' 的判断,否则出现替换tmp_dhmx,唯一索引报错的情况
+        --                 因为尽管mzcs=0但有可能是不需要提样的
+        --                 而 flag = '0' 表示为真正匹配, flag = '1' 表示为非真正匹配
+        --
+        -- 特殊情况: tmp_dhmx中的书号+定价相同但书名不同的有多条记录, 但实际是同一个品种
+        --           其所关联的采购单的"ID"相同, 则会出现主键冲突的问题
+        --
+        -- 2017-01-10 jy add 屏蔽 flag='0' 的条件，增加 Substr(t_jcfyhg_dhmx.flowid_dhmx, 1, 3) <> 'AAA' 的条件
+        Select Count(Distinct flowid) Into v_rows
+        From t_jcfyhg_dhmx
+        Where flowid_tmp_dhmx = c_dhmx.flowid_dhmx And /*flag='0'*/
+              Substr(t_jcfyhg_dhmx.flowid_dhmx, 1, 3) <> 'AAA';
+              --mzcs > 0;
+ V_BJ := 217;
+        -- 判断大中专必须匹配依据 (上边已经判过了见第346行)
+        -- 对于没有走系统的大中专, 将视为普通到货, 因此也不会受此限制.
+        -- 切换大中专时, 要求参与切换的门店必须是所有未走系统的大中专订货/发货全部结算完毕
+
+        --只匹配了一笔采购单的情况
+        -- 2017-01-10 jy add 判断 c_dhmx.flowid_jcfyhg = 0，只有没有改过书名的才判断是否关联，
+        -- 改过书名的必须要进行提样
+        If v_rows > 0 And c_dhmx.flowid_jcfyhg = 0 Then
+
+            Select Count(Distinct trim(t_jcfyhg.Id)) --Count(Distinct Nvl(t_jcfyhg.id, 'A')) 2014-07-07 jy edit
+            Into v_rows
+            From t_jcfyhg, t_jcfyhg_dhmx
+            Where t_jcfyhg.flowid =  t_jcfyhg_dhmx.flowid And
+                  t_jcfyhg_dhmx.flowid_tmp_dhmx = c_dhmx.flowid_dhmx And /*t_jcfyhg_dhmx.flag='0'*/
+                  substr(t_jcfyhg_dhmx.flowid_dhmx, 1, 3) <> 'AAA';
+                  -- mzcs > 0
+            /*Group By t_jcfyhg.flowid, t_jcfyhg.id*/ --2013-11-13n jy add
+
+            -- 2014-12-23 16:45 jy add 因为发现在t_jcfyhg_dhmx中关联了多条采购单，并且采购单中的 ID 为空和不为空的都存在
+            -- 的情况，导致了认为不需要提样，而用已有 ID 而生成到货的情况。所以在原有判断的前提下增加了关联的采购单中
+            -- 如果是否存在 ID 为空的判断，一旦有，就必须提样。
+            Select Count(Distinct trim(t_jcfyhg.Id)) --Count(Distinct Nvl(t_jcfyhg.id, 'A')) 2014-07-07 jy edit
+            Into v_rows1
+            From t_jcfyhg, t_jcfyhg_dhmx
+            Where t_jcfyhg.flowid =  t_jcfyhg_dhmx.flowid And
+                  t_jcfyhg_dhmx.flowid_tmp_dhmx = c_dhmx.flowid_dhmx And /*t_jcfyhg_dhmx.flag='0'*/
+                  substr(t_jcfyhg_dhmx.flowid_dhmx, 1, 3) <> 'AAA' And
+                  Nvl(t_jcfyhg.id, 'A') = 'A';
+ V_BJ := 218;
+            -- 2014-12-23 17:02 jy add   And v_rows1 = 0
+            If v_rows = 1 And v_rows1 = 0 Then
+
+                Select t_jcfyhg.id /*t_jcfyhg.flowid, t_jcfyhg.id */
+                Into /*v_flowid,*/ v_id_jcfyhg
+                From t_jcfyhg, t_jcfyhg_dhmx
+                Where t_jcfyhg.flowid =  t_jcfyhg_dhmx.flowid And
+                      t_jcfyhg_dhmx.flowid_tmp_dhmx = c_dhmx.flowid_dhmx And
+                      --mzcs > 0
+                      /*t_jcfyhg_dhmx.flag='0'*/
+                      substr(t_jcfyhg_dhmx.flowid_dhmx, 1, 3) <> 'AAA' And
+                      rownum = 1
+               /* Group By t_jcfyhg.flowid, t_jcfyhg.id*/; --2013-11-13n jy add
+
+                --t_jcfyhg中有ID
+                If v_id_jcfyhg Is Not Null Then
+                   Select sm, dj, isbn , sptz, sylx, decode(sylx,'0',dj,100),
+                          dbbz, xbbz, lb, fl, cbny, zl
+                   Into v_sm_kcsm, v_dj_kcsm, v_isbn_kcsm, v_sptz_kcsm, v_sylx_kcsm, v_zjxs_kcsm,
+                        v_dbbz_kcsm, v_xbbz_kcsm, v_lb_kcsm, v_fl_kcsm, v_cbny_kcsm, v_zl_kcsm
+                   From t_kcsm_all
+                   Where id = v_id_jcfyhg And ywbmbh=v_ywbmbh;
+
+                   If v_dbbz_kcsm Is Null Or v_xbbz_kcsm Is Null Then
+                      Select nvl(min(dbbz), 1), nvl(min(xbbz), 1), nvl(Min(zl),0)
+                       Into v_dbbz_kcsm, v_xbbz_kcsm, v_zl_kcsm
+                       From t_kcsm
+                       Where id = v_id_jcfyhg;
+                   End If;
+ V_BJ := 219;
+                   --t_jcfyhg中有ID且ID对应t_kcsm中的dj与 tmp_dhmx 的dj 相等,则不需要提样
+                   If v_dj_kcsm = c_dhmx.dj And v_sptz_kcsm=c_dhmx.sptz Then
+                      --提样标记，默认为0=不需提样，1=需提样未提
+                      v_tybj := '0';
+                      v_id := v_id_jcfyhg;
+                      -- 2015-06-26 yangyi: 为避免重复处理，将下边的语句挪到了这里
+                      Update tmp_dhmx Set id=v_id Where flowid_dhmx=c_dhmx.flowid_dhmx;
+                      pkg_public_func.proc_write_id_xtw(c_dhmx.flowid_dhmx,v_ywbmbh,'',120, 'OLD',v_id,errcode,errtext);
+                      If errcode <> 0 Then
+                          Rollback;
+                          Return;
+                      End If;
+                      ------------------------------------------------------------------------------
+                   Else
+                      v_tybj := '1';
+                   End If;
+                Else
+                   v_tybj := '1';
+                End If;
+            Else
+                v_tybj := '1';
+            End If;
+        Else
+            v_tybj := '1';
+        End If;
+ V_BJ := 220;
+        -- 2017-06-20 jy add 强制提样
+        If c_dhmx.tybj = '1' Then
+            v_tybj := '1';
+        End If;
+
+        -- 2015-06-26 add by yangyi:
+        -- 如果上述判断为需要提样的话，下边再继续判断一下是否需要提样：
+        If v_tybj <> '0' Then
+            If v_fjw = 'OLD' Then
+                -- 即使库存书目中已存在，也要调这个函数，目的是更新t_kcsm_ywbm中的相关信息
+                Update tmp_dhmx Set id=v_id Where flowid_dhmx=c_dhmx.flowid_dhmx;
+                pkg_public_func.proc_write_id_xtw(c_dhmx.flowid_dhmx,v_ywbmbh,'',120,v_fjw,v_id,errcode,errtext);
+                If errcode <> 0 Then
+                    Rollback;
+                    Return;
+                End If;
+                v_tybj := '0'; -- 如果t_kcsm中存在，则不需要提样
+                 V_BJ := 227;
+            Else
+
+               -- 2019-06-01 add yangyi: 如果是全品种提样方式，则直接生成ID
+               if v_qpztybj=1 then
+                  -- 2019-05-30 yangyi:
+                  -- 所以判断一下，如果录入的大类与业务部门有冲突，则按营销分类的对应关系重新改变一下财务大类
+                  Select Count(*) Into v_rows From t_lb
+                     Where bh=c_dhmx.lb And ywbmbhs Like '%'||Trim(v_ywbmbh)||'%';
+                   V_BJ := 230;
+                  If v_rows=0 Then
+                     SELECT COUNT(*) INTO V_ROWS FROM T_ALLFL WHERE  flbh=c_dhmx.fl;
+                     IF V_ROWS =0 THEN
+                        errcode := -1;
+                        errtext := 'PROC_DHSP_ZDTJ_SJXX--' || '请维护营销细类和财务大类！'||c_dhmx.sm;
+                        Rollback;
+                        Return;
+                     END IF;
+                     
+                     Select blbh Into c_dhmx.lb From t_allfl Where flbh=c_dhmx.fl;
+                     
+                     Update tmp_dhmx Set lb=c_dhmx.lb Where flowid_dhmx=c_dhmx.flowid_dhmx;
+                  End If;
+                   V_BJ := 229;
+                  --------------------------------------------------------------------------------------------------
+                  Update tmp_dhmx Set id=v_id Where flowid_dhmx=c_dhmx.flowid_dhmx;
+                  pkg_public_func.proc_write_id_xtw(c_dhmx.flowid_dhmx,v_ywbmbh,'',120, v_fjw,v_id,errcode,errtext);
+                  If errcode <> 0 Then
+                      Rollback;
+                      Return;
+                  End If;
+                  v_tybj := '0';
+ V_BJ := 221;
+               else
+                   -- 如果浙江书目中存在且必录项目齐全，直接生成书目信息，则也就不需要提样了
+                   -- 2015-08-26 yangyi: 如果分类不是最低级的也需要走提样流程
+                   SELECT nvl(min(djbj),'0') into v_djbj from t_allfl where flbh=c_dhmx.fl;
+
+                   If c_dhmx.cbny Is Not Null And v_djbj='1'/*length(trim(c_dhmx.fl))=8*/ And c_dhmx.lb Is Not Null Then
+ V_BJ := 226;
+
+                       Select Count(*) Into v_rows From t_stand_book a
+                          Where a.isbn=c_dhmx.isbn And a.Sm60=c_dhmx.sm And a.dj=c_dhmx.dj;
+                       If v_rows>0 Then
+                            --------------------------------------------------------------------------------------------------
+                            -- 2016-04-29 yangyi: 河北有可能用浙江书目,
+                            -- 所以判断一下，如果录入的大类与业务部门有冲突，则按营销分类的对应关系重新改变一下财务大类
+                            Select Count(*) Into v_rows From t_lb
+                               Where bh=c_dhmx.lb And ywbmbhs Like '%'||Trim(v_ywbmbh)||'%';
+                        V_BJ := 227;    
+                        If v_rows=0 Then
+                               Select blbh Into c_dhmx.lb From t_allfl Where flbh=c_dhmx.fl;
+                               Update tmp_dhmx Set lb=c_dhmx.lb Where flowid_dhmx=c_dhmx.flowid_dhmx;
+                            End If;
+                            --------------------------------------------------------------------------------------------------
+                             V_BJ := 228;
+                            Update tmp_dhmx Set id=v_id Where flowid_dhmx=c_dhmx.flowid_dhmx;
+                            pkg_public_func.proc_write_id_xtw(c_dhmx.flowid_dhmx,v_ywbmbh,'',120, v_fjw,v_id,errcode,errtext);
+                            If errcode <> 0 Then
+                                Rollback;
+                                Return;
+                            End If;
+                            v_tybj := '0';
+                       Else
+                           v_id := ''; -- 如果没有生成ID，则将取得的v_id变量清空
+                       End If;
+ V_BJ := 222;
+                   Else
+                      v_id := ''; -- 如果没有生成ID，则将取得的v_id变量清空
+                   End If;
+               end if;
+            End If;
+
+            If v_tybj = '0' And v_id Is Not Null Then
+                 Select sm, dj, isbn , sptz, sylx, decode(sylx,'0',dj,100),
+                          dbbz, xbbz, lb, fl, cbny, zl
+                   Into v_sm_kcsm, v_dj_kcsm, v_isbn_kcsm, v_sptz_kcsm, v_sylx_kcsm, v_zjxs_kcsm,
+                        v_dbbz_kcsm, v_xbbz_kcsm, v_lb_kcsm, v_fl_kcsm, v_cbny_kcsm, v_zl_kcsm
+                   From t_kcsm_all
+                   Where id = v_id And ywbmbh=v_ywbmbh;
+
+                   If v_dbbz_kcsm Is Null Or v_xbbz_kcsm Is Null Then
+                      Select nvl(min(dbbz), 1), nvl(min(xbbz), 1), nvl(min(zl), 0)
+                       Into v_dbbz_kcsm, v_xbbz_kcsm, v_zl_kcsm
+                       From t_kcsm
+                       Where id = v_id;
+                   End If;
+            End If;
+        End If;
+ V_BJ := 223;
+        -- 2019-06-01 add yangyi: 增加判断
+        if v_qpztybj=1 then
+           select count(*) into v_rows
+              From tmp_dhmx Where flowid_dhmx = c_dhmx.flowid_dhmx and trim(id) is not null;
+           if v_rows=0 then
+              errcode := -1;
+              errtext := 'PROC_DHSP_ZDTJ_SJXX--' || '全品种提样方式下，没有生成ID！'||c_dhmx.flowid_dhmx;
+              Rollback;
+              Return;
+           end if;
+        end if;
+ V_BJ := 224;
+        --2015-07-16 ymx 按照杨工指示 插一个old表，以备过后查询使用
+        Insert Into tmp_dhmx_old
+            (flowid_dhmx, flowid_dj, isbn, sm, dj, bc, yc, cbny, bz, yz, bb, fl, cip,
+             splx, sptz, zt, kb, zz, nj, nz, xz, zfk, wz, jhfs, bblx, sl, flowid_allzdsm,
+             zdqh, zdxh, sylx, jhzk, fhzk, dbbz, xbbz, mkzl, yssl, djshsl, pssl, yjrq,
+             jzjtrq, cqjtbl, xszq, remark, fgywybh, lrczybh, shczybh, shqrrq, lrqrzyczybh,
+             zdyj, tph, cbczybh, flowid_jcfyhg, hw, ydhcs, bdcs, lrqrrq, yssy, kzxsbj, ID,
+             changdu, kuandu, gaodu, tj, zl, sjflcs, tm_flag, tm, sm_cs, sm_fcs, sm_bl,
+             ppbj, tybj, fl1, fl2, fl3, cbzb, fxzb, kmfl, bcfl, mfjcbj, fhfs, spdm, ysxlh,
+             lb, new_flag)
+            Select flowid_dhmx, flowid_dj, isbn, sm, dj, bc, yc, cbny, bz, yz, bb, fl, cip,
+                   splx, sptz, zt, kb, zz, nj, nz, xz, zfk, wz, jhfs, bblx, sl,
+                   flowid_allzdsm, zdqh, zdxh, sylx, jhzk, fhzk, dbbz, xbbz, mkzl, yssl,
+                   djshsl, pssl, yjrq, jzjtrq, cqjtbl, xszq, remark, fgywybh, lrczybh,
+                   shczybh, shqrrq, lrqrzyczybh, zdyj, tph, cbczybh, flowid_jcfyhg, hw,
+                   ydhcs, bdcs, lrqrrq, yssy, kzxsbj, ID, changdu, kuandu, gaodu, tj, zl,
+                   sjflcs, tm_flag, tm, sm_cs, sm_fcs, sm_bl, ppbj, tybj, fl1, fl2, fl3,
+                   cbzb, fxzb, kmfl, bcfl, mfjcbj, fhfs, spdm, ysxlh, lb, new_flag
+              From tmp_dhmx
+             Where flowid_dhmx = c_dhmx.flowid_dhmx;
+
+        /*-- 生成t_kcsm/t_kcsm_ywbm，并通过数据链生成物流的t_kcsm/t_kcsm_ywbm
+        update tmp_dhmx set sm=c_dhmx.sm, id = v_id, sl=v_xxsl where flowid_dhmx = c_dhmx.flowid_dhmx;
+        v_bj := 2;
+        pkg_public_func.proc_write_id_xtw(c_dhmx.flowid_dhmx,v_ywbmbh,'',120,v_fjw,v_id,errcode,errtext);
+        if errcode<>0 then
+           rollback;
+           return;
+        end if;
+
+        ----------------------------------------------------------------------------------------
+        -- 2012-10-06 yangyi: 物流要求去掉tmp_dhmx.id
+        -- 2012-12-18 yangyi: 商流的书名中自动去掉了特殊字符，
+        -- 为避免物流重新生成ID，需要用商流滤掉特殊字符后的书名更新一下物流临时表中的书名
+        Select sm Into c_dhmx.sm From t_kcsm Where id=v_id;
+        update tmp_dhmx set id = '', sm=c_dhmx.sm where flowid_dhmx = c_dhmx.flowid_dhmx;
+        ---------------------------------------------------------------------------------------
+
+        Insert Into tmp_dhmx_kcsm(isbn,Id,sm,dj,flowid_dhmx,flowid_dj,rq)
+        Values (c_dhmx.isbn, v_id, c_dhmx.sm, c_dhmx.dj, c_dhmx.flowid_dhmx, as_flowid_dj, Sysdate);
+
+        Select Count(*) Into v_rows From t_kcsm Where isbn=c_dhmx.isbn And sm=c_dhmx.sm And dj=c_dhmx.dj;
+        If v_rows=0 Then
+           errcode := -1;
+           errtext :='库存书目信息没有生成！'||c_dhmx.flowid_dhmx;
+           rollback;
+           return;
+        End If;
+
+        -- 2012-12-05 yangyi: 顺便将t_dpls.id置上id号
+        Update t_dpls Set sylx=c_dhmx.sylx, zjxs=c_dhmx.zjxs, id=v_id
+           Where flowid_dhmx = c_dhmx.flowid_dhmx;
+
+        Update T_YFSJ_TMP Set sylx=c_dhmx.sylx, zjxs=c_dhmx.zjxs,id=v_id --2013-11-08 jy add,防止音像的xdcs=0，清空t_dpls.flowid_dhmx且没有ID的情况
+           Where flowid = c_dhmx.flowid_dhmx;*/
+
+        --2013-12-18 jy add 只有直发/转发才生成书目
+        If v_zfzd_flag <> '0' Then
+            -- 生成t_kcsm/t_kcsm_ywbm，并通过数据链生成物流的t_kcsm/t_kcsm_ywbm
+
+            v_bj := 2;
+
+            Select Count(*) Into v_rows From t_kcsm_all
+            Where id = v_id And ywbmbh=v_ywbmbh;
+
+            If v_rows > 0 Then
+                Select sm, dj, isbn , sptz, sylx, decode(sylx, '0', dj, 100),
+                        dbbz, xbbz, lb, fl, cbny, zl
+                 Into v_sm_kcsm, v_dj_kcsm, v_isbn_kcsm, v_sptz_kcsm, v_sylx_kcsm,
+                      v_zjxs_kcsm, v_dbbz_kcsm, v_xbbz_kcsm, v_lb_kcsm, v_fl_kcsm,
+                      v_cbny_kcsm, v_zl_kcsm
+                From t_kcsm_all
+                Where id = v_id And ywbmbh=v_ywbmbh;
+
+                If v_dbbz_kcsm Is Null Or v_xbbz_kcsm Is Null Then
+                  Select nvl(min(dbbz), 1), nvl(min(xbbz), 1), nvl(min(zl), 0)
+                   Into v_dbbz_kcsm, v_xbbz_kcsm, v_zl_kcsm
+                   From t_kcsm
+                   Where id = v_id_jcfyhg;
+                End If;
+            End If;
+
+/*             -- 2013-12-09 jy:
+            If trim(c_dhmx.lb) Is Null And trim(v_lb_kcsm) Is Null Then
+              errcode := -1;
+              errtext := '['||trim(c_dhmx.sm)||']的财务大类没有定义!';
+              Rollback;
+              Return;
+            End If;
+
+            If trim(c_dhmx.fl) Is Null And trim(v_fl_kcsm) Is Null Then
+              errcode := -1;
+              errtext := '['||trim(c_dhmx.sm)||']的营销细类没有定义!';
+              Rollback;
+              Return;
+            End If;
+
+            If c_dhmx.cbny Is Null And v_cbny_kcsm Is Null Then
+              errcode := -1;
+              errtext := '['||trim(c_dhmx.sm)||']的出版年月没有定义!';
+              Rollback;
+              Return;
+            End If;
+*/
+            -- 2013-08-28 add by yangyi:
+            -- 发现到货录入时，有些品种的分类没有录入到非底级
+            --------------------------------------
+            /*If length(trim(c_dhmx.fl))=2 Then
+               Select nvl(djbj,'0') Into v_djbj From t_allfl Where flbh=c_dhmx.fl;
+               If v_djbj<>'1' Then
+                   errcode := -1;
+                   errtext := '['||trim(c_dhmx.sm)||']的营销细类至少要输入到2级分类!';
+                   rollback;
+                   return;
+               End If;
+            End If;*/
+
+
+            -- 因为 pkg_public_func.proc_write_id_xtw过程需要用到 tmp_dhmx.id,所以更新ID  2013-11-22 jy add
+            update tmp_dhmx
+            Set id = v_id, lb = decode(lb, null, v_lb_kcsm, lb),
+                fl = decode(fl, null, v_fl_kcsm, fl), cbny = decode(cbny, null, v_cbny_kcsm, cbny)
+            where flowid_dhmx = c_dhmx.flowid_dhmx;
+
+            /* 2014-01-09 20:52 jy comment
+            --2014-01-05 jy add,直发转单\绿通在判断需要生成书目后才生成
+            \*If v_tybj = '1' Then*\
+                pkg_public_func.proc_write_id_xtw(c_dhmx.flowid_dhmx,v_ywbmbh,'',120,v_fjw,v_id,errcode,errtext);
+                if errcode<>0 then
+                   rollback;
+                   return;
+                end if;
+            \*End If; *\
+
+            Select sm, dj, isbn , sptz, sylx, decode(sylx, '0', dj, 100),
+                    dbbz, xbbz, lb, fl, cbny
+             Into v_sm_kcsm, v_dj_kcsm, v_isbn_kcsm, v_sptz_kcsm, v_sylx_kcsm,
+                  v_zjxs_kcsm, v_dbbz_kcsm, v_xbbz_kcsm, v_lb_kcsm, v_fl_kcsm, v_cbny_kcsm
+            From t_kcsm_all
+            Where id = v_id And ywbmbh=v_ywbmbh;*/
+            --------------------
+
+            /*2013-10-31 jy comment 因为 tmp_dhmx 改为商流的表,就不需要把ID置空了
+            ----------------------------------------------------------------------------------------
+            -- 2012-10-06 yangyi: 物流要求去掉tmp_dhmx.id
+            -- 2012-12-18 yangyi: 商流的书名中自动去掉了特殊字符，
+            -- 为避免物流重新生成ID，需要用商流滤掉特殊字符后的书名更新一下物流临时表中的书名
+            Select sm Into c_dhmx.sm From t_kcsm Where id=v_id;
+            update tmp_dhmx set id = '', sm=c_dhmx.sm where flowid_dhmx = c_dhmx.flowid_dhmx;
+            ---------------------------------------------------------------------------------------*/
+
+            --2014-01-09 20:52 jy comment
+            /*Insert Into tmp_dhmx_kcsm(isbn,Id,sm,dj,flowid_dhmx,flowid_dj,rq)
+                Values (\*c_dhmx.isbn, v_id, c_dhmx.sm, c_dhmx.dj,*\
+                         v_isbn_kcsm, v_id, v_sm_kcsm, v_dj_kcsm,
+                         c_dhmx.flowid_dhmx, as_flowid_dj, Sysdate);
+
+
+            Select Count(*) Into v_rows From t_kcsm
+                Where isbn=c_dhmx.isbn And sm=c_dhmx.sm And dj=c_dhmx.dj;
+            If v_rows=0 Then
+               errcode := -1;
+               errtext :='库存书目信息没有生成！'||c_dhmx.flowid_dhmx;
+               rollback;
+               return;
+            End If;*/
+
+            --v_tybj := '0';--直发/转发
+
+            --2014-01-09 20:52 jy add 根据山东要求,直发/转发的置提样标记为 '2',不直接生成书目信息
+            If v_tybj = '1' Then
+               v_tybj := '2'; -- 屏蔽
+
+               Update tmp_dhmx Set tybj = '2' Where flowid_dhmx = c_dhmx.flowid_dhmx; -- 屏蔽
+
+               --2014-10-17 13:45 JY EDIT
+               /*Update tmp_dhmx@c_link_sl_wl
+               Set tybj = '2'
+               Where flowid_dhmx = c_dhmx.flowid_dhmx;*/
+
+               /*Insert Into tmp_dhmx_sp@c_link_sl_wl(flowid_dhmx, tybj)
+               Values(c_dhmx.flowid_dhmx, 'U');
+
+               If Sql%Rowcount = 0 Then
+                  errcode := -1;
+                  errtext := 'PROC_DHSP_ZDTJ,' || 'Insert Into tmp_dhmx_sp@c_link_sl_wl失败！';
+                  Rollback;
+                  Return;
+               End If;*/
+
+               Insert Into tmp_dhmx_sp(flowid_dhmx, tybj, lx)
+               Values(c_dhmx.flowid_dhmx, 'U', '图书审批');
+
+               If Sql%Rowcount = 0 Then
+                  errcode := -1;
+                  errtext := 'PROC_DHSP_ZDTJ,' || 'Insert Into tmp_dhmx_sp失败！';
+                  Rollback;
+                  Return;
+               End If;
+            End If;
+        End If;
+
+        -- 不需提样的将tmp_dhmx的 sm,isbn更新为t_kcsm的 sm,isbn  2013-10-31 jy add
+        v_bj := 233;
+        update tmp_dhmx
+            set sm = decode(v_tybj, '0', v_sm_kcsm, c_dhmx.sm),
+                isbn = decode(v_tybj, '0', v_isbn_kcsm, c_dhmx.isbn),
+                lb= decode(v_tybj, '0', v_lb_kcsm, c_dhmx.lb),
+                fl= decode(v_tybj, '0', v_fl_kcsm, c_dhmx.fl),
+                cbny= decode(v_tybj, '0', v_cbny_kcsm, c_dhmx.cbny),
+                dbbz= decode(v_tybj, '0', v_dbbz_kcsm, c_dhmx.dbbz),
+                xbbz= decode(v_tybj, '0', v_xbbz_kcsm, c_dhmx.xbbz),
+                id = v_id, sl = v_xxsl, tybj = v_tybj,
+                zl = decode(v_tybj, '0', v_zl_kcsm, c_dhmx.zl)
+            where flowid_dhmx = c_dhmx.flowid_dhmx;
+
+        v_bj := 234;
+
+        -- 2012-12-05 yangyi: 顺便将t_dpls.id 置上id 号
+        -- 只要有id
+        If trim(v_id) Is Not Null And v_tybj='0' Then
+
+            ------------------------------------------------------------------------------------------
+            -- 2014-07-21 yangyi:
+            -- 对于不需要提样的品种，也需要调此函数来更新批销底折、平均折扣、最近到货日期、供货单位等
+            -- 2015-06-26 yangyi: 为避免重复处理，将下边的语句挪到了根据采购依据判断不需要提样时
+/*            PKG_PUBLIC_FUNC.PROC_WRITE_ID_XTW(c_dhmx.flowid_dhmx,
+                                              v_ywbmbh,
+                                              '',
+                                              120,
+                                              'OLD',
+                                              v_id,
+                                              errcode,
+                                              errtext);
+            If errcode <> 0 Then
+                Rollback;
+                Return;
+            End If;
+*/            -----------------------------------------------------------------------------------------
+
+            -- 注意：有触发器保护着发货折扣：即：若sylx有变，t_dpls已定义的发折自动置为0
+            -- 2014-04-29 yangyi:
+            -- 因为，t_dpls触发器的写法是当sylx有变化时，才将发折自动置为0
+            -- 如果这里提前将sylx改变了，那触发器那里就判断不出来了
+            -- 所以，这里就改为不再替换sylx和zjxs了，统一由触发器完成。
+            Update t_dpls Set /*sylx=v_sylx_kcsm, zjxs=v_zjxs_kcsm,*/ id=v_id
+               Where flowid_dhmx = c_dhmx.flowid_dhmx;
+
+            -- 2014-03-13 yangyi: 将T_YFSJ_TMP 也置上 ID
+            Update T_YFSJ_TMP Set sylx=v_sylx_kcsm, zjxs=v_zjxs_kcsm, id=v_id
+               Where flowid = c_dhmx.flowid_dhmx;
+
+            -------------------------------------------------------------------------------------
+            -- 2015-09-09 add by yangyi:
+            -- 针对固定发货折扣品种, 到货时根据固定发货折价形成本次分配的发货折价
+            Select nvl(gdzkbj,'0'),nvl(decode(sylx,'0',fhzk,fhjg),0),sylx,decode(sylx,'0',dj,100)
+               Into v_gdzkbj, v_gdfhzj, v_gdsylx, v_gdzjxs
+               From t_kcsm_all Where id=v_id And ywbmbh=v_ywbmbh;
+
+            -- 先验证固定折价的设置是否正确:
+            If v_gdzkbj='1' And (v_gdfhzj<=0 Or (v_gdsylx='0' And v_gdfhzj>100) ) Then
+               Rollback;
+               errcode := -1;
+               errtext := '此品种为固定发折/发价品种，但固定发折/发价的值非法!--'||v_id;
+               Return;
+            End If;
+
+            -- 再将相应发货记录替换为固定的折价
+            If v_gdzkbj='1' Then
+
+               Update t_dpls Set zk=v_gdfhzj, sylx=v_gdsylx, zjxs=v_gdzjxs
+                   Where flowid_dhmx = c_dhmx.flowid_dhmx;
+
+               Update t_yfsj_tmp Set fhzk=v_gdfhzj, sylx=v_gdsylx, zjxs=v_gdzjxs
+                   Where flowid = c_dhmx.flowid_dhmx;
+
+            End If;
+            -- End add 2015-09-09 ----------------------------------------------------------------
+
+            --------------------------------------------------------------------------------------
+            -- 2014-01-08 add by yangyi:
+            -- 这种情况是不需要提样时, 将flowid_dhmx与ID的对照存入此表中
+            -- 为物流分流时依据flowid_dhmx找到相应的ID号, 而不再自行生成ID了
+            -- 对于需要提样的品种,在提样确认时生成新的ID, 并也写入tmp_dhmx_kcsm表
+            Select Count(*) Into v_rows From tmp_dhmx_kcsm Where flowid_dhmx = c_dhmx.flowid_dhmx;
+            If v_rows=0 Then
+
+                Insert Into tmp_dhmx_kcsm(isbn,Id,sm,dj,flowid_dhmx,flowid_dj,rq)
+                    Values ( v_isbn_kcsm, v_id, v_sm_kcsm, v_dj_kcsm,
+                             c_dhmx.flowid_dhmx, as_flowid_dj, Sysdate);
+            End If;
+            --------------------------------------------------------------------------------------
+
+        End If;
+
+        -- 2012-12-15 yangyi:
+        -- 顺便更新一下已录入提交而未审批的其它同品种记录，将新品标记置为0
+        Update tmp_dhmx a Set mfjcbj='0'
+          Where isbn=c_dhmx.isbn And sm=c_dhmx.sm And dj=c_dhmx.dj And
+                flowid_dhmx <> c_dhmx.flowid_dhmx And
+                Exists (Select 1 From tmp_dhdj Where flowid_dj=a.flowid_dj And sbbj='1');
+
+    End Loop;
+
+    Select Count(*) Into v_rows From tmp_dhmx Where flowid_dj=as_flowid_dj And tybj='0' And id Is Null;
+    If v_rows>0 Then
+       Rollback;
+       errcode := -1;
+       errtext := '此单内有些不需要提样的品种没有ID! flowid_dj='||as_flowid_dj;
+       Return;
+    End If;
+
+    ---------------------------------------------------------------------------------------------------
+    -- 2016-01-13 add by yangyi:
+    Select Count(*) Into v_rows
+       From tmp_dhmx Where flowid_dj=as_flowid_dj And tybj='0' And id Is Not Null And trim(fl) Is Null;
+    If v_rows>0 Then
+       Rollback;
+       errcode := -1;
+       errtext := '此单内有些不需要提样的品种没有分类! flowid_dj='||as_flowid_dj;
+       Return;
+    End If;
+    --------------------------------------------------------------------------------------------------
+
+    Select Count(*), Min(sm) Into v_rows, v_sm From (
+       Select Count(*),isbn,sm,dj From tmp_dhmx
+       Where flowid_dj=as_flowid_dj Group By isbn,sm,dj Having Count(*)>1)
+       Where rownum=1;
+    If v_rows>0 Then
+       Rollback;
+       errcode := -1;
+       errtext := '此单内含有重复品种，不能提交！【'||v_sm||'】';
+       Return;
+    End If;
+
+    -- end add
+
+ /*   ----------------------------------------------------------------------------------------
+    -- 2012-03-19 add by yangyi: 有时候单据可能会录重了。所以增加了判断：
+    Select Count(*)
+      Into v_rows
+      From t_dhdj@c_link_sl_wl
+     Where ywbmbh = v_ywbmbh And ghdwh = v_ghdwh And ysdj = v_ysdj;
+    If v_rows > 0 Then
+        errcode := -1;
+        errtext := '当前部门该货源此原始单号已经录过了！请仔细核查! (如果确实录重了，请点【否决】按钮)';
+        Rollback;
+        Return;
+    End If;
+    -------------------------------------------------------------------------------------------
+*/
+    /*    If v_ywbmbh='102' Then
+           errcode := -1;
+           errtext := '音像部门的暂时不能提交！';
+           Return;
+        End If;
+    */
+
+    V_BJ := 3;
+    Select Min(ywybh)
+      Into v_ywybh
+      From t_ghdw_ywbm
+     Where ghdwh = v_ghdwh And ywbmbh = v_ywbmbh;
+
+    -- 2011-08-10 yangyi:
+    -- 当一条t_dpls记录发生多次到货时，会出现问题（在生成发货数据时无法分清本次下达数）,
+    -- 所以，到货校核提交时，将t_dpls相应未分齐的记录进行拆分：
+    --
+    -- 因为”音像制品“是全部上架，且”音像制品“的判断方法改为：用商品类型来区分了
+    -- t_splx: 01=图书，02=音像，03=文化用品
+
+  --  If v_ywbmbh <> '102' And v_ywbmbh <> '105' Then
+
+    -- 2012-10-19 将一般图书未分齐的订单拆分，山东用sptz来区分一般书和音像制品
+    For c_dbd_cf In (Select a.dbdh, a.xsds, a.xdcs, a.id, a.sylx
+                       From t_dpls a, tmp_dhmx b
+                      Where a.flowid_dhmx = b.flowid_dhmx And
+                            b.flowid_dj = as_flowid_dj And a.xsds > a.xdcs And
+                            a.xdcs > 0 And b.sptz='01')
+    Loop
+
+        DLGETLSH(v_ywbmbh, 'DBD', 'DB', v_newdbdh);
+        -- 按原dbdh复制一份，修改xsds=>原记录的(xsds-xdcs), xdcs=0, dbdh=新生成的dbdh
+        -- 2014-01-07 YANGYI: 加了 note_gp, YYDFLAG
+        -- 2014-09-05 yangyi: 将拆分的记录置csbj=1，以便触发器的判断是否顺延有效日期30天。
+        Insert Into t_dpls
+            (dbdh, djly, flowid_all, zdqh, zdxh, id, fshpch, tdpch, dh, tihfs, fhfs,
+             jzqx, cybh, kfbh, ywbmbh, sylx, zjxs, sl, fhzk, dslx, xsds, jsds, cbds,
+             usr_id, bz, czrq, cspc, flowid_dhmx, yflcs, usr_idpf, yxrq, flowid_jcfyhg,
+             spbj, qsclfs, ysddlsh, cgyj_kh, xszq, fhyxj, csbj, xdcs, okbj, ywshbj,
+             lt_flag, note_gp, yydflag)
+            Select v_newdbdh, djly, flowid_all, zdqh, zdxh, id, fshpch, tdpch, dh,
+                   tihfs, fhfs, jzqx, cybh, kfbh, ywbmbh, sylx, zjxs, sl, fhzk, dslx,
+                   (c_dbd_cf.xsds - c_dbd_cf.xdcs), jsds, cbds, usr_id, bz, czrq, cspc,
+                   Null, 0, usr_idpf, yxrq, flowid_jcfyhg, spbj, qsclfs, ysddlsh,
+                   cgyj_kh, xszq, fhyxj, /*csbj*/'1', 0, okbj, ywshbj, lt_flag, note_gp, yydflag
+              From t_dpls
+             Where dbdh = c_dbd_cf.dbdh;
+
+        -- 2019-09-25 add yangyi:
+        -- 因为在pkg_dhsp_dhfs.PROC_DHFS_ONE_DBDH中，更新过t_dpls.zjxs
+				-- 当不完全满足拆分时，需要将原来ID 的 zjxs 恢复回来
+				-- 如：t_dpls一条记录的xsds=20, id=A001 dj=16, 本次到货id=A002, dj=22 最大可分数=2
+				--     在到货审批分书过程中，会将t_dpls中该记录的zjxs 替换成 22
+				--     原来拆分时，会造成原记录=2册，拆分记录=18册，其id不同，但zjxs都是22
+				--     如果后期现货库存满足时，这条拆分的记录会下达到物流的t_fhrwb中
+				--     物流将按错误的折价系数计算实洋数
+				--     商流接收物流t_fhmx时，会重新根据id 取得 zjxs，并重新计算 sys
+				--     最终，造成商流的实洋与物流的实洋不符
+				--     所以，这里针对拆分后记录，需要重新取一下zjxs
+				--     
+				If c_dbd_cf.id Is Not Null Then
+				   If c_dbd_cf.sylx='0' Then
+					    Select dj Into v_dpls_zjxs From t_kcsm Where id=c_dbd_cf.id;
+					 Else
+					    v_dpls_zjxs := 100;
+					 End If;
+				   Update t_dpls Set zjxs=v_dpls_zjxs Where dbdh=v_newdbdh;
+				End If;
+				------------------------------------------------------------------------------------
+
+        -- 修改原记录的xsds=xdcs
+        Update t_dpls Set xsds = xdcs Where dbdh = c_dbd_cf.dbdh;
+
+    End Loop;
+
+        -- end add 2011-08-10
+   -- End If;
+
+
+    -- 2010-07-29 add by yangyi:
+    -- 如果是绿通或直发转单的, 需要判断一下到货数与分书数是否相符
+    -- 如果到货数量大于订数，则按多余数补写t_dpls
+    -- 主要为处理 "直发转单/绿色通道" 到货多订数少的情况, 补写t_dpls
+    If v_zfzd_flag <> '0' Then
+
+        If v_zfzd_flag = '1' Then
+            v_djly    := 'ZF';
+            v_cgyj_kh := '直发转单';
+        Else
+            v_djly    := 'LT';
+            v_cgyj_kh := '绿色通道';
+        End If;
+
+        -- 2010-09-15 add by yangyi:
+        -- 为写t_dpls.tdpch
+        DLGETLSH(v_ywbmbh, 'TD', 'TD', v_tdpch);
+        If v_tdpch Is Null Then
+            errcode := -1;
+            errtext := '生成添单批次号失败!';
+            Rollback;
+            Return;
+        End If;
+        -- end add
+
+        V_BJ := 4;
+        -- 2010-12-01 add by yangyi:
+        -- 2011-07-01 增加取推销员, 为写t_dpls.usr_id yangyi:
+        Select nvl(lsdbj, '0'), txy
+          Into v_lsdbj, v_txy
+          From t_dm_ywbm
+         Where dh = v_zfzd_dh And ywbmbh = v_ywbmbh;
+        -- end add
+
+        For c1 In (Select * From tmp_dhmx Where flowid_dj = as_flowid_dj)
+        Loop
+
+
+            Select nvl(Sum(xdcs), 0)
+              Into v_xdcs
+              From t_dpls
+             Where flowid_dhmx = c1.flowid_dhmx;
+
+            -- 2014-06-26 add by yangyi:
+            -- 到货关联在处理t_dpls时，对于qsclfs<>0的，在处理t_dpls.xdcs时，并没有写xdcs。
+            -- 当时的考虑是qsclfs<>0不参与到货分流，但并没有考虑到"绿通直发"的情况。
+            -- 问题是这样：
+            -- 假如在这里不置上xdcs, 对绿通和直发则会造成自动补写一条无依据的t_dpls
+            -- 这条新加的记录参与到货分发，而原来那条记录将不会参与本次到货分发。
+            -- 后期，会因为库存满足造成重复发货（原来那条记录）。
+            -- 新增这段话的目的是，弥补已有程序的缺陷，对于qsclfs<>0的"绿通直发"，补写上t_dpls.xdcs
+            --
+            -- 相应地：改变了特殊订单确认时，写t_dpls的写法，qsclfs按0处理，spbj按0处理
+            -- 但是，采购订单在处理直发转单或绿通的处理并没有改变，因此，这里先这么处理一下
+            -- 是最保险的，好处是：1.已有的数据不必处理。2.采购订单在处理直发转单或绿通的过程改了
+            -- 这里也不用再改变。
+            If v_xdcs < c1.yssl Then
+                v_zxdcs := c1.yssl -  v_xdcs;
+                For c_dp In (Select * From t_dpls Where flowid_dhmx=c1.flowid_dhmx And xsds>xdcs)
+                Loop
+                    v_bckxdcs := least(v_zxdcs, c_dp.xsds - c_dp.xdcs);
+                    Update t_dpls Set xdcs=xdcs + v_bckxdcs Where dbdh=c_dp.dbdh;
+                    v_zxdcs := v_zxdcs - v_bckxdcs;
+                End Loop;
+            End If;
+
+            -- 由于上边一段话改变的t_dpls.xdcs，所以，这里再重新计算一遍：
+            Select nvl(Sum(xdcs), 0)
+              Into v_xdcs
+              From t_dpls
+             Where flowid_dhmx = c1.flowid_dhmx;
+
+            /*        -- 2010-12-01 add by yangyi:
+                    -- 主要为控制非连锁店的绿色通道业务
+                    if v_lsdbj='0' and v_xdcs=0 then
+                       errcode := -1;
+                       errtext := '非连锁店的绿色通道业务必须要做订单补录!';
+                       rollback;
+                       return;
+                    end if;
+                    -- end add
+            */
+
+            If v_xdcs < c1.yssl Then
+
+                If c1.sylx = '0' Then
+                    v_zjxs := c1.dj;
+                Else
+                    v_zjxs := 100;
+                End If;
+
+                DLGETLSH(v_ywbmbh, 'DBD', 'DB', v_dbdh);
+                V_BJ := 5;
+                -- 2010-12-03 yangyi add:
+                -- 根据书号+书名+定价+货源+进货折扣生成t_jczdml
+                PKG_PUBLIC_FUNC.PROC_GET_ZDH_BY_SMXX(c1.isbn,
+                                                     c1.sm,
+                                                     c1.dj,
+                                                     c1.bc,
+                                                     c1.cbny,
+                                                     c1.bb,
+                                                     c1.fl,
+                                                     c1.jhzk,
+                                                     c1.sylx,
+                                                     v_ghdwh,
+                                                     v_ywbmbh,
+                                                     v_zdqh,
+                                                     v_zdxh,
+                                                     errcode,
+                                                     errtext);
+                If errcode <> 0 Then
+                    Rollback;
+                    Return;
+                End If;
+                V_BJ := 6;
+                -- 2010-09-15 yangyi:
+                -- 将生成的v_tdpch赋给t_dpls.tdpch/t_dpls.fspch
+                -- 利用连锁店标记来控制t_dpls.ywshbj(业务审核标记)
+                -- 2011-07-01 usr_id改用推销员 yangyi:
+                -- 2012-07-01 yangyi: 将采购业务员作为开单人写入到t_dpls.cspc
+                -- 以便通过tg_t_dpls将开单人写入到t_xhd_xhqphz.dhr中
+                -- 2013-08-29 yangyi: 原来写错了decode(v_djly, 'LT', '1', '2')
+                --                    改为：decode(v_djly, 'LT', '2', '1')
+                -- 与到货单据头中的一致
+                Insert Into t_dpls
+                    (dbdh, djly, flowid_all, zdqh, zdxh, id, fshpch, tdpch, dh, tihfs,
+                     fhfs, jzqx, cybh, kfbh, ywbmbh, sylx, zjxs, sl, fhzk, dslx, xsds,
+                     jsds, cbds, usr_id, bz, czrq, cspc, flowid_dhmx, yflcs, usr_idpf,
+                     yxrq, flowid_jcfyhg, spbj, qsclfs, ysddlsh, cgyj_kh, xszq, fhyxj,
+                     csbj, xdcs, okbj, ywshbj, lt_flag)
+                Values
+                    (v_dbdh, v_djly, Null, v_zdqh, v_zdxh, '', v_tdpch, v_tdpch,
+                     v_zfzd_dh, '01', '01', 90, v_cybh, v_kfbh, v_ywbmbh, c1.sylx, v_zjxs,
+                     c1.sl, c1.fhzk, '0', (c1.yssl - v_xdcs), 0, 0, v_txy /*v_ywybh*/,
+                     v_cgyj_kh, Sysdate, v_ywybh/*Null*/, c1.flowid_dhmx, 0, Null, Sysdate, Null, '0',
+                     '0', Null, v_cgyj_kh, c1.xszq, 'A', '0', (c1.yssl - v_xdcs), '1',
+                     v_lsdbj, decode(v_djly, 'LT', '2', '1'));
+            End If;
+
+        End Loop;
+
+    Else
+
+        -- 只有正常到货的才写t_sl_yfsj
+        -- 2010-10-15 yangyi:
+        -- 增加判断条件:
+        --    如果是非音像的, 才生成预分数据, 并且只将t_dpls中ywshbj=0的记录的xdcs清成0
+        --    如果是音像的, 不生成预分数据, 并将t_dpls中所有相关记录的xdcs清成0
+        --
+
+        -------------------------------------------------------------------------------------
+        -- 2019-09-18 yangyi: 由于内蒙不论图书、音像、文化用品，都参与到货分流
+/*        if 1=2 then
+	
+            -- 2012-09-05 yangyi:
+            -- 山东按商品特征来区分图书、音像、文化用品
+            -- 将非图书品种的分配数清0，
+            -- 以及t_dpls中参与本次到货分书但未审批记录的xdcs清为0
+            For c0 In (Select dbdh
+                         From t_dpls, tmp_dhmx
+                        Where t_dpls.flowid_dhmx = tmp_dhmx.flowid_dhmx And
+                              tmp_dhmx.flowid_dj = as_flowid_dj And xdcs > 0 And
+                              (tmp_dhmx.sptz<>'01' Or nvl(ywshbj, '0') = '0')
+                       )
+            Loop
+
+                Update t_dpls Set xdcs = 0 Where dbdh = c0.dbdh;
+
+            End Loop;
+        
+        end if;
+*/                    
+        ----------------------------------------------------------------------------------------
+
+       -- If v_ywbmbh <> '102' And v_ywbmbh <> '105' Then
+
+        -- 2011-03-18 add by yangyi:
+        -- 由于到货审批改为允许手工调整订单的分配数量
+        -- 所以，在提交前对分配数不足的t_dpls记录做拆分处理：
+        proc_dhsp_cfcl(as_flowid_dj, errcode, errtext);
+        If errcode <> 0 Then
+            Rollback;
+            Return;
+        End If;
+        -- end add
+
+        -- 将参与到货分配的订数写入t_sl_yfsj, 为物流分流做准备
+        -- 2012-06-27 yangyi: 为控制由于白屏现象导致写t_sl_yfsj重复的问题
+        -- 加写FLOWID_YFSJ1=0
+        -- t_dpls.zk是到货审批关联依据时，临时用到的一个字段
+
+        -- 2012-09-01 yangyi:
+        -- 通常情况下，期货的t_dpls.fhzk都是为空的
+        -- 但转换为QS后，就有折扣了，目的是当有库存时，能够及时按发货折扣发货。
+        -- 到货审批时，应该不考虑原来的折扣，都要重新计算。
+
+        -----------------------------------------------------------------------------------
+        -- 2012-11-29 yangyi:
+        -- 发现有已经下达过物流的记录又通过到货审批功能下达了一次
+        -- 但没有找到原因，不知是否与物流的咕噜程序主动读取指令有冲突？
+        -- 为便于后期出现问题时检查数据，将t_dpls中相应数据备份到t_dpls_chk表中
+        -- 在物流的咕噜程序中也增加的相应的写t_dpls_chk表语句
+        Insert Into t_dpls_chk (dbdh,xsds,xdcs,wcxdcs,phcs,spdate,flowid_dhmx)
+             Select t_dpls.dbdh,t_dpls.xsds,t_dpls.xdcs,t_dpls.wcxdcs,t_dpls.phcs,Sysdate,t_dpls.flowid_dhmx
+              From t_dpls, tmp_dhmx
+             Where t_dpls.flowid_dhmx = tmp_dhmx.flowid_dhmx And
+                   tmp_dhmx.flowid_dj = as_flowid_dj And xdcs > 0 And
+                   nvl(ywshbj, '0') = '1';
+        ------------------------------------------------------------------------------------
+
+        Insert Into T_SL_YFSJ
+            (FLOWID, FLOWID_DJ, DH, ID, YFSL, SYLX, QSCLFS, RECEFLAG, FLAG, YFBJ,
+             OKSL, YXJ, TPH, FLOWID_YFSJ, XSZQ, SDHRQ, ZJXS, FHZK, YSDJH, DJLY, WCXDCS,
+             PHCS, YFSL_BAK, CYBH, CGYJ_KH, FLOWID_YFSJ1)
+            Select t_dpls.flowid_dhmx, as_flowid_dj, dh, t_dpls.id, xdcs, t_dpls.sylx,
+                   qsclfs, 'ZP', '0', Null, Null, NVL(FHYXJ, 'D'), Null,
+                   all_flowid.Nextval, Null, yxrq, zjxs,
+                   --Case
+                   --    When nvl(t_dpls.fhzk, '0') <> 0 Then
+                   --     t_dpls.fhzk
+                   --    Else
+                        t_dpls.zk,
+                   --End,
+                   dbdh, djly, 0, 0, xsds, cybh, cgyj_kh, 0
+              From t_dpls, tmp_dhmx
+             Where t_dpls.flowid_dhmx = tmp_dhmx.flowid_dhmx And
+                   tmp_dhmx.flowid_dj = as_flowid_dj And xdcs > 0 And
+                   nvl(ywshbj, '0') = '1';
+
+        -- 2010-10-15 yangyi: 增加判断条件: 只有非音像部门的才写预分数据
+        --If v_ywbmbh <> '102' And v_ywbmbh <> '105' Then
+
+            -- 将参与到货分配的主配数写入t_sl_yfsj, 为物流分流做准备
+            -- 2010-08-23 yangyi:
+            -- 到货审批时,针对每条到货记录, 增加主配缓急项目,
+            -- 整单提交时, 按此项目来决定主配任务的发货缓急.
+            --
+            -- 2010-09-15 modify by yangyi:
+            -- 只有连锁店的到货主配数据才直接下达给物流
+            -- 而非连锁店的到货主配数据, 只能先插入t_dpls(ywshbj=0),
+            -- 待业务审批完后, 物流才能发货
+
+            -- 2011-06-17 yangyi:
+            -- 因为大中专不需要营销部门的审批，所以
+            -- 对于大中专教材，增加了(Or v_ywbmbh='104' Or v_ywbmbh='666')条件，
+            -- 666是测试环境下的大中专部门
+            -- 104 是正式环境下的大中专部门
+            -- 2012-06-27 yangyi: 为控制由于白屏现象导致写t_sl_yfsj重复的问题
+            -- 加写FLOWID_YFSJ1=0
+
+            -- 2012-11-15 yangyi: 由于t_dpls.dbdh数字型已改为带负号了
+            -- 所以这里写t_sl_yfsj时，也要改为带负号
+            -- 2014-03-13 JY 放开非连锁店到货主配播种的限制
+            -- 同时,下边根据t_yfsj_tmp写t_dpls时,也去掉了对XDCS的判断,都按YFSL=>xdcs了.
+            
+            -- 2019-09-18 yangyi: 由于内蒙不论图书、音像、文化用品，都参与到货分流
+            --                    故屏蔽了 Exists (Select 1 From tmp_dhmx Where flowid_dhmx=a.Flowid And sptz='01');
+            Insert Into T_SL_YFSJ
+                (FLOWID, FLOWID_DJ, DH, ID, YFSL, SYLX, QSCLFS, RECEFLAG, FLAG, YFBJ,
+                 OKSL, YXJ, TPH, FLOWID_YFSJ, XSZQ, SDHRQ, ZJXS, FHZK, YSDJH, DJLY, WCXDCS,
+                 PHCS, YFSL_BAK, CYBH, CGYJ_KH, FLOWID_YFSJ1)
+                Select a.FLOWID, a.FLOWID_DJ, a.DH, a.ID, a.YFSL, a.SYLX, a.QSCLFS,
+                       a.RECEFLAG, a.FLAG, a.YFBJ, a.OKSL,
+                       Trim((Select nvl(fhfs, 'D')
+                               From tmp_dhmx
+                              Where flowid_dhmx = a.flowid)), a.TPH, a.FLOWID_YFSJ, a.XSZQ,
+                       a.SDHRQ, a.ZJXS, a.FHZK, '-'||trim(a.YSDJH), a.DJLY, a.WCXDCS, a.PHCS, a.YFSL,
+                       a.CYBH, a.CGYJ_KH, 0
+                  From t_yfsj_tmp a, t_dm_ywbm b
+                 Where a.dh = b.dh And b.ywbmbh = v_ywbmbh And
+                       /*(nvl(b.lsdbj, '0') = '1' */
+                       /*Or v_ywbmbh = '104' Or v_ywbmbh = '666') And */
+                       a.FLOWID_DJ = as_flowid_dj And a.djly = 'XP' And a.yfsl > 0; /*And
+                       Exists (Select 1 From tmp_dhmx Where flowid_dhmx=a.Flowid And sptz='01');*/
+        --End If;
+
+        -- 2010-09-15 add by yangyi:
+        -- 为到货主配的记录生成添单批次号
+        For c1 In (Select Distinct dh
+                     From t_yfsj_tmp
+                    Where flowid_dj = as_flowid_dj And djly = 'XP' And yfsl > 0)
+        Loop
+
+            DLGETLSH(v_ywbmbh, 'TD', 'TD', v_tdpch);
+            If v_tdpch Is Null Then
+                errcode := -1;
+                errtext := '生成添单批次号失败!';
+                Rollback;
+                Return;
+            End If;
+
+            Update t_yfsj_tmp
+               Set tdpch = v_tdpch
+             Where flowid_dj = as_flowid_dj And djly = 'XP' And dh = c1.dh;
+
+        End Loop;
+        -- end add
+
+        -- 2010-01-12 add by yangyi:
+        -- 到货审批时的主配数据补写到t_dpls中
+
+        -- 2010-09-15 modify by yangyi:
+        -- 对于非连锁店的到货主配记录在插入t_dpls时, 将ywshbj置为'0'
+        -- 注意: 这些记录既没有ID也没有征订号
+        -- 在订单审批时并不能马上看到这些记录, 只有商流接收到相应的到货数据后,
+        -- ID才能被置上, 这时, 这些记录才可以参与审批.
+        -- 在到货审批时已经限制了只有连锁店才可参与主配,
+        -- 所以上述情况就不存在了.
+        --
+        -- 2010-10-15 yangyi:
+        -- 如果是音像部门, 则在插入t_dpls时, 下达册数赋值成0
+        -- 如果是非音像部门, 则只将ywshbj=0的记录的下达册数赋值成0
+
+        -- 2011-06-17 yangyi:
+        -- 对于大中专教材来说，不需要营销审批，已通过t_dpls触发器将ywshbj死置1了
+        -- 所以，在这里并没有做处理。详见tg_t_dpls
+        --
+        -- 2011-07-01 usr_id改为用推销员了, yangyi:
+        --
+        -- 顺便说一下：到货审批时对非连锁店的主配，写t_dpls时，既没有ID也没有ZDQH，
+        -- 所以，营销员对非连锁店的审批，只有在商流接收到物流到货数据后，系统
+        -- 才根据FLOWID_DHMX将t_dpls.id置上，这时，营销员才可做营销审批。
+        -- 上边绿通的在写T_DPLS前，生成了征订号，其原因是，绿通到货发货同时生成，
+        -- 所以，必须在生成ID之前进行营销审批，因此，在那里才生成了征订号
+        -- 2012-07-01 yangyi: 将采购业务员作为开单人写入到t_dpls.cspc
+        -- 以便通过tg_t_dpls将开单人写入到t_xhd_xhqphz.dhr中
+        --
+        --------------------------------------------------------------------------------
+        -- 将到货主配的预分数据，写入t_dpls表
+        -- 但”音像制品“以及非连锁店的xdcs应该清零
+        For c10 In (Select * From t_yfsj_tmp
+                       Where flowid_dj = as_flowid_dj And djly = 'XP' And yfsl>0)
+        Loop
+
+            Select txy, nvl(lsdbj,'0') Into v_txy, v_lsdbj
+               From t_dm_ywbm Where dh=c10.dh And ywbmbh=v_ywbmbh;
+
+            Select sptz Into v_sptz From tmp_dhmx Where flowid_dhmx=c10.flowid;
+
+            -- 2014-03-13 JY 放开非连锁店到货主配播种的限制
+            -- 同时,上边根据t_yfsj_tmp写t_sl_yfsj时,也去掉了对lsdbj='1'的条件.
+            --If v_sptz='01' And v_lsdbj='1' Then
+               v_xdcs := c10.yfsl;
+            --Else
+            --   v_xdcs := 0;
+            --End If;
+
+            -- 2014-03-13 yangyi: 写t_dpls时 加ID
+            Insert Into t_dpls
+                  (dbdh, djly, fshpch, tdpch, dh, tihfs, fhfs, jzqx,
+                   cybh, kfbh, ywbmbh, sylx, zjxs, sl, fhzk, dslx,
+                   xsds, jsds, cbds, usr_id, bz, czrq, cspc, flowid_dhmx,
+                   yflcs, usr_idpf, yxrq, flowid_jcfyhg, spbj, qsclfs, ysddlsh,
+                   cgyj_kh, xszq, fhyxj, csbj, xdcs, okbj, YWSHBJ, id)
+
+            Values (c10.ysdjh, c10.djly, c10.tdpch, c10.tdpch, c10.dh, '01', '01', 90,
+                    c10.cybh, v_kfbh, v_ywbmbh, c10.sylx, c10.zjxs, 10, c10.fhzk, 2,
+                    c10.yfsl, 0, 0, v_txy, '', Sysdate, v_ywybh, c10.flowid,
+                    0, '', c10.sdhrq, Null, '0', '0', Null,
+                    c10.ysdjh, 120, 'D', '0', v_xdcs,'1', v_lsdbj, c10.id);
+
+        end Loop;
+        -------------------------------------------------------------------------------
+
+    End If;
+
+    Delete From T_YFSJ_TMP Where FLOWID_DJ = as_flowid_dj And djly = 'XP';
+
+    -- 当前单据置已审批标记
+    -- 2010-12-02 对于绿色通道的已在物流接收到货数据时控制，
+    -- 只有全部审批通过的才能接收到物流进行相关处理
+    -- 在这里没有加判断，还是置成2了，
+    -- 主要是为到货审批功能看不到已经审批过的绿通单据
+
+    --2015-04-27 jy add 河北版程序需要验证浙江书目，需要将sbbj 置成 X
+    -- 到货审批提交后，如果相应单据内有需要提样的品种，
+    -- 并且，需提样品种在浙江书目中存在书号+定价相同的品种，则将tmp_dhdj.sbbj置为【X】
+    Select VERSION Into v_version From t_version Where okflag= '1';
+
+    -- 214-01-09 20:48 jy add,普通的直接置 sbbj = '2' , 非普通的不需提样的 置 sbbj = '2'
+
+    --上传的电子单
+    If tmpTldjhz Is Null Then
+
+        --判断是否需要提样
+        Select Count(*) Into v_rows
+        From tmp_dhmx
+        Where tybj <> '0' And
+              flowid_dj = as_flowid_dj;
+
+        Update tmp_dhdj Set sbbj = '2' Where flowid_dj = as_flowid_dj;
+
+        --绿通/直转 且 需要提样的 要将  sbbj 置为 'Z'
+        -- 2017-04-15 jy add 重庆的物流在到货登记时 t_tldjhz 不区分普通和绿通了，
+        -- 所以将下面的条件 v_zfzd_flag <> '0' 要改为 v_zfzd_flag = '1'
+        If v_zfzd_flag <> '0' And v_rows > 0 Then
+            Update tmp_dhdj Set sbbj = 'Z' Where flowid_dj = as_flowid_dj;
+        End If;
+
+        --2015-04-29 jy add
+        --2015-05-28 ymx 去掉v_sbbj = 'X' 条件
+/*        If v_version = '河北版' And v_rows>0 Then
+
+            --查看tmp_dhmx中,当前单据内存在需要提样，且在 t_stand_book 是否存在的品种
+            Select Count(*) Into v_count_stb
+            From tmp_dhmx
+            Where Exists (Select 1
+                          From t_stand_book
+                          Where isbn = tmp_dhmx.isbn
+                            And dj = tmp_dhmx.dj) And
+                  flowid_dj = as_flowid_dj And tybj<>'0';
+
+            If v_zfzd_flag = '0' Then
+                --在 t_stand_book 不存在，不需要去验证
+                If v_count_stb = 0 Then
+                   Update tmp_dhdj Set sbbj = '2' Where flowid_tldjhz = tmpTldjhz;
+                --在 t_stand_book 存在，需要去验证
+                Else
+                   Update tmp_dhdj Set sbbj = 'X' Where flowid_tldjhz = tmpTldjhz;
+                End If;
+            --绿通 / 直转方式
+            Else
+                --在 t_stand_book 不存在，不需要去验证
+                If v_count_stb = 0 Then
+                  Update tmp_dhdj Set sbbj = 'Z' Where flowid_dj = as_flowid_dj;
+                --在 t_stand_book 存在，需要去验证
+                Else
+                  Update tmp_dhdj Set sbbj = 'X' Where flowid_dj = as_flowid_dj;
+                End If;
+            End If;
+        End If;*/
+
+    Else
+
+        --普通
+        If v_zfzd_flag = '0' Then
+
+            -- 对于普通到货不必按运号处理，由商流的推送过程决定是否推走，
+            -- 那里会判断作业批次内所有单据都处理完才推给物流
+            -- 对于直发转单来说，数据先行时，为一票一单；而补录电子单时，有可能会一票多单。
+            Update tmp_dhdj Set sbbj = '2' Where flowid_dj = as_flowid_dj;
+
+            --2015-04-29 jy add
+            --2015-05-28 ymx 去掉v_sbbj = 'X' 条件
+/*            If v_version = '河北版' Then
+                --查看tmp_dhmx中的品种在 t_stand_book 是否存在，且是否需要提样
+                Select Count(*) Into v_count_stb
+                From tmp_dhmx
+                Where Exists (Select 1
+                              From t_stand_book
+                              Where isbn = tmp_dhmx.isbn
+                                And dj = tmp_dhmx.dj) And
+                      tybj <> '0' And
+                      flowid_dj = as_flowid_dj;
+
+                --在 t_stand_book 不存在，不需要去验证
+                If v_count_stb > 0 Then
+                   Update tmp_dhdj Set sbbj = 'X' Where flowid_dj = as_flowid_dj;
+                End If;
+
+            End If;*/
+
+            --2015-02-26 jy add 直转/绿通时判断是否为作业批次中的最后一条单据
+
+        Else
+
+            Select Count(*) Into v_rows
+            From tmp_dhdj
+            Where flowid_tldjhz = tmpTldjhz And
+                  sbbj = '1' And
+                  flowid_dj <> as_flowid_dj;
+
+            --最后一条
+            If v_rows = 0 Then
+                --整个作业批次 判断是否需要提样
+                Select Count(*) Into v_rows
+                From tmp_dhmx
+                Where tybj <> '0' And
+                      Exists (Select 1
+                              From tmp_dhdj
+                              Where tmp_dhmx.flowid_dj = tmp_dhdj.flowid_dj
+                                 And flowid_tldjhz = tmpTldjhz);
+
+                 If v_rows = 0 Then
+                    Update tmp_dhdj Set sbbj = '2' Where flowid_tldjhz = tmpTldjhz;
+                 Else
+                    -- 2017-04-15 jy add 重庆的物流在到货登记时 t_tldjhz 不区分普通和绿通了，
+                    -- 所以增加下面的判断
+                    /*If v_zfzd_flag = '1' Then
+                       Update tmp_dhdj Set sbbj = 'Z' Where flowid_tldjhz = tmpTldjhz;
+                    Else
+                       Update tmp_dhdj Set sbbj = '2' Where flowid_tldjhz = tmpTldjhz;
+                    End If;  */
+
+                    Update tmp_dhdj Set sbbj = 'Z' Where flowid_tldjhz = tmpTldjhz;
+                 End If;
+
+                 --2015-04-29 jy add
+                 --2015-05-28 ymx 去掉v_sbbj = 'X' 条件
+/*                 If v_version = '河北版' And v_rows>0 Then
+                    --查看tmp_dhmx中的品种在 t_stand_book 是否存在
+                    Select Count(*) Into v_count_stb
+                    From tmp_dhmx
+                    Where Exists (Select 1
+                                  From t_stand_book
+                                  Where isbn = tmp_dhmx.isbn
+                                    And dj = tmp_dhmx.dj) And
+                          Exists (Select 1
+                              From tmp_dhdj
+                              Where tmp_dhmx.flowid_dj = tmp_dhdj.flowid_dj
+                                 And flowid_tldjhz = tmpTldjhz) And tybj<>'0';
+
+                   --在 t_stand_book 不存在，不需要去验证
+                   If v_count_stb = 0 Then
+                      Update tmp_dhdj Set sbbj = 'Z' Where flowid_tldjhz = tmpTldjhz;
+                   --在 t_stand_book 存在，需要去验证
+                   Else
+                      Update tmp_dhdj Set sbbj = 'X'
+                      Where flowid_tldjhz = tmpTldjhz And
+                            Exists (Select 1
+                                    From t_stand_book, tmp_dhmx
+                                    Where t_stand_book.isbn = tmp_dhmx.isbn
+                                      And t_stand_book.dj = tmp_dhmx.dj
+                                      And flowid_dj = tmp_dhdj.flowid_dj
+                                      And tybj<>'0');
+                   End If;
+
+                 End If;*/
+            Else
+                 Update tmp_dhdj Set sbbj = 'W' Where flowid_dj = as_flowid_dj;
+            End If;
+        End If;
+    End If;
+
+/*    If v_zfzd_flag = '0' Then
+       Update tmp_dhdj Set sbbj = '2' Where flowid_dj = as_flowid_dj;
+    End If;
+
+    --2015-04-27 jy add 河北版程序需要验证浙江书目，需要将sbbj 置成 X
+    -- 到货审批提交后，如果相应单据内有需要提样的品种，
+    -- 并且，需提样品种在浙江书目中存在书号+定价相同的品种，则将tmp_dhdj.sbbj置为【X】
+    Select VERSION Into v_version From t_version Where okflag= '1';
+
+    If v_version = '河北版' Then
+        Update tmp_dhdj Set sbbj = 'X'
+        Where flowid_dj = as_flowid_dj And
+              Exists(Select 1 From tmp_dhmx Where flowid_dj = tmp_dhdj.flowid_dj And tybj <> '0') And
+              ;
+    End If;*/
+    ----------------
+
+    --2014-05-07 按作业批次判断是否需要提样，需提 sbbj = 'Z'，供应商上传在下面的程序置为‘2’
+    --商流补录的在补录电子单的提交处处理
+   /* If v_zfzd_flag<> '0' Then
+       If v_rows = 0 Then
+          Update tmp_dhdj Set sbbj = '2' Where flowid_dj = as_flowid_dj;
+       Else
+          Update tmp_dhdj Set sbbj = 'Z' Where flowid_dj = as_flowid_dj;
+       End If;
+    End If;*/
+
+     --2014-01-09 20:51 根据山东要求,直发单据直接形成物流 T_TLDJHZ 数据,并且绑定 TMP_DHDJ
+    If v_zfzd_flag = '1' Then
+
+      --v_dzdly :电子单来源，0=供应商上传，1=商流补录 tmpTldjhz
+      If v_dzdly = '0' And tmpTldjhz Is Null Then
+         Select all_flowid.nextval@c_link_sl_wl
+         Into v_zypc
+         From dual;
+
+         Insert Into t_Tldjhz_temp(flowid_tldjhz, yh, dh, fyfsh, fhr, ysjs, ssjs, djsl,
+                                   ywbmbh, tlrq, cbrq, cybh, shr1,
+                                   ycbbj, cfhw, lrtj, lhbj, djlx, bz, zzdh, flbj)
+         Values (v_zypc, 'A', v_ghdwh, '01', 'auto', 0, 0, 1,
+                 v_ywbmbh, Sysdate , Sysdate, v_cybh, 'auto',
+                 '1','下属门店','1','1','DH','直发', v_zfzd_dh, '1');
+
+         Insert Into t_Tldjhz@c_link_sl_wl(flowid_tldjhz,yh,dh,fyfsh,fhr,
+                                        ysjs,ssjs,djsl,
+                                  ywbmbh,tlrq,cbrq,cybh,shr1,
+                                  ycbbj,cfhw,lrtj,lhbj,djlx,bz,kl_flag,lrqrbj,jsrq)
+         Select flowid_tldjhz,yh,dh,fyfsh,fhr,
+                ysjs,ssjs,djsl,
+                ywbmbh,tlrq,cbrq,cybh,shr1,
+                '1','下属门店','0',lhbj,'DH',bz,'1','1',Sysdate
+          From t_Tldjhz_temp
+         Where flowid_tldjhz = v_zypc;
+
+         Update tmp_dhdj
+         Set flowid_tldjhz = v_zypc, flowid_tldjhz_tmp = v_zypc,
+             remark = '电子单自动生成', note = '电子单自动生成'/*,
+             sbbj = '2'--new, 2014-05-07 jy add*/--2015-04-29 jy comment,因为 sbbj 改为在上边置
+         Where flowid_dj = as_flowid_dj;
+      End If;
+    End If;
+
+/*    ----------------------------------------------------------------------------------------------
+    -- 2014-01-08 yangyi:
+    -- 当到货审批提交时, 对大中专教材相关订单记录置已关联电子单数据标记.
+    -- 目的是为了大中专订单状态追踪
+    If v_ywbmbh='000002' Then
+      For c1 In (Select a.flowid From t_jcfyhg_dhmx a, tmp_dhmx b
+                    Where a.flowid_tmp_dhmx=b.Flowid_Dhmx And b.flowid_dj=as_flowid_dj And
+                          Exists(Select 1 From t_ysddmx Where flowid_mx=a.flowid And bdflag='1' ))
+      Loop
+          -- 对于大中专教材来讲,其t_ysddmx.flowid_mx=t_jcfyhg.flowid
+          Update t_ysddmx Set fhdsj_flag='1', fhdsj_date=Sysdate Where flowid_mx=c1.flowid;
+      End Loop;
+    End If;
+    -----------------------------------------------------------------------------------------------
+*/
+
+    -- 2010-08-12 yangyi:
+    -- 将t_jcfyhg_dhmx表中增加字段flag, 用于区分有效关联/无效关联
+    -- 在到货审批自动关联时, 如果关联出多条, 则也将相应的数据也写入此表
+    -- 但这些记录的flag='1', 表示是无效关联, 只用于在到货审批时的显示
+    -- 没有其它实际意义.
+    -- 参见到货审批过程: PROC_DHSP_CGYJ_ZDQXH(手工匹配)
+    --                   PROC_DHSP_GLYJ(自动匹配)
+    --
+    -- 在单据提交时, 将当前单据中的这些无效的关联记录删除掉.
+    For c2 In (Select flowid_dhmx,id,sylx From tmp_dhmx Where flowid_dj = as_flowid_dj)
+    Loop
+        -- 2012-12-05 yangyi: 对t_dpls中未参与本次分书的记录，解除其占用，以便其它单据继续做关联
+        -- 有时相同品种多次报订一次到货但在不同的单据当中，有一个关联了则另一个就关联不上了。
+        -- 因此，在提交时，及时对无效记录解除占用。
+        Update t_dpls Set flowid_dhmx=Null Where flowid_dhmx=c2.flowid_dhmx And xdcs=0;
+
+        -- 2014-08-18 add by yangyi:
+        If c2.id Is Not Null And Trim(c2.id) <> '' Then
+            Select sylx Into v_sylx_kcsm From t_kcsm_ywbm Where id=c2.id And ywbmbh=v_ywbmbh;
+            If v_sylx_kcsm<>c2.sylx Then
+                -- 2014-08-18 yangyi: 如果到货的实洋类型与库存书目的实洋类型不一致
+                -- 则重新计算预分数据(t_yfsj_tmp)中的发货折扣
+                PKG_PURCHASE_ORDER_BEFOREHAND.PROC_UPDATE_TMP_YFSJ_FHZK(c2.flowid_dhmx,c2.id,errcode,errtext);
+                If errcode<>0 Then
+                   Rollback;
+                   Return;
+                End If;
+            End If;
+        End If ;
+        -- end add
+
+        -- 2012-12-07 yangyi:
+        -- 在订单匹配时，已改为不论是否包含有已经关联的t_dpls的记录
+        -- 都插一条与t_dpls无关的记录，以便于这里的删除不会影响到接收到货时向t_jcfyhg写已到货册数
+        -- 这里如果不将mzcs=0的记录删掉，会造成其他单据在匹配写t_jcfyhg_dhmx时主键冲突
+        -- t_jcfyhg_dhmx的主键是t_jcfyhg.flowid+t_dpls.dbdh
+        -- t_jcfyhg_dhmx的一个作用是接收到货时，能根据此表对t_jcfyhg写ydhcs
+        -- 这里只将与t_dpls有关的mzcs=0的记录删掉
+        Delete From t_jcfyhg_dhmx a
+         Where flowid_tmp_dhmx = c2.flowid_dhmx And mzcs = 0 And Exists
+         (Select 1 From t_dpls Where dbdh = a.flowid_dhmx);
+        -----------------------------------------------------------------------------------
+
+        -- 2014-04-08 yangyi: 附加了substrb(a.flowid_dhmx,1,3)='AAA'的条件
+        -- 否则, 纯备货的采购关联将被删掉了, 后期无法置已到货数了
+        Delete From t_jcfyhg_dhmx Where FLOWID_TMP_DHMX = c2.flowid_dhmx And flag = '1' And substrb(flowid_dhmx,1,3)='AAA';
+
+    End Loop;
+
+    /*    -- 2010-10-15 add by yangyi:
+        -- 因为音像部门没有到货分流, 到货录入提交后, 就形成正式到货数据了,
+        -- 但为了音像也可能利用到货审批功能进行依据关联, 所以没有马上删除tmp_dhdj/tmp_dhmx,
+        -- 改到这里删除了. 相应地, 音像到货确认时也改成了删这两个表了,
+        -- 只是像图书一样,将 update tmp_dhdj set oklrbj='1',oklrrq=sysdate, note='' where flowid_dj=p_flowid_dj;
+        -- 看一下音像到货录入时, 单据头显示时, 是否有oklrbj='0'的条件
+        If v_ywbmbh = '102' And v_zfzd_flag = '0' Then
+            Insert Into tmp_dhmx_xtw@c_link_sl_wl
+                Select * From tmp_dhmx Where flowid_dj = as_flowid_dj;
+            Insert Into tmp_dhdj_xtw@c_link_sl_wl
+                Select * From tmp_dhdj Where flowid_dj = as_flowid_dj;
+            Delete From tmp_dhmx Where flowid_dj = as_flowid_dj;
+            Delete From tmp_dhdj Where flowid_dj = as_flowid_dj;
+        End If;
+        -- end add
+    */
+
+    -- 另外:
+    -- 接收到货数据时, 需要判断一下, 如果tmp_dhdj中存在未审核的数据,则暂时不接收改笔到货
+    -- 主要是考虑到, 如果音像商流还未做到货审批, 那接过来到货后无法根据审批结果关联征订
+    -- 数据
+
+    errcode := 0;
+    errtext := 'OK';
+
+
+    -- 2017-08-01 yangyi: 增加写表 t_wl_yfsj
+    insert into t_wl_yfsj@c_link_sl_wl
+       (flowid, flowid_tldjhz, flowid_dhmx, flowid_dj, dh, id, yfsl,
+       cgyj, cgyj_kh,   djly, fhzk, sdhrq, yxj,  qsclfs,   cgdh_sl, cgdh_lsd, fhdh_ghdw)
+    Select flowid_yfsj,
+           (Select flowid_tldjhz From tmp_dhdj Where flowid_dj = a.flowid_dj) As flowid_tldjhz,
+           flowid, flowid_dj, dh, id, yfsl, ysdjh, substrb(trim(cgyj_kh),1,30), djly, fhzk, sdhrq, yxj, qsclfs,
+           (Select hgpch
+               From t_jcfyhg
+              Where flowid = (Select flowid_jcfyhg
+                                From t_dpls
+                               Where dbdh = substrb(a.ysdjh || '       ', 1, 12))) As cgdh_sl,
+
+           (Select flowid_jcfyhg From t_dpls Where dbdh = substrb(a.ysdjh || '       ', 1, 12)) As cgdh_lsd,
+           (Select ysdj From tmp_dhdj Where flowid_dj = a.flowid_dj) As fhdh_ghdw
+      From t_sl_yfsj a
+     Where flowid_dj = as_flowid_dj;
+
+      -- 2019-05-30 add yangyi: 如果是全品种提样方式，删除物流临时到货表中的相应数据
+      --                        相当于商流录入的电子单，下步物流接收时重新生成物流的tmp_dhdj/tmp_dhmx
+      --                        如果是全品种提样方式, 则到货信息是在物流录入的，提交后直接写入商流tmp_dhdj/tmp_dhmx
+      --                        按说在那里就可以将物流临时到货表中的相应数据删除，但考虑到有可能到货审批进行【否决】
+      --                        所以，在那里暂时先不删掉，待商流到货审批提交后, 再将其删除
+      if v_qpztybj=1 then
+        delete from tmp_dhmx@c_link_sl_wl where flowid_dj=as_flowid_dj;
+        delete from tmp_dhdj@c_link_sl_wl where flowid_dj=as_flowid_dj;
+      end if;
+      Commit;
+
+    --Rollback;
+
+Exception
+    When Others Then
+        errcode := -1;
+        errtext := Sqlerrm || 'PROC_DHSP_ZDTJ' || V_BJ||'k--'||v_sm_kcsm||'-'||v_id;
+        Rollback;
+
+End PROC_DHSP_ZDTJ_SJXX;

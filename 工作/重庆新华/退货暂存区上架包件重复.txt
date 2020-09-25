@@ -1,0 +1,4 @@
+
+ select * from t_dfbj where rqh='206384' and wcbj='0'; 
+ delete t_dfbj where bjlsh='2551661     ';
+ update t_hykcsl set bjlsh='2551662' where bjlsh='2551661     ';

@@ -1,0 +1,24 @@
+select t.hqmc 货区,
+       count(distinct t.id) 品种,
+       sum(sjsl) 册数,
+       sum(t.sjsl * s.dj) 码洋
+  from (select id,
+               sjsl,
+               (select trim(mc) hqmc from t_hqdy where bh = a.hqbh) hqmc
+          from t_agv_rw_xt_bak2 a
+         where lxbh = 'ST' 
+           and xjrq > to_date('2018/1/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+           and xjrq < to_date('2019/1/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+        union all
+        
+        select id,
+               sjsl,
+               (select hqmc from t_ghdw_hythq where hqbh = b.hqbh) hqmc
+          from t_fjrwb_bf_bak b
+         where ywlx = 'TH'
+           and tjrq > to_date('2018/1/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+              
+           and tjrq < to_date('2019/1/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')) t,
+       t_kcsm s 
+ where t.id = s.id
+ group by t.hqmc

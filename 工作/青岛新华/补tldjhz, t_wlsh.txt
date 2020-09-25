@@ -1,0 +1,25 @@
+ select * from  t_tldjhz where flowid_tldjhz=6707132;
+ select * from t_tldjhz_state where flowid_tldjhz=6707132; 
+  select * from  t_wlsh  where id=6707132;
+  
+  
+  select * from  t_wlsh  where id=6685125;
+  
+------
+ insert into t_tldjhz (tlrq,ysjs,ssjs, dh ,
+  flowid_tldjhz,djlx,ywbmbh,cybh,TLLRYBH  ,djsl, shbj,id_wlfh ,xchw,kl_flag,yh)
+  select shrq,ysjs,ssjs, dh ,
+  id,djlx,ywbmbh,'3001' ,shczy  ,djsl, '0',id_wlfh, shhw,kl_flag,wldh  from  t_wlsh where id=p_flowid_tldjhz;
+
+----
+
+ insert into t_tldjhz_state (flowid_tldjhz,insertdate,js) 
+ select flowid_tldjhz ,sysdate,ysjs from t_tldjhz
+ where flowid_tldjhz=6707132;
+ 
+ 
+   insert into t_wlsh (shrq,ysjs,ssjs,wldh,id_wlgs,dh ,shhw,
+  id,djlx,ywbmbh, shczy,bz,djsl,sj_flag,  kl_flag,zt)
+  
+ select tlrq,ysjs,ysjs,null,1,dh,nvl(xchw,'1'),flowid_tldjhz,djlx,ywbmbh,shr,bz,djsl,0,0,'1'
+ from t_tldjhz where flowid_tldjhz=6707132;

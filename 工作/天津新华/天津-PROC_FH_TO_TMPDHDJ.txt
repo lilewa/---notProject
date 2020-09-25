@@ -1,0 +1,346 @@
+  Procedure PROC_FH_TO_TMPDHDJ(ERRNO   Out Number,
+                                 ERRTEXT Out Varchar2) As
+        /*v_djhstr   Varchar2(4000);
+        v_onestr   Varchar2(4000);*/
+        v_count Number;
+        /*v_count1    Number;
+        v_count2    Number;*/
+        v_flowid_hz Number;
+        v_flowid_mx Number;
+        v_cybh      Char(6);
+        v_ywbmbh    Char(6);
+        v_zfd       Char(6);
+        v_zfzd_bj   Char(1);
+        v_sptz      Char(2);
+        v_lb        Char(3);
+        v_fl        Char(8);
+        v_jjbj      Char(1); --加急标记
+        v_bb        Char(6);
+        --v_bbmc      Char(60);
+        v_cbny      Number;
+        v_khlx      Char(2); --客户类型
+        v_sfd       Number; --上浮点
+        v_kfbh      Char(6);
+        v_mfjcbj    Char(1);
+        v_flowid_dj Number;
+
+        --v_sm v_isbn dj fhdh fhrq  fhcs sylx fhzk sl cgdh spnm yh
+        --v_sm v_isbn v_dj v_fhdh v_fhrq  v_fhcs v_sylx v_fhzk v_sl v_cgdh v_spnm v_yh
+        --v_sm       CHAR(60);
+        --v_isbn     CHAR(15);
+        --v_dj       NUMBER;
+        v_fhrq Date;
+        --v_fhdh     CHAR(20);
+        --v_fhcs     NUMBER;
+        --v_sylx     CHAR(1);
+        --v_fhzk     NUMBER;
+        --v_sl       NUMBER;
+        --v_cgdh     CHAR(12);
+        --v_spnm     CHAR(20);
+        v_yh   Char(20);
+        v_rows Number;
+        v_ghdw Char(6);
+
+    Begin
+
+/*      -- 2016-02-25 yangyi: 因为下边改为一单一提交了，所以，先暂时屏蔽了下边的判断
+				Select Count(*) Into v_count From t_ghdw_fhxxhz Where Nvl(bjs, 0) = -100;
+        If v_count > 0 Then
+            ERRNO := 0;
+            Return;
+        End If;
+*/
+        Update t_ghdw_fhxxhz Set BJS = -100 Where Nvl(bjs, 0) = 0;
+
+        --Commit;
+
+        -- 2015-08-31 yangyi: 为v_kfbh赋值
+        Select dh Into v_kfbh From t_dm Where lxbh='2' And kflx='LK' And rownum=1;
+
+        For c1 In (Select GHDWH, FLOWID_DJ, YSDJ From T_GHDW_FHXXHZ Where BJS = -100)
+        Loop
+            v_flowid_dj := c1.flowid_dj;
+            v_ghdw      := c1.ghdwh;
+
+            Select Count(*) Into v_count
+            From tmp_dhdj
+            Where ysdj = Upper(c1.ysdj) And
+                  ghdwh = v_ghdw;
+
+            if v_count = 0 then
+               Select Count(*) Into v_count
+								 From t_dhdj
+								 Where ysdj = Upper(c1.ysdj) And ghdwh = v_ghdw;
+            end if;
+
+            If v_count = 0 then
+
+              For c2 In (Select YSDJ, Min(cgdh) As cgdh
+                         From T_GHDW_FHXXMX
+                        Where FLOWID_DJ = v_flowid_dj
+                          And YSDJ = c1.ysdj -- 2017-01-17 jy add 否则将会把前面判重的ysdj插入到表中
+                        Group By YSDJ)
+              Loop
+
+                  --要取物流的流水号
+                  Select All_Flowid.Nextval@c_link_sl_wl Into v_flowid_hz From dual;
+
+                  --写商流 TMP_DHDJ@c_link_web_sl
+                  Select Min(ywbmbh), Min(fhdh), Min(clzt), Min(chych),
+                         Nvl(Max(URGENT), '0'), Nvl(Min(sptz), '01')
+                    Into v_ywbmbh, v_cybh, v_zfzd_bj, v_zfd, v_jjbj, v_sptz
+                    From t_jcfyhg
+                   Where hgpch = c2.cgdh
+                     And ghdwh = v_ghdw;
+
+                  If v_zfd Is Null Then
+                      v_sfd := 7;
+                  Else
+                      Select KHLXBH
+                        Into v_khlx
+                        From t_dm_ywbm
+                       Where dh = v_zfd
+                         And ywbmbh = v_ywbmbh;
+
+                      Select Nvl(Min(fdzk), 6) Into v_sfd From t_khlx Where bh = v_khlx;
+                  End If;
+
+                  --写商流 TMP_DHMX@c_link_web_sl
+                  For c3 In (Select isbn, sm, dj, fhzk
+                               From T_GHDW_FHXXMX
+                              Where FLOWID_DJ = v_flowid_dj
+                                And YSDJ = c2.ysdj
+                                And yscs <> 0
+                              Group By ISBN, SM, DJ, FHZK)
+                  Loop
+                      --要取物流的流水号
+                      Select All_Flowid.Nextval@c_link_sl_wl Into v_flowid_mx From dual;
+
+                      Select Min(lb), Min(fl), Min(bb), Min(cbny)
+                        Into v_lb, v_fl, v_bb, v_cbny
+                        From t_jcfyhg
+                       Where isbn = c3.isbn
+                         And sm = c3.sm
+                         And dj = c3.dj;
+
+                      -------------------------------------------------------------------------------------
+                      -- 2016-04-12 add by yangyi:
+                      -- 如果采购单上的分类不是底级分类，则自动找一个近似的底级分类:
+                      If length(trim(v_fl))<>8 Then
+                         Select nvl(min(flbh),v_fl) Into v_fl From t_allfl Where flbh Like Trim(v_fl)||'%' And djbj='1';
+                      End If;
+                      -------------------------------------------------------------------------------------
+
+                      If v_lb Is Null Then
+                          Select Min(lb) Into v_lb From t_kcsm Where isbn = c3.isbn;
+                      End If;
+
+                      If v_lb Is Null Then
+                          v_lb := '01';
+                      End If;
+
+                      If v_fl Is Null Then
+                          Select Min(fl) Into v_fl From t_kcsm Where isbn = c3.isbn;
+                      End If;
+
+                      If v_fl Is Null Then
+                          Select Min(fl) Into v_fl From t_jczdml Where isbn = c3.isbn;
+                      End If;
+
+                      If v_fl Is Null Then
+                          v_fl := '0101';
+                      End If;
+
+                      If v_bb Is Null Or Trim(v_bb) = '' Then
+                          -----------
+                          PKG_PUBLIC_FUNC.PROC_ISBN_TO_BB(c3.isbn, v_bb, ERRNO, ERRTEXT);
+                          --C_LINK_SJJHPT_SL
+                          If ERRNO <> 0 Then
+                              Rollback;
+                              Return;
+                          End If;
+
+                          If Trim(v_bb) Is Null Then
+                              Select Count(*)
+                                Into v_rows
+                                From t_kcsm
+                               Where isbn = c3.isbn
+                                 And dj = c3.dj
+                                 And sm = c3.sm;
+                              If v_rows > 0 Then
+                                  Select bb
+                                    Into v_bb
+                                    From t_kcsm
+                                   Where isbn = c3.isbn
+                                     And dj = c3.dj
+                                     And sm = c3.sm
+                                     And rownum = 1;
+                              Else
+                                  Select Count(*)
+                                    Into v_rows
+                                    From t_kcsm
+                                   Where isbn = c3.isbn
+                                     And dj = c3.dj;
+                                  If v_rows > 0 Then
+                                      Select bb
+                                        Into v_bb
+                                        From t_kcsm
+                                       Where isbn = c3.isbn
+                                         And dj = c3.dj
+                                         And rownum = 1;
+                                  Else
+                                      Select Count(*)
+                                        Into v_rows
+                                        From t_kcsm
+                                       Where isbn = c3.isbn;
+                                      If v_rows > 0 Then
+                                          Select bb
+                                            Into v_bb
+                                            From t_kcsm
+                                           Where isbn = c3.isbn
+                                             And rownum = 1;
+                                      Else
+                                          v_bb := '000000'; -- 未指定版别
+                                      End If;
+                                  End If;
+                              End If;
+                          End If;
+
+                      End If;
+
+                      If v_cbny Is Null Then
+                          Select to_number(to_char(trunc(Sysdate), 'yyyy') || '.' ||
+                                            to_char(trunc(Sysdate), 'mm'))
+                            Into v_cbny
+                            From dual;
+                      End If;
+
+                      Select Count(*)
+                        Into v_count
+                        From t_kcsm
+                       Where isbn = c3.isbn
+                         And dj = c3.dj
+                         And sm = c3.sm;
+
+                      If v_count > 0 Then
+                          v_mfjcbj := '0';
+                      Else
+                          v_mfjcbj := '1'; --新品
+                      End If;
+
+                      Insert Into TMP_DHMX
+                          (FLOWID_DHMX, FLOWID_DJ, ISBN, SM, DJ, CBNY, BB, LB, FL, SL, SYLX,
+                           JHZK, DBBZ, XBBZ, YSSL, DJSHSL, LRCZYBH, SM_BL, YSSY, NEW_FLAG,
+                           SPTZ, FHZK, FHFS, JZJTRQ, TM, MFJCBJ, BDCS)
+                          Select v_flowid_mx, v_flowid_hz, ISBN, SM, DJ, v_cbny, v_bb, v_lb,
+                                 v_fl, Nvl(Min(SL), 13), Min(SYLX), Min(FHZK), 1, 20,
+                                 Sum(YSCS), Sum(YSCS), 'WEB', c2.cgdh,
+                                 round(Decode(Min(SYLX),
+                                               '0',
+                                               Sum(YSCS * FHZK * DJ / 100),
+                                               Sum(YSCS * FHZK)),
+                                        2), '0', v_sptz, Min(FHZK) + v_sfd, 'D',
+                                 trunc(Sysdate) + 90, ISBN, v_mfjcbj, Sum(YSCS)
+                            From T_GHDW_FHXXMX
+                           Where T_GHDW_FHXXMX.FLOWID_DJ = v_flowid_dj
+                             And YSDJ = c2.ysdj
+                             And ISBN = c3.isbn
+                             And SM = c3.sm
+                             And DJ = c3.dj
+                             And FHZK = c3.fhzk
+                            -- and yscs <> 0 zwq 20180725
+                           Group By ISBN, SM, DJ, FHZK;
+                  End Loop;
+
+                  --直转/转发加急标记置为 '1'
+                  If v_zfzd_bj <> '0' Then
+                      v_jjbj := '1';
+                  End If;
+
+                  --取库房编号
+                  /* Select dh Into v_kfbh
+                  From t_dm Where lxbh = '2' And kflx = 'LK' ;*/
+
+                  Select Max(fhrq)
+                    Into v_fhrq
+                    From T_GHDW_FHXXMX
+                   Where T_GHDW_FHXXMX.FLOWID_DJ = v_flowid_dj
+                     And YSDJ = c2.ysdj;
+
+                  --TMP_DHDJ 的 SJ_FLAG 字段代表电子单来源，0=供应商上传，1=商流补录
+                  --TMP_DHDJ 的 SBBJ 字段 0=未提交，1=录入提交，2=审批结束标记，3=接收完商流预分数据
+                  --TMP_DHDJ 的 YWYBH 保存采购单号, BZR 保存商品特征
+                  /*Insert Into TMP_DHDJ@c_link_web_sl
+                  (FLOWID_DJ, DJLX, YWBMBH, GHDWH, YSDJ, YSRQ, CYBH, FLOWID_TLDJHZ, YDPZ,
+                   YDCS, YDMY, YDSY, LRCZYBH, DH, ZFZD, SL, SJ_FLAG, SBBJ, JJBJ, YWYBH, BZR, KFBH)
+                  Select v_flowid_hz, 'DH', v_ywbmbh, v_ghdw, ysdj, Max(fhrq), v_cybh, Null,
+                         Count(Trim(sm) || Trim(isbn) || dj), Sum(YSCS), Sum(YSCS * DJ),
+                         Sum(round(YSCS * DJ * fhzk / 100, 2)), 'WEB', v_zfd, v_zfzd_bj,
+                         Min(sl), '0', '1', v_jjbj, c2.cgdh, v_sptz, v_kfbh
+                    From T_GHDW_FHXXMX
+                   Where T_GHDW_FHXXMX.FLOWID_DJ = v_flowid_dj
+                     And YSDJ = c2.ysdj
+                   Group By YSDJ;*/
+                  Insert Into TMP_DHDJ
+                      (FLOWID_DJ, DJLX, YWBMBH, GHDWH, YSDJ, YSRQ, CYBH, FLOWID_TLDJHZ,
+                       YDPZ, YDCS, YDMY, YDSY, LRCZYBH, DH, ZFZD, SL, SJ_FLAG, SBBJ, JJBJ,
+                       YWYBH, BZR, KFBH)
+                      Select v_flowid_hz, 'DH', v_ywbmbh, v_ghdw, Upper(c2.ysdj), v_fhrq, v_cybh,
+                             Null, Nvl(Count(*),1), Sum(YSSL), Sum(YSSL * DJ), Sum(YSSY), 'WEB',
+                             v_zfd, v_zfzd_bj, Min(sl), '0', '7', v_jjbj, c2.cgdh, v_sptz,
+                             v_kfbh
+                        From TMP_DHMX
+                       Where FLOWID_DJ = v_flowid_hz;
+
+              /*Insert Into T_GHDW_FHXXHZ
+                                                                                              (YSDJ, YSPZ, SHPZ, YSCS, SHCS, YSMY, SHMY, YSSY, SHSY, CGDH, YH, BJS,
+                                                                                               FHRQ, SHRQ, ZT, GHDWH, FLOWID_DJ, UPLOAD_NUMBER)
+                                                                                              Select \*decode(v_fhdh, 'NULL', ysdj, v_fhdh)*\
+                                                                                               ysdj, Count(*), 0, Sum(yscs), 0, round(Sum(yscs * dj), 2), 0,
+                                                                                               Sum(round(YSCS * DJ * fhzk / 100, 2)), 0,
+                                                                                               \*decode(v_cgdh, 'NULL', Min(cgdh), v_cgdh)*\ Min(cgdh),
+                                                                                               decode(v_yh, 'NULL', Null, v_yh), Null, Max(fhrq), Null, 0, v_ghdw,
+                                                                                               v_flowid_dj
+                                                                                                From T_GHDW_FHXXMX
+                                                                                               Where T_GHDW_FHXXMX.FLOWID_DJ = v_flowid_dj
+                                                                                                 And YSDJ = c2.ysdj
+                                                                                               Group By YSDJ;*/
+              End Loop;
+
+            end if;
+
+            --备份上传电子单明细数据
+            Insert Into T_GHDW_FHXXMX_BAK
+                Select * From T_GHDW_FHXXMX Where FLOWID_DJ = v_flowid_dj And ysdj=c1.ysdj;
+
+            Delete From T_GHDW_FHXXMX Where FLOWID_DJ = v_flowid_dj  And ysdj=c1.ysdj;
+
+            -- 2016-02-25 yangyi:
+            -- 为避免因多个地方调用造成数据重复，对T_GHDW_FHXXHZ_BAK建立了flowid_dj+ysdj的唯一索引
+            Insert Into T_GHDW_FHXXHZ_BAK
+                Select * From T_GHDW_FHXXHZ Where FLOWID_DJ = v_flowid_dj  And ysdj=c1.ysdj;
+
+            Delete From T_GHDW_FHXXHZ Where FLOWID_DJ = v_flowid_dj  And ysdj=c1.ysdj;
+
+						Commit; -- 2016-02-25 yangyi: 改为一单一提交了(注意：这可是一大单，包含多个YSDJ)
+
+        End Loop;
+
+
+        ERRNO   := 0;
+        ERRTEXT := 'ok';
+        Return;
+
+    Exception
+        When Others Then
+            ERRNO   := Sqlcode;
+            ERRTEXT := Sqlerrm;
+            Rollback;
+
+            Insert Into t_trans_errlog
+                (flowid, trans_date, trans_note, trans_errlog, TRANS_XM)
+            Values
+                (all_flowid.Nextval, Sysdate, substrb(ERRTEXT, 1, 200), ERRNO,
+                 'PROC_FH_TO_TMPDHDJ');
+            Commit;
+    End;

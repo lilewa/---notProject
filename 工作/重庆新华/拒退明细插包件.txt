@@ -1,0 +1,12 @@
+  insert into t_dfbj(bjlsh,rqh,wcbj,pfrq,ywbmbh,cybh,ywpc,dh, ybzbj,bjfjbj,
+              zpz,zcs,zmy, bzjs,fhbmbh,fyfsh,zzbh, tihfs,sjjs,kfbh,jxfs,ywlx,zb,station,dz,lxr,tel,xjbj ,JHRQ,jhczybh,cgyj,
+            tyr_tele /*已打印，未打印*/,jgflag,cgyj_kh
+              )
+            select  bjlsh,rqh,'1',sysdate,'000001','3001',bjlsh,dh,  '1','0',
+              count(distinct id),sum(sdsl),sum(dj*sdsl),1,'3001',1,dh,1,1,'2001','JT','FH',rqh,
+              (select trim(mc) from t_station@c_link_wl_ex where bh =(Select station from t_dm@c_link_wl_sl where dh=t.dh)),
+              (select trim(substr(addr,1,90)) from t_dm_ywbm@c_link_wl_sl where dh = t.dh and ywbmbh = '000001'),
+              (select trim(substr(lxr,1,16)) from t_dm_ywbm@c_link_wl_sl where dh = t.dh and ywbmbh =  '000001'),
+              (select trim(tele) from t_dm_ywbm@c_link_wl_sl where dh =t.dh and ywbmbh = '000001'),'0',sysdate, '','已校核','0','0',ytpch
+              from t_khthmx_jt t where bjlsh='9612695' group by dh,rqh,ytpch,bjlsh
+ 

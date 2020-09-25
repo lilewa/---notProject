@@ -1,0 +1,13 @@
+
+小乐，王科要的那些数据，时间截止到10号，你11号调了12号给她就可以了
+ 图书大宗上架   图书返品上架   归到   图书新货上架
+TSPTDLSJ            TSPTDTSJ
+
+  图书批量大宗上架  图书批量返品上架  归到  图书批量上架
+
+ update t_gzltimes set id_job = 'TSPTCCSJ' where id_job ='TSPTDTSJ' or   id_job ='TSPTDLSJ'
+ update t_gzl2 set id_job= 'TSPTCCSJ' where id_job ='TSPTDTSJ' or   id_job ='TSPTDLSJ'
+ 
+  update t_gzltimes set id_job = 'TSPLCCSJ' where id_job ='TSPLDTSJ' or   id_job ='TSPLDLSJ'
+ update t_gzl2 set id_job= 'TSPLCCSJ' where id_job ='TSPLDTSJ' or   id_job ='TSPLDLSJ'
+ 

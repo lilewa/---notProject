@@ -1,0 +1,5 @@
+ select  h.bjlsh 单号,(select trim(mc) from t_ghdw where bh=h.hybh) 供商,
+
+ isbn 书号,trim(sm) 书名, dj 定价,thcs 数量,thcs*dj 码洋  from t_hythmx h,t_kcsm s where     gzbj='1' and dbrq >to_date('2018/11/22 00:00:00','yyyy/mm/dd hh24:mi:ss')
+
+ and s.id=h.id

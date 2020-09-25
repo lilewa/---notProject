@@ -1,0 +1,97 @@
+
+-- Create/Recreate primary, unique and foreign key constraints 
+alter table T_WLGS
+  add constraint pk_wlgs primary key (ID);
+
+
+-- Add/modify columns 
+alter table T_WLSH add cbtaskmsg varchar2(500);
+-- Add comments to the columns 
+comment on column T_WLSH.cbtaskmsg
+  is '生成拆包任务错误信息';
+
+
+PROC_WRITE_FHMX_XTW
+
+alter table T_FHRWB_YB add phone char(11);
+-- Add/modify columns 
+alter table T_KHDJ add zt char(1);
+-- Add comments to the columns 
+comment on column T_KHDJ.zt
+  is '0:未下单  1:已下单';
+
+
+drop table t_timer ;
+
+update t_menu set form='JGWL.WindowsForm.WLDailyReport.Form_Dai_pzgz2' where form='JGWL.WindowsForm.WLDailyReport.Form_Dai_pzgz';
+
+ 
+ update t_menu set form='JGWL.WindowsForm.WLSystem.RqZlSetting'
+ where form='JGWL.WindowsForm.WLSystem.Form_Sys_rqzlMain';
+
+create table T_TIMER
+(
+  name      VARCHAR2(30),
+  begindate DATE,
+  enddate   DATE,
+  ok        CHAR(1),
+  msg       VARCHAR2(1000)
+);
+
+ 
+update  t_wl_exe set proclock='Y' where proc_name='PROC_AUTOCREATEXJ2';
+update t_menu set form='JGWL.WindowsForm.WLShipped.Form_fhdj_print3' where form='JGWL.WindowsForm.WLShipped.Form_fhdj_print2';
+
+update  t_menu set enable='0' where ejmc ='库区作业监控';
+update  t_menu set enable='0' where ejmc ='发运批次查询';
+
+
+insert into T_TLDJHZ_STATEcode
+values
+('未校核',13);
+insert into T_TLDJHZ_STATEcode
+values
+('已校核',14);
+
+create sequence SQ_wlzf
+minvalue 1
+maxvalue 99999999
+start with 1
+increment by 1
+cache 20;
+
+-- Add/modify columns 
+alter table T_STMX add old_bjlsh CHAR(12);
+
+-- Add/modify columns 
+alter table T_GZLTIMES add ywbm CHAR(6);
+-- Add/modify columns 
+alter table T_GZL2 add ywbm CHAR(6);
+
+alter table T_PMSJHZ add sjzxid VARCHAR2(30);
+alter table T_THSJHZ add sjzxid VARCHAR2(30);
+
+
+alter table T_PKLS_SL add pk1 number;
+alter table T_PKLS_SL add pk2 number;
+alter table T_PKLS_SL add pk3 number;
+alter table T_PKLS_SL add pk1rq date;
+alter table T_PKLS_SL add pk2rq date;
+alter table T_PKLS_SL add pk3rq date;
+alter table T_PKLS_SL add pk1czy CHAR(4);
+alter table T_PKLS_SL add pk2czy CHAR(4);
+alter table T_PKLS_SL add pk3czy CHAR(4);
+alter table T_PKLS_SL add pk1czyname varchar2(10);
+alter table T_PKLS_SL add pk2czyname varchar2(10);
+alter table T_PKLS_SL add pk3czyname varchar2(10);
+alter table T_PKLS_SL add handle char(1); 
+comment on column T_PKLS_SL.handle
+  is '0 ,未处理，1 已处理';
+
+
+
+update t_menu set form ='JGWL.WindowsForm.WLDailyReport.Form_Dai_FySelect2'
+ where form='JGWL.WindowsForm.WLDailyReport.Form_Dai_FySelect'；
+
+update  t_menu set  form ='JGWL.WindowsForm.WLCorrection.Form_Correction_thqth2'
+ where form='JGWL.WindowsForm.WLCorrection.Form_Correction_thqth' ；

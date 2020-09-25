@@ -1,0 +1,50 @@
+ select count(*) ,sum(sl)from(
+  select id,count(distinct dh) sl  from    t_pz2   
+ where substr(dh,1,1) <> 'G' and substr(dh,1,1)<>'V' and 
+  (id,flrq) in ( 
+ 
+   select  id,min(flrq) flrq   from  t_pz2   
+   where    substr(dh,1,1) <> 'G' and substr(dh,1,1)<>'V'
+   group by   id) 
+   group by id )
+   
+   ---------
+   
+   
+    select count(*) ,sum(sl)from(
+  select id,count(distinct dh) sl  from    t_pz2   
+ where (substr(dh,1,1) = 'G' or substr(dh,1,1)='V') and 
+  (id,flrq) in ( 
+ 
+   select  id,min(flrq) flrq   from  t_pz2   
+   where   ( substr(dh,1,1) = 'G' or substr(dh,1,1)='V')
+   group by   id) 
+   group by id )
+   
+   ------------
+   select 117928/82362 from dual ;
+   
+
+    select count(*) ,sum(sl)from(
+    select id,count(distinct dh) sl  from    t_pz2   
+   where substr(dh,1,1) <> 'G' and substr(dh,1,1)<>'V' and 
+    (id,flrq) not in ( 
+   
+     select  id,min(flrq) flrq   from  t_pz2   
+     where    substr(dh,1,1) <> 'G' and substr(dh,1,1)<>'V'
+     group by   id) 
+     group by id )
+     
+     -------
+       select count(*) ,sum(sl)from(
+  select id,count(distinct dh) sl  from    t_pz2   
+ where (substr(dh,1,1) = 'G' or substr(dh,1,1)='V') and 
+  (id,flrq) not in ( 
+ 
+   select  id,min(flrq) flrq   from  t_pz2   
+   where   ( substr(dh,1,1) = 'G' or substr(dh,1,1)='V')
+   group by   id) 
+   group by id )
+   
+      select 38568/19589 from dual ;
+     

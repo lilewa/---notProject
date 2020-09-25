@@ -1,0 +1,7 @@
+ select tph 托盘,t.* from t_khthbj b ,(
+
+ select distinct (select trim(dm) from t_dm where dh = t.dh) 店名, ysxm 包号
+
+   from t_fjrwb t
+
+  where ghdwh = '003249' ) t where b.bjlsh =t.包号

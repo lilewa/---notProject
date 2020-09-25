@@ -1,0 +1,169 @@
+CREATE OR REPLACE Procedure "PROC_THZY"
+(
+ p_bjlsh Char, -- 预退批次号/容器号
+ p_id    Char, -- 品种号
+ p_zycs  number,
+ p_hw    Char,
+ p_czy char,
+ errno   Out Number, --如果大于零，表示有数据还未完成
+ errtext Out Varchar) As
+    v_flowid  Number(10);
+    v_rqh char(10);
+    v_rows    Number(10);
+   v_flowid_new Number;
+    v_bj      Number;
+    v_syflcs  Number(10);
+     v_sypch      Char(12);
+    v_bccs    Number;
+   v_bjywbmbh char(6);
+   v_hwywbmbh char(6);
+    v_kccs number;
+    v_hqbh char(4);
+  --  v_hykcsl t_hykcsl%rowtype;
+Begin
+
+    select hqbh into v_hqbh from t_hwdy where hw=p_hw;
+    if v_hqbh is null then
+       errno:=-1;
+       errtext := '货位不存在';
+       return;
+    end if;
+    select ywbmbh into v_hwywbmbh from T_HWDY w,t_hqdy q   where hw=p_hw and   w.hqbh=q.bh;
+
+    select min(rqh),min(ywbmbh) into v_rqh,v_bjywbmbh from t_dfbj where bjlsh=p_bjlsh
+    and ywlx='SC' and wcbj='0';
+    if v_rqh is null then
+        errno:=-1;
+        errtext := '未找到明细数据';
+        return;
+    end if;
+
+    if v_bjywbmbh <>v_hwywbmbh then
+      errno:=-1;
+      errtext := '书目所属部门和储备库货位所属部门不一致';
+      return;
+    end if;
+
+    select count(*) into v_rows from t_ghdw_hythqhw where rqh=v_rqh;
+    if v_rows=0 then
+       errno:=-1;
+       errtext := '容器不在退货库货位上';
+       return;
+    end if;
+
+   select sum(kccs) into v_kccs from t_hykcsl where bjlsh=p_bjlsh;
+   if p_zycs > v_kccs then
+
+    errno:=-1;
+    errtext := '调整册数不能大于箱内册数';
+    return;
+   end if ;
+
+
+     v_syflcs := p_zycs;
+    For c2 In (Select *  from t_hykcsl  where bjlsh=p_bjlsh and  id=p_id   order by kccs desc )
+    Loop
+
+      insert into t_hykcsl_zy
+      select id, ywbmbh, cybh, kfbh, dbbz, xbbz, kccs, zycs, hw, ghdwh,
+       xm, sylx, zjxs, sjly, thzk, flowid, ywpc, bjlsh, sl, jhcs, zl, cgyj, yscs, pk,
+      p_czy from t_hykcsl where flowid=c2.flowid;
+
+      If  c2.kccs <= v_syflcs Then
+          -- 如果够分
+          v_bccs :=c2.kccs;
+          delete t_hykcsl  where flowid=c2.flowid;
+      Else
+          v_bccs := v_syflcs;
+          update t_hykcsl set kccs=kccs-v_bccs where flowid=c2.flowid;
+      End If;
+
+       Select all_flowid.Nextval Into v_flowid_new From dual;
+       dlgetlsh('3001', '2002' || 'ZC', 'ZC', v_sypch);
+            If v_sypch is null Then
+                errno   := 110;
+                errtext := '没有取得单据号! 请与管理员联系';
+                Return;
+            End If;
+
+        Insert Into t_wl_zyls
+            (flowid, id, ckkf, rkkf, cybh, ywbmbh, yssl, sjsl, cgyj, ysbbj, lx, rq,
+             ghdwh, zypch, zk, zjxs, sylx,xtpch)
+            values( v_flowid_new  , c2.id, '2002', '2001','3001', c2.ywbmbh, v_bccs,
+                   v_bccs, '', '0', 'TZ', sysdate, c2.GHDWH, V_SYPCH, c2.thzk, c2.zjxs,
+                    c2.sylx,null);
+
+        Insert Into t_crkls
+            (flowid_crkls, id, ywpch, yspch, crkrq, ywlx, kfbh, lybh, cybh, ywbmbh,
+             crkcs, bz, crksy, sylx, zk_jg, zjxs, DBBZ, XBBZ, SL, flowid_wl )
+            values( v_flowid_new /*flowid_fjrwb*/, c2.ID, V_SYPCH, V_SYPCH, sysdate, 'ZC',
+                   '2002', '2001', '3001', c2.YWBMBH, v_bccs, '退货库转储备库',
+                   ROUND(v_bccs * c2.ZJXS * c2.THZK / 100, 2), c2.SYLX, c2.THZK,
+                    c2.ZJXS, c2.DBBZ, c2.XBBZ,
+                   c2.SL, c2.flowid);
+
+         Insert Into t_crkls
+            (flowid_crkls, id, ywpch, yspch, crkrq, ywlx, kfbh, lybh, cybh, ywbmbh,
+             crkcs, bz, crksy, sylx, zk_jg, zjxs, DBBZ, XBBZ, SL, flowid_wl )
+            values( all_flowid.Nextval  , c2.ID, V_SYPCH, V_SYPCH, sysdate, 'ZR',
+                   '2001', '2002', '3001', c2.YWBMBH, v_bccs, '退货库转储备库',
+                   ROUND(v_bccs * c2.ZJXS * c2.THZK / 100, 2), c2.SYLX, c2.THZK,
+                    c2.ZJXS, c2.DBBZ, c2.XBBZ,
+                   c2.SL, c2.flowid);
+
+       Update T_LTKF
+               Set kccs = kccs + v_bccs--,updatedate=sysdate
+             Where ID = c2.ID And HW = p_hw And KFBH = '2001'  and YWBMBH = c2.YWBMBH  ;
+        If Sql%Notfound Then
+            V_BJ := 7;
+            Insert Into T_LTKF
+                (ID, HW, KFBH, DBBZ, XBBZ, KCCS, CYBH, ywbmbh, Zycs, zl,hqbh)
+            Values
+                (c2.ID, p_hw, '2001', c2.dbbz, c2.xbbz, v_bccs,
+                 '3001', c2.ywbmbh, 0, c2.zl,v_hqbh);
+        End If;
+
+             -- 增加库存数量(由于参与了播种，所以要同时增加库存占用数)：
+        Update t_kcsl
+           Set kccs = nvl(kccs, 0) + v_bccs
+         Where id = c2.id And kfbh = '2001' And ywbmbh = c2.ywbmbh;
+        If Sql%Notfound Then
+            Insert Into t_kcsl
+                (id, kfbh, ywbmbh, kccs, cybh, dbbz, xbbz, zycs, change)
+            Values
+                (c2.id,  '2001', c2.ywbmbh, v_bccs,  '3001', c2.dbbz,
+                 c2.xbbz, 0, '1');
+        End If;
+
+      v_syflcs := v_syflcs - v_bccs;
+      -- 如果本次分流数=0，则自动跳出循环:
+      If v_syflcs = 0 Then
+          Exit;
+      End If;
+   End Loop;
+
+   if v_syflcs >0 then
+      errno:=-1;
+      errtext := '发生错误id:'||p_id||',bjlsh:'||p_bjlsh;
+      rollback;
+      return;
+   end if;
+
+/*    insert into t_gzltimes
+     (czybh,   cs, my, id_job, proc, tablename, tablepk)
+     values(
+     p_czy, pi_cs,pi_my,  decode(v_ywbmbh,'000001','TS','YX')||'FHBZ', 'PROC_THZY','t_dfbj',  ps_bjlsh
+     ) ;*/
+     select count(*) into v_rows from t_hykcsl where bjlsh=p_bjlsh;
+     if v_rows=0 then
+       delete t_dfbj where bjlsh=p_bjlsh;
+     end if ;
+
+    errno:=0;
+    errtext := 'ok';
+Exception
+    When Others Then
+        errno   := -1;
+        errtext := Sqlerrm||v_bj||v_flowid||'PROC_THZY';
+        Rollback;
+End;

@@ -1,0 +1,7 @@
+ insert into t_hqfldz(hqbh,fl,ywbmbh)
+  select distinct '01', substr(s.fl,1,4) ,'000001' from t_dh_yfsj t,t_kcsm s where flqx='CC' and hqbh is null  
+  and t.id=s.id and not exists (select 1 from t_hqfldz where substr(s.fl,1,4) = trim(fl) and ywbmbh='000001' and hqbh='01')
+
+
+
+ 

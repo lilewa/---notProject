@@ -1,0 +1,5 @@
+ insert into t_gkxxxxb
+   (  czybh, flowid, flowid_fjrw, gbth, gkh,   serialno, sjsl, xxrq)
+  
+  select  '0001', 1, flowid_fjrwb, 1, gkh, 1,  gbsl, sysdate from  
+ t_fjrwb where isbn='9787518411917'
