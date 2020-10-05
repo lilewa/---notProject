@@ -382,7 +382,7 @@ Begin
      select
        id, null, tph,'1', sysdate, j.YWBMBH, id, j.DH, '1', ZPZ, ZCS, ZMY, ZSY,
        js, '3001', js, '01', KFBH, j.ywlx, jxfs, '01', ZZL, null, js,
-        yxj, 1, '1',zddh,zb ,ddcdbj,tdpch,JHCZY,p_newbjlsh,sysdate ,null,Sysdate,null,null
+        yxj, 1, '1',zddh,zb ,ddcdbj,tdpch,JHCZY,p_newbjlsh,bzr ,null,Sysdate,null,null
         from t_jhbag j  where j.id=p_newbjlsh ;
      
      if v_jhtask.ywlx='FH' then
@@ -405,13 +405,13 @@ Begin
                       2
                  End zl, a.pk
             From T_PXMX A,   t_dm c
-           Where A.BJLSH = p_newbjlsh And a.dh = c.dh And a.pxcs >0; 
+           Where trim(A.BJLSH) = p_newbjlsh And a.dh = c.dh And a.pxcs >0; 
            
         insert into t_pxmx_bak select * from t_pxmx
-        Where BJLSH = p_newbjlsh;
+        Where trim(BJLSH) = p_newbjlsh;
 
         Delete t_pxmx
-         Where  BJLSH = p_newbjlsh;
+         Where  trim(BJLSH) = p_newbjlsh;
         /* 
           Update t_agv_rw_xt_bak
            Set fyrq = Sysdate

@@ -1,0 +1,19 @@
+select * from t_fjrwb_log_bak where id_thflhz=78
+
+select * from t_ghdw_hythqhw where ghdwh='001155'
+
+
+delete t_tree where 
+ (tbid, tbname) in (
+ select flowid , 't_stjh'tbname  from t_stjh where bjlsh=5743
+ )
+ 
+ delete t_crkls t where YWLX ='ZR' and KFBH='2002' 
+ and exists (select 1 from t_fjrwb_log_bak
+ where id_thflhz=78 and flowid=t.flowid_wl and sjsl=t.crkcs)
+ 
+ delete t_stjh where bjlsh=5743;
+ 
+ delete t_jhtask where   id=5743;
+
+ delete  t_rqzy where bh='850432'
