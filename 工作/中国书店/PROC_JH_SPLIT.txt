@@ -429,7 +429,7 @@ Begin
                KTRQ, TYLX, TYRQ, TYR, TYR_TELE, null, CYRQ, CYR_TELE, CYR, CYDW, ssjs,
                psjs, shrq, hw, zb, js, sdhrq, bzr, jhrq, GKH, jxfs
           From t_dfbj
-         Where  BJLSH = p_newbjlsh;
+         Where  trim(BJLSH) = p_newbjlsh;
       end if;   
       
      if v_jhtask.ywlx='ST' then
