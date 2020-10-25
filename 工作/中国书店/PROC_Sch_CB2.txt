@@ -1,0 +1,100 @@
+CREATE OR REPLACE Procedure PROC_Sch_CB2(
+                                         p_flowid_tldjhz   Char,
+                                         p_czybh           char,
+                                         p_czyname         char,
+                                         errno     Out Number,
+                                         errtext     Out Varchar) Is
+    v_rows       Number;
+    v_djsl       Number;
+    v_bj         Number;
+    v_kl_flag char(1);
+  TYPE lock_table         is TABLE OF   number;
+  lock_SPLITBAGTASK lock_table;
+  v_ywbmbh char(6);
+  v_kflx char(2);
+Begin
+    v_bj   := 1;
+    v_rows := 0;
+    v_bj   := 3;
+
+    errno := 0;
+    errtext := 'ok';
+
+    select count(*) into v_rows from  T_SPLITBAGTASK where  flowid_tldjhz = p_flowid_tldjhz and zt='0';
+    if v_rows=0 then
+        errno := -1;
+        errtext := '已经被其他人调度!';
+
+        Return;
+    end if;
+/*    Insert Into t_cbxh
+        Select p_flowid_tldjhz, trunc(Sysdate), nvl(Max(xh), 0) + 1
+          From t_cbxh
+         Where cbrq = trunc(Sysdate);*/
+
+
+ select 1  BULK COLLECT  into  lock_SPLITBAGTASK  from t_splitbagtask where  zt='0' for update ;
+  update T_SPLITBAGTASK  set
+                    PLANDATE=sysdate, PLANCZYBH=p_czybh,PLANCZYNAME=p_czyname,ZT='1',
+                    xh=(select nvl(Max(xh), 0) + 1   From t_splitbagtask  Where  plandate> trunc(sysdate) and plandate  < trunc(sysdate+1) )
+  Where flowid_tldjhz = p_flowid_tldjhz;
+
+    --2013-12-16 modify by lv 新增加判断数据先行的单据需要查询tmp_dhd判断商流是否已经推送完单据然后才允许拆包调度
+/*    Select   djsl,  kl_flag,ywbmbh  Into  v_djsl,v_kl_flag, v_ywbmbh
+      From t_wlsh
+     Where id = p_flowid_tldjhz  ;
+    select kflx into v_kflx from t_dm where dh=v_ywbmbh;*/
+    --if v_kflx='YX' then
+          update T_SPLITBAGTASK  set  finished='1' ,finishdate=sysdate, zt='3'
+          Where flowid_tldjhz = p_flowid_tldjhz;
+          return;
+   -- end if ;
+
+/*   Select Count(*)   Into v_rows From   tmp_dhdj   Where flowid_tldjhz = p_flowid_tldjhz;
+
+    If v_rows <> v_djsl Then
+        errno := -1;
+        errtext := '电子单不齐，不允许调度!';
+        Rollback;
+        Return;
+        v_bj := 4;
+    End If;*/
+
+     Update t_tldjhz Set ycbbj = '2', cbrq = Sysdate Where flowid_tldjhz = p_flowid_tldjhz;
+    --2013-11-20 modify by lv 更新tmp_dhdj中的fl_auto_flag 标记为了下一步提样做准备
+    --2013-11-20 modify by lv 判断是否需要提样如果需要提样，置上提样标记,不需要提样的直接置上sbbj=‘2’ 通过PROC_SX_JSDHSJ_XTW进行处理后可以进行到货分流
+   /* Select Count(*)
+      Into v_rows
+      From tmp_dhmx
+     Where tybj = '1' And Exists
+     (Select 1
+              From tmp_dhdj
+             Where flowid_tldjhz = p_flowid_tldjhz And tmp_dhdj.flowid_dj = tmp_dhmx.flowid_dj);
+    If v_rows > 0   Then
+        Update tmp_dhdj Set fl_auto_flag = '1' Where flowid_tldjhz = p_flowid_tldjhz;
+        if v_kl_flag ='0' or v_kl_flag='2'   then
+        insert into t_samplebooktask
+         (flowid_tldjhz, ghdw, createdate, yxj, kl_flag)
+          select p_flowid_tldjhz, dh, sysdate, sj_flag, kl_flag
+            from t_wlsh
+           where id = p_flowid_tldjhz;
+        insert into t_samplebook
+         (flowid_dhmx, flowid_dj, isbn, sm, dj, cbny, bb, fl, flowid_tldjhz)
+         select  x.flowid_dhmx,  x.flowid_dj,  isbn,  sm,  dj, cbny,  bb,  fl, p_flowid_tldjhz
+         from tmp_dhmx x,tmp_dhdj j where x.flowid_dj=j.flowid_dj and x.tybj='1' and j.flowid_tldjhz=p_flowid_tldjhz;
+
+         update t_samplebooktask set zpz=(select count(*) from t_samplebook where  flowid_tldjhz = p_flowid_tldjhz )
+                where flowid_tldjhz = p_flowid_tldjhz;
+         end if;
+    Else
+        Update tmp_dhdj Set sbbj = '2' Where flowid_tldjhz = p_flowid_tldjhz;
+    End If;*/
+
+
+Exception
+    When Others Then
+        errno := -1;
+        errtext := Sqlerrm || v_bj;
+        Rollback;
+        Return;
+End PROC_Sch_CB2;

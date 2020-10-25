@@ -1,0 +1,49 @@
+create or replace procedure RF_COMMIT_WLSH(
+p_id number,
+ERRNO   Out Number,
+ERRTEXT Out varchar2
+)
+as
+v_ywbmbh char(6);
+v_rows number;
+ v_kflx char(2);
+
+ begin
+
+  update t_wlsh set zt='1',TJRQ=sysdate where id=p_id;
+
+  select count(*) into v_rows from t_tldjhz where flowid_tldjhz=p_id;
+   if v_rows =0 then
+      insert into t_tldjhz (tlrq,ysjs,ssjs, dh ,
+      flowid_tldjhz,djlx,ywbmbh,cybh,TLLRYBH  ,djsl, shbj,id_wlfh ,xchw)
+      select shrq,ysjs,ssjs, dh ,
+      id,djlx,ywbmbh,'3001' ,shczy  ,djsl, '0',id_wlfh, shhw  from  t_wlsh where id=p_id;
+   end if ;
+   update t_tldjhz  set shbj='0'  where flowid_tldjhz=p_id;
+
+   select ywbmbh into v_ywbmbh from t_wlsh where id=p_id;
+  /* select kflx into v_kflx from t_dm where dh=v_ywbmbh;
+  if v_kflx='YX' then*/
+   select count(*) into v_rows from  t_splitbagtask where  flowid_tldjhz=p_id;
+  if v_rows=0 then
+    Insert Into t_splitbagtask
+            (flowid_tldjhz, createdate, ghdw, kl_flag, yxj, zjs, xchw)
+            Select p_id, Sysdate, dh, kl_flag, '0', ssjs, substrb(shhw, 1, 20)
+              From t_wlsh
+        Where id = p_id;
+  end if ;
+
+/*  insert into t_wlsh (shrq,ysjs,ssjs, dh ,
+  id,djlx,ywbmbh, shczy  ,djsl, zt,id_wlfh,cbtask,shhw,id_wlgs,wldh)
+ values(sysdate,p_ssjs,p_ssjs, p_ghdw,
+  v_flowid, p_djlx,p_ywbmbh,p_djr, p_djsl, '0',p_id_wlfh,'0',p_hw,p_wlgs,p_wldh);*/
+
+
+
+
+exception
+  when others then
+    ERRNO:=-1;
+    ERRTEXT:='RF_COMMIT_WLSH'||sqlerrm;
+    rollback;
+end RF_COMMIT_WLSH;

@@ -1,0 +1,444 @@
+CREATE OR REPLACE Procedure PROC_GOO_DHLR_YX_MX_SAVE_YY2
+
+    -- 2010-08-01 yangyi:
+    -- 音像录入改为按整单提交
+    --
+    -- 本过程由山西音像明细录入确定按钮调用
+    -- 录入数据将写入tmp_dhmx表中.
+
+(adc_flowid_dj      Number,
+ adc_flowid_dhmx    Number,
+ as_user            char, --录入员编号
+ adc_dj             Number, --定价
+ adc_yssl           Number, --应收数量
+ adc_sssl           Number, --实收数量
+ adc_pssl           Number, --破损数量
+ as_sylx            char, --实洋类型 '0':折扣 '1':进价
+ adc_jhzk           Number, --进货折扣/进价
+ adc_sl             Number, --税率
+ adc_fhzk           Number,
+ adc_xbbz           Number,
+ adc_cd             Number, --长度
+ adc_kd             Number, --宽度
+ adc_gd             Number, --高度
+ adc_zl             Number, --重量
+
+ as_tmflag          char, --条码打印标记 1:打印 0:不打印
+ as_isbn            char,
+ as_sm              Varchar2,
+ as_bb              char,
+ as_cip             Varchar2,
+ as_fl              char,
+ as_splx            char,
+ as_zt              char,
+ as_kb              char,
+ as_zz              char,
+ as_bz              char,
+ as_yz              char,
+ as_wz              char,
+ as_id              char,
+ as_remark          Varchar2,
+ adc_bc             Varchar2,
+ adc_yc             Varchar2,
+ adc_cbny           Number,
+ as_kzxsbj          char,
+ as_spdm            char, --商品代码
+ as_rqh             Char,
+ v_flowid_dhmx Out Number,  -- 为将新增的flowid_dhmx反馈给前台
+
+ errno      Out Number,
+ errtext      Out Varchar2
+ )
+
+ As
+
+    v_cybh            Char(6);
+    v_kfbh            Char(6);
+    v_ywbmbh          Char(6);
+    v_yssy            Number; -- 应收实洋
+
+    v_xszq            Number;
+    v_rows            Number;
+    v_jzjtrq          Date;
+
+    v_rqh char(20);
+    v_hqbh            Char(4);
+
+     v_sptz            Char(2);
+    adc_flowid_tldjhz Number;
+    v_kl_flag         Char(1);
+
+    v_tjth            Char(1); -- 2015-10-29 yangyi: 这个变量的含义是代表单据头中录入的商品特征，0=图书，1=音像，2=文化用品
+    v_sptz_yxfl       Char(2); -- 2016-09-20 yangyi: 限制分类对应的商品特征与单头中的商品特征一致
+    v_dh              Char(6);
+    v_zfzd            Char(1);
+    v_fhzk            Number;
+    v_bj              Number;
+
+Begin
+
+    v_fhzk := adc_fhzk;
+
+    -- 验证必录项:
+    If Trim(as_isbn) Is Null Or Trim(as_sm) Is Null Then
+        --or trim(as_rqh) is null then  容器号判断在下面进行
+        errno := -123;
+        errtext := '书号,书名为必录项!';
+        Rollback;
+        Return;
+    End If;
+
+    If adc_dj = 0 Or adc_dj Is Null Then
+        --or trim(as_rqh) is null then  容器号判断在下面进行
+        errno := -123;
+        errtext := '定价 为必录项!';
+        Rollback;
+        Return;
+    End If;
+
+  /*  proc_chkrqh2(as_rqh, 'tmp_dhdj', errno, errtext);
+    If errno <> 0 Then
+        errno := -1;
+        Return;
+    End If;*/
+
+   /* select count(*) into v_rows from tmp_dhdj t,t_rqzy z where oklrbj='1'  and z.tbname='tmp_dhdj'
+     and bh=as_rqh and  t.flowid_dj=z.tableid;
+    if v_rows>0 then
+       errno := -1;
+       errtext := '箱子里的到货单已经提交!';
+       Return;
+    end if ;*/
+
+    v_bj := 1;
+    If Trim(as_fl) Is Null Or Trim(as_bb) Is Null Or adc_jhzk = 0 Or adc_jhzk Is Null Or
+      /*  v_fhzk = 0 Or v_fhzk Is Null Or */
+       Trim(as_zt) Is Null Or adc_cbny = 0 Or adc_cbny Is Null Then
+        --or trim(as_rqh) is null then  容器号判断在下面进行
+        errno := -123;
+        errtext := '版别,分类,载体,出版年月,进价,发价为必录项!';
+        Rollback;
+        Return;
+    End If;
+
+    -- add by ymx 2019-10-15
+    SELECT COUNT(*) INTO v_rows FROM t_allfl WHERE flbh=as_fl AND djbj='0';
+    If v_rows > 0 Then
+        errno := -1;
+        errtext := '所选分类不是细类，必须选择细类!'||as_fl;
+        Rollback;
+        Return;
+    End If;
+
+
+    If nvl(adc_sssl, 0) = 0 And nvl(adc_yssl, 0) = 0 Then
+        errno := -1;
+        errtext := '[应收数]和[实收数]不能都为0!';
+        Rollback;
+        Return;
+    End If;
+    if adc_xbbz=0 then
+       errno := -1;
+        errtext := '包册不能为0!';
+        Rollback;
+        Return;
+    end if;
+    -- 2019-09-16 yangyi: 放开下述判断
+    -- 验证进价/发价/零售价的合法性:
+    If as_sylx = '0' Then
+        If adc_jhzk > v_fhzk Then
+            errno := -123;
+            errtext := '进折必须低于发折!';
+            Rollback;
+            Return;
+        End If;
+    Else
+        If adc_jhzk > v_fhzk Then
+            errno := -123;
+            errtext := '进价必须低于发价!';
+            Rollback;
+            Return;
+        End If;
+
+        If adc_jhzk >= adc_dj Then
+            errno := -123;
+            errtext := '进价必须低于零售价(定价)!';
+            Rollback;
+            Return;
+        End If;
+
+        If v_fhzk >= adc_dj Then
+            errno := -123;
+            errtext := '发价必须低于零售价(定价)!';
+            Rollback;
+            Return;
+        End If;
+
+    End If;
+
+    If as_sylx <> '0' Then
+        If adc_jhzk >= adc_dj Then
+            errno := -123;
+            errtext := '进价必须低于零售价(定价)!';
+            Rollback;
+            Return;
+        End If;
+    End If;
+
+    -- 2015-10-29 yangyi: 取得tjth, 图书音像标记: 0 代表图书 1 代表音像 2 代表文化用品
+    Select ywbmbh, cybh, kfbh, flowid_tldjhz, tjth, dh, zfzd
+      Into v_ywbmbh, v_cybh, v_kfbh, adc_flowid_tldjhz, v_tjth, v_dh, v_zfzd
+      From tmp_dhdj
+     Where flowid_dj = adc_flowid_dj;
+
+
+    -- 2019-06-01 add yangyi: 由于财务凭证中，传媒部门按税率区分不同科目，故增加限制:
+    proc_chk_sl(v_ywbmbh, adc_sl, errno, errtext);
+    If errno <> 0 Then
+        Rollback;
+        Return;
+    End If;
+
+    If v_zfzd = '1' And (v_fhzk = 0 Or v_fhzk Is Null) Then
+        PROC_GETFHZK_CQYX(as_id,
+                          v_ywbmbh,
+                          v_dh,
+                          as_sylx,
+                          as_fl,
+                          adc_dj,
+                          v_fhzk,
+                          errno,
+                          errtext);
+        If errno <> 0 Then
+            Rollback;
+            Return;
+        End If;
+
+    End If;
+
+    -- 2015-10-29 yangyi: 根据v_tjth 对v_sptz赋值
+    -- tjth: 图书音像标记: 0 代表图书 1 代表音像 2 代表文化用品
+    -- 同时将下边一段转换商品特征的写法屏蔽掉了:
+    If v_tjth = '0' Then
+        v_sptz := '01';
+    Elsif v_tjth = '1' Then
+        v_sptz := '02';
+    Else
+        v_sptz := '03';
+    End If;
+
+
+
+    -----------------------------------------------------------------------------------------
+    v_bj := 3;
+
+
+    -- 2012-05-10 lv:
+    -- 如果选择的运号是直发转单的，则所录入的单据可以不录入容器号：
+    Select nvl(kl_flag, '0')
+      Into v_kl_flag
+      From t_tldjhz
+     Where flowid_tldjhz = adc_flowid_tldjhz;
+
+    If v_kl_flag Is Null Then
+        v_kl_flag := '0';
+    End If;
+
+    -- 2019-09-17 ymx 不在判断容器号，可以为空
+    -- 2019-06-01 yangyi:  只有非直转的、非图书部门(v_tjth<>'0')才必须录入容器号
+   /* If Trim(as_rqh) Is Null And v_kl_flag <> '1'   Then
+        errno := -123;
+        errtext := '容器号为必录项!';
+        Rollback;
+        Return;
+    End If;*/
+
+
+
+
+    -- 2019-06-26 add by yangyi: 青海省店限制非藏文部门，不允许录入藏文类品种
+   /* If v_ywbmbh <> '000008' And substrb(as_fl, 1, 2) = '08' Then
+        errno := -55;
+        errtext := '只有藏文部门才允许录入藏文类品种!';
+        Rollback;
+        Return;
+    End If;*/
+
+    ----------------------------------------------------------------
+    -- 2016-09-20 add by yangyi:
+    -- 验证营销分类所属的商品特征与单据头的商品特征要一致：
+    Select min(sptz) Into v_sptz_yxfl From t_allfl Where flbh = as_fl;
+    if v_sptz_yxfl is null then
+        errno := -55;
+        errtext := 't_allfl没有这个分类!'||as_fl;
+        Rollback;
+        Return;
+    end if ;
+    If v_sptz_yxfl <> v_sptz Then
+        errno := -55;
+        errtext := '营销分类的商品特征与单据头中录入的商品特征不一致!';
+        Rollback;
+        Return;
+    End If;
+    ------------------------------------------------------------------
+
+    v_bj := 4;
+    Select Count(*) Into v_rows From t_Hqdy  Where ywbmbh = v_ywbmbh;
+    If v_rows = 0 Then
+              errno := -1;
+        errtext := '此部门没有定义货区'||v_ywbmbh ;
+        Rollback;
+        Return;
+    end if;
+    v_bj := 9;
+    Select Count(*)
+      Into v_rows
+      From t_hqfldz
+     Where Trim(fl) = substr(as_fl, 0, 4) And ywbmbh = v_ywbmbh;
+    If v_rows = 0 Then
+        errno := -1;
+        errtext := 'PROC_GET_HQBH 此分类没有定义与货区的对应关系2!' || v_ywbmbh || ',' || as_fl;
+        Rollback;
+        Return;
+    End If;
+v_bj := 10;
+    Select Min(hqbh)
+      Into v_hqbh
+      From t_hqfldz
+     Where Trim(fl) = substr(as_fl, 0, 4) And ywbmbh = v_ywbmbh;
+
+   /* Else
+v_bj := 11;
+        Select hqbh Into v_hqbh From t_Hqdy_Ywbm Where ywbmbh = v_ywbmbh;
+    End If;
+*/
+    -- 验证容器号的合法性:
+
+   /*  if v_kl_flag <> '1'   Then
+        proc_chkrqh(as_rqh, 'tmp_dhmx', errno, errtext);
+        If errno <> 0 Then
+            Rollback;
+            Return;
+        End If;
+
+        v_bj := 5;
+        --2011-11-25 modify by lv 增加判断限制一个容器只能用于一个到货单中
+        Select Count(*)
+          Into v_rows
+          From tmp_dhmx
+         Where flowid_dj <> adc_flowid_dj And tph = as_rqh;
+        If v_rows > 0 Then
+            errno := -1;
+            errtext := '该容器已经用于装放其他到货单品种, 请更换容器!';
+            Rollback;
+            Return;
+        End If;
+
+        -- 判断容器的去向与当前品种的去向是否相符
+        -- 去向(hqbh)被保存在tmp_dhmx.hw字段中
+        Select Count(*)
+          Into v_rows
+          From tmp_dhmx
+         Where flowid_dj = adc_flowid_dj And Trim(hw) <> Trim(v_hqbh) And tph = as_rqh;
+        If v_rows > 0 Then
+            errno := -1;
+            errtext := '该容器的去向与当前品种的去向不符, 请更换容器!';
+            Rollback;
+            Return;
+        End If;
+     end if;*/
+
+    --计算应收实洋
+    If as_sylx = '0' Then
+        --折扣方式
+        v_yssy := round(adc_yssl * adc_dj * adc_jhzk / 100, 2);
+    Else
+        --进价方式
+        v_yssy := round(adc_yssl * adc_jhzk, 2);
+    End If;
+    v_bj := 6.1;
+    -- 置默认截止进退日期和销售周期:
+    Select nvl(Min(jtqx), 180) + Sysdate, nvl(Min(xszq), 120)
+      Into v_jzjtrq, v_xszq
+      From t_flszb@c_link_wl_sl
+     Where fl = as_fl And ywbmbh = v_ywbmbh;
+
+    -- tmp_dhmx.tph=as_rqh(用于保存入库上架的容器号)
+    If adc_flowid_dhmx = 0 Then
+        --增加明细:
+        Select all_flowid.Nextval Into v_flowid_dhmx From dual;
+        Insert Into tmp_dhmx
+            (flowid_dj, flowid_dhmx, isbn, sm, bb, cip, fl, splx, sptz, zt, kb, zz, nj,
+             nz, xz, zfk, bz, yz, wz, fgywybh, cbczybh, jhfs, bblx, zdqh, sylx, zdyj, tph,
+             remark, bc, yc, yssl, djshsl, pssl, sl, flowid_allzdsm, zdxh, dj, cbny, jhzk,
+             fhzk, dbbz, xbbz, mkzl, yjrq, lrczybh, bdcs, ydhcs, yssy, kzxsbj, jzjtrq,
+             flowid_jcfyhg, changdu, kuandu, gaodu, tj, zl, id, tm_flag, tm, hw, sm_cs,
+             sm_fcs, sm_bl, xszq, spdm, ysxlh)
+        Values
+            (adc_flowid_dj, v_flowid_dhmx, substrb(as_isbn, 1, 15), substrb(as_sm, 1, 60),
+             as_bb, substrb(as_cip, 1, 10), as_fl, as_splx, v_sptz, as_zt, as_kb, as_zz,
+             null, null, null, '0', substrb(as_bz, 1, 20), substrb(as_yz, 1, 20),
+             as_wz, null, null, null, '01', null, as_sylx, null,
+             as_rqh, substrb(as_remark, 1, 40), adc_bc, adc_yc, adc_yssl, adc_sssl,
+             adc_pssl, adc_sl, '0', 0, adc_dj, adc_cbny, adc_jhzk, v_fhzk,
+             1, adc_xbbz, 0, sysdate, as_user, 0, adc_yssl, v_yssy,
+             as_kzxsbj, v_jzjtrq, 0, adc_cd, adc_kd, adc_gd, 0, nvl(adc_zl,1), '',
+             as_tmflag, substrb(as_isbn, 1, 18), v_hqbh, null,
+             null, null, v_xszq, Trim(as_spdm),
+              null);
+        v_bj := 7;
+
+
+    Else
+
+        v_flowid_dhmx := adc_flowid_dhmx;
+        select tph into v_rqh from tmp_dhmx where  flowid_dhmx = v_flowid_dhmx;
+        select count(*) into v_rows from tmp_dhmx where tph=v_rqh and flowid_dj=adc_flowid_dj;
+        if v_rows =0 then
+
+          delete  t_rqzy where bh=v_rqh and  tbname='tmp_dhdj' and  tableid =adc_flowid_dj;
+
+        end if;
+        --修改明细
+        Update tmp_dhmx
+           Set isbn = substrb(as_isbn, 1, 15), sm = substrb(as_sm, 1, 60), bb = as_bb,
+               cip = substrb(as_cip, 1, 10), fl = as_fl, splx = as_splx, sptz = v_sptz,
+               zt = as_zt, kb = as_kb, zz = as_zz, nj = null, nz = null, xz = null,
+               zfk = '0', bz = substrb(as_bz, 1, 20), yz = substrb(as_yz, 1, 20),
+               wz = as_wz, fgywybh = null, cbczybh = null, jhfs = null,
+                 sylx = as_sylx, zdyj = null, tph = as_rqh,
+               remark = substrb(as_remark, 1, 40), bc = adc_bc, yc = adc_yc,
+               yssl = adc_yssl, djshsl = adc_sssl, pssl = adc_pssl, sl = adc_sl,
+               flowid_allzdsm = '0', zdxh = 0, dj = adc_dj,
+               cbny = adc_cbny, jhzk = adc_jhzk, fhzk = v_fhzk, dbbz = 1,
+               xbbz = adc_xbbz, mkzl = 0, /*yjrq = sysdate,*/ lrczybh = as_user,
+                 ydhcs = adc_yssl, yssy = v_yssy, kzxsbj = as_kzxsbj,
+                 changdu = adc_cd, kuandu = adc_kd,
+               gaodu = adc_gd, tj = 0, zl = adc_zl, id = '', tm_flag = as_tmflag,
+               hw = v_hqbh, tm = substrb(as_isbn, 1, 18),
+                  jzjtrq = v_jzjtrq, xszq = v_xszq,
+               spdm = Trim(as_spdm)
+         Where flowid_dhmx = v_flowid_dhmx;
+    End If;
+    v_bj := 8;
+
+/*    select count(*) into v_rows from t_rqzy
+         where tbname='tmp_dhdj' and tableid=adc_flowid_dj and bh=as_rqh;
+     if v_rows=0 then
+         insert into t_rqzy
+           (bh, zydate, czy, tbname, tableid, note,QX,zylx )
+         values
+           (as_rqh, sysdate, as_user, 'tmp_dhdj', adc_flowid_dj,'到货录入','DHLR','s');
+
+     end if;*/
+    errno  := 0;
+    errtext  := 'OK';
+
+Exception
+
+    When Others Then
+        errno := -1;
+        errtext := Sqlerrm || v_bj||','||as_fl;
+        Rollback;
+
+End;
