@@ -1,0 +1,80 @@
+create or replace procedure PROC_CONFIRMTLDJHZ(
+p_flowid_tldjhz number,
+ERRNO   Out Number,
+ERRTEXT Out Char
+)
+as
+
+ v_shr char(4);
+ v_ssjs number;
+  v_rows number;
+  v_ywbmbh char(6);
+  v_kflx char(2);
+begin
+
+  select count() into v_rows from t_wlsh where id=p_flowid_tldjhz and zt='1';
+  if v_rows0 then
+    ERRNO=-1;
+    ERRTEXT='任务已经提交过了，不能重复提交';
+    return;
+  end if;
+  select count() into v_rows from t_wlsh where id=p_flowid_tldjhz and djlx='XT';
+  if v_rows0 then
+    ERRNO=-1;
+    ERRTEXT='退货登记请在RF中提交';
+    return;
+  end if;
+
+   -- update      t_tldjhz_local set confirmrq=sysdate   where flowid_tldjhz=p_flowid_tldjhz;
+    update  t_wlsh  set   zt='1'   where id=p_flowid_tldjhz;
+
+    select trim(SHCZY),ssjs into v_shr , v_ssjs  from  t_wlsh where id=p_flowid_tldjhz;
+
+  select ywbmbh into v_ywbmbh from t_wlsh where id=p_flowid_tldjhz;
+    UPDATE t_gzl2 SET  js =v_ssjs WHERE proc='PROC_CONFIRMTLDJHZ' AND tablepk=p_flowid_tldjhz;
+    if sql%notfound then
+
+       insert into t_gzl2
+           (czybh,    pz, js, id_job, proc, tablename, tablepk,YWBM)
+           values
+          ( v_shr ,0,v_ssjs,'TDDJ','PROC_CONFIRMTLDJHZ','t_tldjhz',p_flowid_tldjhz,v_ywbmbh);
+
+         insert into t_gzltimes
+        (czybh,  cs, my, id_job, proc, tablename,   tablepk,YWBM)
+      values
+        (v_shr,   0, 0, 'TDDJ', 'PROC_CONFIRMTLDJHZ', 't_tldjhz',  p_flowid_tldjhz,v_ywbmbh);
+
+    end if;
+
+ -- select ywbmbh into v_ywbmbh from t_wlsh where id=p_flowid_tldjhz;
+  --select kflx into v_kflx from t_dm where dh=v_ywbmbh;
+  select count() into v_rows from  t_splitbagtask where  flowid_tldjhz=p_flowid_tldjhz;
+  if v_rows=0 then
+
+    Insert Into t_splitbagtask
+            (flowid_tldjhz, createdate, ghdw, kl_flag, yxj, zjs, xchw)
+            Select p_flowid_tldjhz, Sysdate, dh, kl_flag, '0', ssjs, substrb(shhw, 1, 20)
+              From t_wlsh
+        Where id = p_flowid_tldjhz;
+  end if ;
+
+   select count() into v_rows from t_tldjhz where flowid_tldjhz=p_flowid_tldjhz;
+   if v_rows =0 then
+
+     insert into t_tldjhz (tlrq,ysjs,ssjs, dh ,
+      flowid_tldjhz,djlx,ywbmbh,cybh,TLLRYBH  ,djsl, shbj,id_wlfh ,xchw,kl_flag,yh)
+    select shrq,ysjs,ssjs, dh ,
+    id,djlx,ywbmbh,'3001' ,shczy  ,djsl, '0',id_wlfh, shhw,kl_flag,wldh
+     from  t_wlsh where id=p_flowid_tldjhz;
+
+   end if ;
+   update t_tldjhz  set shbj='0'  where flowid_tldjhz=p_flowid_tldjhz;
+
+ERRNO=0;
+ERRTEXT='ok';
+exception
+  when others then
+    ERRNO=-1;
+    ERRTEXT='PROC_CONFIRMTLDJHZ'sqlerrm;
+    rollback;
+end PROC_CONFIRMTLDJHZ;
