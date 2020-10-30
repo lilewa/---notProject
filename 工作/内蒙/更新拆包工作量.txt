@@ -1,0 +1,38 @@
+ 
+   update t_gzl2 t
+  set  js  =( select  ssjs from  t_tldjhz  where  flowid_tldjhz =t.tablepk )
+  where id_job='CBYD'  and proc='RF_CBDD_Confirm2' 
+   and createdate> to_date('2020/9/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and exists (select  ssjs from  t_tldjhz  where  flowid_tldjhz =t.tablepk);    
+       
+  
+  update t_gzl2 t
+  set  pz  =( select   count(*) from  tmp_dhdj j ,tmp_dhmx x  where j.flowid_tldjhz =t.tablepk
+   and  j.flowid_dj= x.flowid_dj )
+  where id_job='CBYD'  and proc='RF_CBDD_Confirm2' 
+   and createdate> to_date('2020/9/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and exists (select 1 from tmp_dhdj where flowid_tldjhz =t.tablepk);
+   
+   update t_gzl2 t
+  set  pz  =( select   count(*) from  tmp_dhdj_xtw j ,tmp_dhmx_xtw x  where j.flowid_tldjhz =t.tablepk 
+   and  j.flowid_dj= x.flowid_dj)
+  where id_job='CBYD'  and proc='RF_CBDD_Confirm2' 
+   and createdate> to_date('2020/9/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and exists (select 1 from tmp_dhdj_xtw where flowid_tldjhz =t.tablepk)
+    
+  update t_gzltimes t
+  set (cs,my) =( select sum(djshsl) ,sum(djshsl*dj)  from  tmp_dhdj j ,tmp_dhmx x  where j.flowid_tldjhz =t.tablepk 
+  and  j.flowid_dj= x.flowid_dj)
+  where id_job='CBYD'  and proc='RF_CBDD_Confirm2' 
+   and createdate> to_date('2020/9/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and exists (select 1 from tmp_dhdj where flowid_tldjhz =t.tablepk)
+   
+   update t_gzltimes t
+  set (cs,my) =( select sum(djshsl) ,sum(djshsl*dj)  from  tmp_dhdj_xtw j ,tmp_dhmx_xtw x  where j.flowid_tldjhz =t.tablepk 
+  and  j.flowid_dj= x.flowid_dj)
+  where id_job='CBYD'  and proc='RF_CBDD_Confirm2' 
+   and createdate> to_date('2020/9/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and exists (select 1 from tmp_dhdj_xtw where flowid_tldjhz =t.tablepk)
+   
+ 
+     

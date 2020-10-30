@@ -1,0 +1,16 @@
+  select min(sm),
+       min(isbn), 
+       min(dj),   
+       (select bsno from cbs_yybooks_out@c_link_wl_jhq where wl_id = t.id) 物料 ,
+       sum(lk) 库存 ,
+          sum(pk) 盘库 ,
+        sum(pk-lk) 差异,
+          sum(lk*dj) 库存码洋 ,
+          sum(pk *dj) 盘库码洋 ,
+        sum((pk-lk)*dj) 差异码洋 
+   from (
+   select id,sum(kccs) lk,0 pk  from t_ltkf where kfbh='2001' group by id 
+   union all
+   select id,0 lf ,sum(pkcs) pk  from t_pkls_sl   group by id) t,t_kcsm s
+   where s.id=t.id 
+    group by t.id

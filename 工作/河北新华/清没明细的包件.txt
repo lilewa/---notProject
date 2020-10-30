@@ -1,4 +1,5 @@
 
 delete t_dfbj t where ywlx='FH' and cyrq is   null
 and jxfs <>'SG' and trim(nvl(gkh,'1'))<>'JT'
+and wcbj='1'
 and not exists (select 1 from t_pxmx where bjlsh=t.bjlsh);
