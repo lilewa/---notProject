@@ -1,0 +1,181 @@
+ --新货调度数据：下达收货任务单2.1万批
+ select count(*) from t_splitbagtask  
+   where zt<>'0' and 
+   plandate> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+and  plandate< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss');
+
+--2019年12.21至2020.10.31
+--20万种
+ select count(*) from t_splitbagtask k,tmp_dhdj_xtw j,tmp_dhmx_xtw x   where k.zt<>'0' and 
+   plandate> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  plandate< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  
+   and k.flowid_tldjhz=j.flowid_tldjhz and j.flowid_dj=x.flowid_dj;
+   
+    select count(*) from t_splitbagtask k,tmp_dhdj  j,tmp_dhmx  x   where k.zt<>'0' and 
+   plandate> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  plandate< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  
+   and k.flowid_tldjhz=j.flowid_tldjhz and j.flowid_dj=x.flowid_dj
+  
+ --其中计划提样           
+   
+ select count(*) from t_splitbagtask  k,t_samplebook  s
+   where k.zt<>'0' and 
+   plandate> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+and  plandate< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')
+and k.flowid_tldjhz=s.flowid_tldjhz
+
+--分流
+ --16630
+ 
+ select sum(zjs) from t_dhfltask f 
+ where  createdate> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  createdate< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss') and zt='4' ;
+  --播撒79万次
+ select count(*) from t_zprw_bak 
+ where  bzrq> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  bzrq< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss');
+  
+  --绿通
+  
+ select count(*) from t_splitbagtask  
+   where zt<>'0' and kl_flag='2' and 
+   plandate> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+and  plandate< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss');
+ 
+ select count(*) from t_splitbagtask k,tmp_dhdj_xtw j,tmp_dhmx_xtw x   where k.zt<>'0'
+  and k.kl_flag='2'
+  and   plandate> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  plandate< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  
+   and k.flowid_tldjhz=j.flowid_tldjhz and j.flowid_dj=x.flowid_dj;
+   
+    select count(*) from t_splitbagtask k,tmp_dhdj  j,tmp_dhmx  x   where k.zt<>'0'
+    and k.kl_flag='2' and 
+   plandate> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  plandate< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  
+   and k.flowid_tldjhz=j.flowid_tldjhz and j.flowid_dj=x.flowid_dj
+
+
+-----------
+
+  --二、  按店调度（分别按图书大中专、音像电教统计）订单总数
+  select sum(cs), min(d.dm) from (
+  select 1 cs ,ywbmbh from  t_fhrwb_bak 
+  where dd_date  > to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+and  dd_date< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  
+  group by ysdjh  ,ywbmbh ) t,t_dm d where t.ywbmbh=d.dh
+group by ywbmbh
+
+-- 总品种数
+select count(distinct id) ,ywbmbh from  t_fhrwb_bak 
+  where dd_date  > to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+and  dd_date< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  
+group by ywbmbh
+-- 次数
+select count(*) ,ywbmbh from t_agv_rw_xt_bak2 where lxbh='FH'
+ and  xjrq>to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+    and  xjrq< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  
+   group by ywbmbh
+
+
+   --到货的正常发货件数
+   select sum(bzjs) from t_dfbj where 
+   jxfs='FL'
+   and cyrq>to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  cyrq< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss') ;
+   
+   select sum(bzjs) from t_dfbj where 
+   jxfs='ZP'
+   and cyrq>to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  cyrq< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss') ;
+   
+   --select 35218 +97529  from dual
+   --到货的绿通发货件数
+   select sum(bzjs) from t_dfbj where  jxfs='SG'
+   and cyrq>to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  cyrq< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss') ;
+   select yxj from t_splitbagtask
+  ---
+  
+   select sum(zjs) from t_splitbagtask  
+   where zt<>'0' and yxj ='1'  and 
+   plandate> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  plandate< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss');
+  
+  select  56217+233 from dual 
+  
+    select count(*) from t_splitbagtask k,tmp_dhdj_xtw j,tmp_dhmx_xtw x   where k.zt<>'0' and 
+     yxj ='1'  and 
+   plandate> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  plandate< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  
+   and k.flowid_tldjhz=j.flowid_tldjhz and j.flowid_dj=x.flowid_dj;
+   
+    select count(*) from t_splitbagtask k,tmp_dhdj  j,tmp_dhmx  x   where k.zt<>'0' and 
+    yxj ='1'  and 
+   plandate> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  plandate< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  
+   and k.flowid_tldjhz=j.flowid_tldjhz and j.flowid_dj=x.flowid_dj
+
+客退9771万元；
+
+select sum(thcs*dj) from t_khthmx x, t_kcsm s where thlx <>'ZT'
+and  lrrq1> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  lrrq1< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  
+   and x.id=s.id
+
+发货4.49亿
+select sum(sfcs*dj) from t_fhmx x, t_kcsm s where  
+   dbrq> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  dbrq< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  
+   and x.zl<>1
+   and x.id=s.id
+
+库房退货
+   select sum(bzjs) ,ywbmbh from t_dfbj where 
+   jxfs='AD' and ywlx='ST'
+   and cyrq>to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  cyrq< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss') group by ywbmbh 
+
+
+ select count(*),sum(zjs) from t_splitbagtask t where 
+  plandate> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  plandate< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  
+   and (
+   exists (select 1 from tmp_dhdj_xtw j ,tmp_dhmx_xtw x where j.flowid_tldjhz=t.flowid_tldjhz
+   and x.flowid_dj=j.flowid_dj and x.id='9787119124100001    ') 
+   or  exists (select 1 from tmp_dhdj j ,tmp_dhmx x where j.flowid_tldjhz=t.flowid_tldjhz
+   and x.flowid_dj=j.flowid_dj and x.id='9787119124100001    ')
+   );
+  
+  --select yssl,bdcs  from  tmp_dhmx
+  select  sum(bdcs) from t_splitbagtask t  ,tmp_dhdj_xtw j ,tmp_dhmx_xtw x    where 
+  plandate> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  plandate< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  and
+   j.flowid_tldjhz=t.flowid_tldjhz
+   and x.flowid_dj=j.flowid_dj and x.id='9787514709858001       ';
+   
+   select  sum(yssl) from t_splitbagtask t , tmp_dhdj  j ,tmp_dhmx x    where 
+  plandate> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  plandate< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  and
+   j.flowid_tldjhz=t.flowid_tldjhz
+   and x.flowid_dj=j.flowid_dj and x.id='9787514709858001       ';
+
+计划人员处理的特急件添货出库2161批/1799/，6494种/2327/，1.7万件。
+
+  select sum(cs)  from (
+  select 1 cs   from t_fhrwb_bak 
+  where   dd_date > to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  dd_date< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss') 
+    and fhyxj='A'
+  group by ysdjh    ) t 
+
+ select count(distinct id)   from t_fhrwb_bak 
+  where  dd_date > to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  dd_date< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  
+    and fhyxj='A'
+
+ 
+ select sum(bzjs) from t_dfbj b, (
+ select distinct phdh from t_agv_rw_xt_bak2  where ln_zp='A'
+ and  xjrq > to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  xjrq< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')   )t
+   where t.phdh=b.bjlsh

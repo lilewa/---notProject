@@ -1,0 +1,22 @@
+ select count(*),sum(zjs) from t_splitbagtask t where 
+  plandate> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  plandate< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  
+   and (
+   exists (select 1 from tmp_dhdj_xtw j ,tmp_dhmx_xtw x where j.flowid_tldjhz=t.flowid_tldjhz
+   and x.flowid_dj=j.flowid_dj and x.id='9787119124100001    ') 
+   or  exists (select 1 from tmp_dhdj j ,tmp_dhmx x where j.flowid_tldjhz=t.flowid_tldjhz
+   and x.flowid_dj=j.flowid_dj and x.id='9787119124100001    ')
+   );
+  
+  --select yssl,bdcs  from  tmp_dhmx
+  select  sum(bdcs) from t_splitbagtask t  ,tmp_dhdj_xtw j ,tmp_dhmx_xtw x    where 
+  plandate> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  plandate< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  and
+   j.flowid_tldjhz=t.flowid_tldjhz
+   and x.flowid_dj=j.flowid_dj and x.id='9787514709858001       ';
+   
+   select  sum(yssl) from t_splitbagtask t , tmp_dhdj  j ,tmp_dhmx x    where 
+  plandate> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  plandate< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  and
+   j.flowid_tldjhz=t.flowid_tldjhz
+   and x.flowid_dj=j.flowid_dj and x.id='9787514709858001       ';
