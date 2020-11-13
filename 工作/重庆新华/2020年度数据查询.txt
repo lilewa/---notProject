@@ -95,7 +95,16 @@ select count(*) ,ywbmbh from t_agv_rw_xt_bak2 where lxbh='FH'
    and  cyrq< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss') ;
    select yxj from t_splitbagtask
   ---
+
+  分流60.4万件
+   select sum(rqh) from (
+   select count(distinct rqh) rqh from t_flrqh where 
   
+     createdate>to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  createdate< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss') 
+   group by flowid_dhmx )
+
+
    select sum(zjs) from t_splitbagtask  
    where zt<>'0' and yxj ='1'  and 
    plandate> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
@@ -179,3 +188,39 @@ select sum(sfcs*dj) from t_fhmx x, t_kcsm s where
  and  xjrq > to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
    and  xjrq< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')   )t
    where t.phdh=b.bjlsh
+
+
+-- 直发收货 1.3819777189 亿元
+  select sum(djshsl*dj) from t_dhls_jx x,t_dhdj j,t_kcsm s
+  where x.id=s.id and j.flowid_dj=x.flowid_dj
+  and dbrq> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  dbrq< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  
+   and j.zfzd='1';
+   
+  -- 直发收货单
+
+  select  dhdjlsh from t_dhdj j 
+  where dbrq> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  dbrq< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  
+   and j.zfzd='1' group by dhdjlsh
+ 
+-- 客退直退
+ select sum(thcs*dj) from t_khthmx x, t_kcsm s where thlx ='ZT'
+and  lrrq1> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  lrrq1< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  
+   and x.id=s.id
+ --
+ --直发
+ select sum(sfcs*dj) from t_fhmx x, t_kcsm s where  
+   dbrq> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  dbrq< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  
+   and x.zl=1
+   and x.id=s.id
+ 直发收货 1.3819777189 亿元 ，核对直发收货单1.3927万余张 ,客退直退42.337565 万元,
+ 直发发货 1.38135294.89亿元 直发退货42.337565万元，直发退货单95张
+ 
+ 
+select count(distinct bjlsh) from t_hythmx x, t_kcsm s where thlx ='ZT'
+and  dbrq> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')
+   and  dbrq< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  
+   and x.id=s.id

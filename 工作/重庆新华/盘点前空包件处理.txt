@@ -1,0 +1,33 @@
+
+select * from T_DFBJ t WHERE CYRQ IS NULL and jxfs ='ZP'
+and not   exists (select 1 from t_pxmx where  bjlsh=t.bjlsh)
+
+ select * from t_line_zp_hw2  
+ update t_line_zp_hw2 set container =null where container  in
+ (
+ select rqh from T_DFBJ t WHERE CYRQ IS NULL and jxfs ='ZP'
+  and not   exists (select 1 from t_pxmx where  bjlsh=t.bjlsh)
+ )
+ 
+ select * from t_zprw
+ 
+ delete T_DFBJ t WHERE CYRQ IS NULL and jxfs ='ZP'
+and not   exists (select 1 from t_pxmx where  bjlsh=t.bjlsh)
+
+select * from T_DFBJ t WHERE CYRQ IS NULL and ywlx ='ST'
+and ybzbj='1'  and not exists (select 1 from t_hykcsl where  bjlsh=t.bjlsh)
+
+insert into t_hykcsl_bak select * from t_hykcsl where kccs=0 and jhcs =0
+
+delete  t_hykcsl where kccs=0 and jhcs =0
+
+delete T_DFBJ t WHERE CYRQ IS NULL and ywlx ='ST'
+and ybzbj='1'  and not exists (select 1 from t_hykcsl where  bjlsh=t.bjlsh)
+
+select * from T_DFBJ t WHERE CYRQ IS NULL and jxfs <>'BF';
+ 
+  
+select * from t_khthmx_jt where bjlsh='1667088     ';
+
+delete T_DFBJ where bjlsh='2557935     ';
+insert into t_dfbj_bak select * from T_DFBJ where bjlsh='2557935     ';
