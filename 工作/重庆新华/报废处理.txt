@@ -1,2 +1,4 @@
-proc_bfcl_auto
-proc_bfjh_auto_onehw20
+按t_ltkf的货位生成t_dfbj，t_bfkcsl
+	proc_bfjh_auto_onehw20
+把t_bfkcsl传到商流
+	proc_bfcl_auto
