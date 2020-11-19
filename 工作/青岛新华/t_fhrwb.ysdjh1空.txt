@@ -1,0 +1,2 @@
+ update  T_FHRWB set ysdjh1=dh  where ysdjh1 is null  and bdbj='2';
+ update  T_FHRWB set ysdjh1=ysdjh  where ysdjh1 is null  and bdbj='1'

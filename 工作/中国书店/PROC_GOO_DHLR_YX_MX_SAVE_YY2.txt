@@ -44,6 +44,14 @@ CREATE OR REPLACE Procedure PROC_GOO_DHLR_YX_MX_SAVE_YY2
  as_kzxsbj          char,
  as_spdm            char, --商品代码
  as_rqh             Char,
+ a_FACTORY char,
+ a_BRAND char,
+ a_SPECIFICATION Varchar2,
+ a_COLOR Varchar2,
+ a_MATERIAL Varchar2,
+ a_UNIT_MEASUREMENT Varchar2,
+ a_TC Number ,
+ a_JUAN_NUM Number,
  v_flowid_dhmx Out Number,  -- 为将新增的flowid_dhmx反馈给前台
 
  errno      Out Number,
@@ -373,7 +381,8 @@ v_bj := 11;
              remark, bc, yc, yssl, djshsl, pssl, sl, flowid_allzdsm, zdxh, dj, cbny, jhzk,
              fhzk, dbbz, xbbz, mkzl, yjrq, lrczybh, bdcs, ydhcs, yssy, kzxsbj, jzjtrq,
              flowid_jcfyhg, changdu, kuandu, gaodu, tj, zl, id, tm_flag, tm, hw, sm_cs,
-             sm_fcs, sm_bl, xszq, spdm, ysxlh)
+             sm_fcs, sm_bl, xszq, spdm, ysxlh, FACTORY , BRAND , SPECIFICATION , COLOR  , MATERIAL ,
+              UNIT_MEASUREMENT  ,  TC   ,  JUAN_NUM  )
         Values
             (adc_flowid_dj, v_flowid_dhmx, substrb(as_isbn, 1, 15), substrb(as_sm, 1, 60),
              as_bb, substrb(as_cip, 1, 10), as_fl, as_splx, v_sptz, as_zt, as_kb, as_zz,
@@ -385,7 +394,8 @@ v_bj := 11;
              as_kzxsbj, v_jzjtrq, 0, adc_cd, adc_kd, adc_gd, 0, nvl(adc_zl,1), '',
              as_tmflag, substrb(as_isbn, 1, 18), v_hqbh, null,
              null, null, v_xszq, Trim(as_spdm),
-              null);
+              null,a_FACTORY , a_BRAND , a_SPECIFICATION ,a_COLOR  , a_MATERIAL ,
+             a_UNIT_MEASUREMENT  , a_TC   ,  a_JUAN_NUM );
         v_bj := 7;
 
 
@@ -417,7 +427,8 @@ v_bj := 11;
                gaodu = adc_gd, tj = 0, zl = adc_zl, id = '', tm_flag = as_tmflag,
                hw = v_hqbh, tm = substrb(as_isbn, 1, 18),
                   jzjtrq = v_jzjtrq, xszq = v_xszq,
-               spdm = Trim(as_spdm)
+               spdm = Trim(as_spdm),FACTORY=a_FACTORY ,BRAND= a_BRAND , SPECIFICATION =a_SPECIFICATION,COLOR=a_COLOR  ,
+                MATERIAL=a_MATERIAL , UNIT_MEASUREMENT=a_UNIT_MEASUREMENT  , TC=a_TC   , JUAN_NUM= a_JUAN_NUM
          Where flowid_dhmx = v_flowid_dhmx;
     End If;
     v_bj := 8;
