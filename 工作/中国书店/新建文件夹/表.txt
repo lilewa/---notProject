@@ -1,0 +1,88 @@
+ 
+alter table T_FYBJ modify zt default 0;
+ 
+ 
+alter table T_FYBJ add jjczy char(4);
+ 
+ alter table T_FYBJ add jjdate date;
+ 
+ 
+alter table T_FYBJ_BAK add jjczy CHAR(4);
+ 
+ 
+alter table T_FYBJ_BAK add jjdate date;
+ 
+ create table t_tongbu (rq date ,db varchar2(10));
+ 
+ 
+alter table T_LOCK add zt char(1) default 0;
+ 
+ 
+alter table T_PF_TEMP_QS_XTW add ysdjh1 CHAR(12);
+
+ 
+alter table DBEX.T_STATION modify mc varCHAR2(60);
+
+ 
+alter table DBEX.T_STATION modify mc VARCHAR2(30);
+
+ 
+alter table T_ZDTB add condition VARCHAR2(50);
+
+
+alter table T_HYTHHZ add thlx char(2);
+
+
+alter table T_KHTHHZ add thlx char(2);
+
+ 
+alter table T_KHTHHZ modify thlx default 'XT';
+
+ 
+alter table T_KHTHMX modify thlx CHAR(2);
+
+ 
+alter table T_HYTHMX modify thlx CHAR(2) default 'XT';
+
+create table T_WLZF
+(
+  id      NUMBER not null,
+  wldh    VARCHAR2(30),
+  shrq    DATE,
+  ghdw    CHAR(6),
+  id_wlgs NUMBER not null,
+  shczy   CHAR(4),
+  js      NUMBER(10,2),
+  ssjs    NUMBER(10,2),
+  shhw    VARCHAR2(30) not null,
+  bz      VARCHAR2(30),
+  dh      CHAR(6),
+  fyrq    DATE,
+  fhczy   CHAR(6),
+  djsl    NUMBER(10),
+  yldjsl  NUMBER(10),
+  zt      CHAR(1) default 0,
+  cbtask  CHAR(1),
+  djlx    CHAR(2),
+  fllx    CHAR(2),
+  djrq    DATE,
+  fhname  VARCHAR2(10)
+)
+tablespace USERS
+  pctfree 10
+  initrans 1
+  maxtrans 255
+  storage
+  (
+    initial 64K
+    next 1M
+    minextents 1
+    maxextents unlimited
+  );
+
+
+alter table T_FYBJ add jjsl number default 0;
+
+ 
+alter table T_FYBJ_BAK add jjsl number;
+

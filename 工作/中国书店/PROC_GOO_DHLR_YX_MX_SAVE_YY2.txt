@@ -44,14 +44,14 @@ CREATE OR REPLACE Procedure PROC_GOO_DHLR_YX_MX_SAVE_YY2
  as_kzxsbj          char,
  as_spdm            char, --商品代码
  as_rqh             Char,
- a_FACTORY char,
- a_BRAND char,
- a_SPECIFICATION Varchar2,
- a_COLOR Varchar2,
- a_MATERIAL Varchar2,
- a_UNIT_MEASUREMENT Varchar2,
- a_TC Number ,
- a_JUAN_NUM Number,
+ as_factory char,
+ as_brand char,
+ as_specification Varchar2,
+ as_color Varchar2,
+ as_material Varchar2,
+ as_unit_measurement Varchar2,
+ as_tc Number ,
+ as_juan_num Number,
  v_flowid_dhmx Out Number,  -- 为将新增的flowid_dhmx反馈给前台
 
  errno      Out Number,
@@ -394,8 +394,8 @@ v_bj := 11;
              as_kzxsbj, v_jzjtrq, 0, adc_cd, adc_kd, adc_gd, 0, nvl(adc_zl,1), '',
              as_tmflag, substrb(as_isbn, 1, 18), v_hqbh, null,
              null, null, v_xszq, Trim(as_spdm),
-              null,a_FACTORY , a_BRAND , a_SPECIFICATION ,a_COLOR  , a_MATERIAL ,
-             a_UNIT_MEASUREMENT  , a_TC   ,  a_JUAN_NUM );
+              null,as_FACTORY , as_BRAND , as_SPECIFICATION ,as_COLOR  , as_MATERIAL ,
+             as_UNIT_MEASUREMENT  , as_TC   ,  as_JUAN_NUM );
         v_bj := 7;
 
 
@@ -427,8 +427,8 @@ v_bj := 11;
                gaodu = adc_gd, tj = 0, zl = adc_zl, id = '', tm_flag = as_tmflag,
                hw = v_hqbh, tm = substrb(as_isbn, 1, 18),
                   jzjtrq = v_jzjtrq, xszq = v_xszq,
-               spdm = Trim(as_spdm),FACTORY=a_FACTORY ,BRAND= a_BRAND , SPECIFICATION =a_SPECIFICATION,COLOR=a_COLOR  ,
-                MATERIAL=a_MATERIAL , UNIT_MEASUREMENT=a_UNIT_MEASUREMENT  , TC=a_TC   , JUAN_NUM= a_JUAN_NUM
+               spdm = Trim(as_spdm),FACTORY=as_FACTORY ,BRAND= as_BRAND , SPECIFICATION =as_SPECIFICATION,COLOR=as_COLOR  ,
+                MATERIAL=as_MATERIAL , UNIT_MEASUREMENT=as_UNIT_MEASUREMENT  , TC=as_TC   , JUAN_NUM= as_JUAN_NUM
          Where flowid_dhmx = v_flowid_dhmx;
     End If;
     v_bj := 8;

@@ -12,16 +12,16 @@ as
   v_kflx char(2);
 begin
 
-  select count() into v_rows from t_wlsh where id=p_flowid_tldjhz and zt='1';
-  if v_rows0 then
-    ERRNO=-1;
-    ERRTEXT='任务已经提交过了，不能重复提交';
+  select count(*) into v_rows from t_wlsh where id=p_flowid_tldjhz and zt='1';
+  if v_rows>0 then
+    ERRNO:=-1;
+    ERRTEXT:='任务已经提交过了，不能重复提交';
     return;
   end if;
-  select count() into v_rows from t_wlsh where id=p_flowid_tldjhz and djlx='XT';
-  if v_rows0 then
-    ERRNO=-1;
-    ERRTEXT='退货登记请在RF中提交';
+  select count(*) into v_rows from t_wlsh where id=p_flowid_tldjhz and djlx='XT';
+  if v_rows>0 then
+    ERRNO:=-1;
+    ERRTEXT:='退货登记请在RF中提交';
     return;
   end if;
 
@@ -48,17 +48,17 @@ begin
 
  -- select ywbmbh into v_ywbmbh from t_wlsh where id=p_flowid_tldjhz;
   --select kflx into v_kflx from t_dm where dh=v_ywbmbh;
-  select count() into v_rows from  t_splitbagtask where  flowid_tldjhz=p_flowid_tldjhz;
+  select count(*) into v_rows from  t_splitbagtask where  flowid_tldjhz=p_flowid_tldjhz;
   if v_rows=0 then
 
     Insert Into t_splitbagtask
-            (flowid_tldjhz, createdate, ghdw, kl_flag, yxj, zjs, xchw)
-            Select p_flowid_tldjhz, Sysdate, dh, kl_flag, '0', ssjs, substrb(shhw, 1, 20)
+            (flowid_tldjhz, createdate, ghdw, kl_flag, yxj, zjs, xchw,fllx,ywbmbh)
+            Select p_flowid_tldjhz, Sysdate, dh, kl_flag, sj_flag, ssjs, substrb(shhw, 1, 20),'PT',ywbmbh
               From t_wlsh
         Where id = p_flowid_tldjhz;
   end if ;
 
-   select count() into v_rows from t_tldjhz where flowid_tldjhz=p_flowid_tldjhz;
+   select count(*) into v_rows from t_tldjhz where flowid_tldjhz=p_flowid_tldjhz;
    if v_rows =0 then
 
      insert into t_tldjhz (tlrq,ysjs,ssjs, dh ,
@@ -70,11 +70,11 @@ begin
    end if ;
    update t_tldjhz  set shbj='0'  where flowid_tldjhz=p_flowid_tldjhz;
 
-ERRNO=0;
-ERRTEXT='ok';
+ERRNO:=0;
+ERRTEXT:='ok';
 exception
   when others then
-    ERRNO=-1;
-    ERRTEXT='PROC_CONFIRMTLDJHZ'sqlerrm;
+    ERRNO:=-1;
+    ERRTEXT:='PROC_CONFIRMTLDJHZ'||sqlerrm;
     rollback;
 end PROC_CONFIRMTLDJHZ;

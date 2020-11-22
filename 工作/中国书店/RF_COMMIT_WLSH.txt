@@ -27,8 +27,8 @@ v_rows number;
    select count(*) into v_rows from  t_splitbagtask where  flowid_tldjhz=p_id;
   if v_rows=0 then
     Insert Into t_splitbagtask
-            (flowid_tldjhz, createdate, ghdw, kl_flag, yxj, zjs, xchw)
-            Select p_id, Sysdate, dh, kl_flag, '0', ssjs, substrb(shhw, 1, 20)
+            (flowid_tldjhz, createdate, ghdw, kl_flag, yxj, zjs, xchw,fllx,ywbmbh)
+            Select p_id, Sysdate, dh, kl_flag, '0', ssjs, substrb(shhw, 1, 20),'PT',ywbmbh
               From t_wlsh
         Where id = p_id;
   end if ;

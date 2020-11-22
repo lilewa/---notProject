@@ -1,0 +1,36 @@
+ 
+create table t_hqpd as 
+   select hqbh ,min(createdate) createdate from(
+   select hqbh ,createdate  from T_PKJHTASK    where createdate >to_date('2020/10/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+    group by hqbh ,createdate 
+   union all 
+   select hqbh ,createdate from T_PKJHTASK_bak    where createdate >to_date('2020/10/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+    group by hqbh ,createdate ) group by hqbh 
+    
+ 
+ 
+ alter table  t_hqpd add lx varchar2(10)
+ 
+ select * from t_hqpd for update 
+ 
+ update t_hqpd t set lx='散货区' where 
+ exists (select 1 from t_hqdy where bh=t.hqbh and ywbmbh='000001')
+ 
+  update t_hqpd t set lx='音像电教' where 
+ exists (select 1 from t_hqdy where bh=t.hqbh and ywbmbh='000002');
+ 
+  update t_hqpd t set lx='音像电教' where 
+ exists (select 1 from t_hqdy where bh=t.hqbh and ywbmbh='000004')
+ 
+ 
+ 
+ select lx, count(distinct id) 种,count(*) 次 from t_hqpd q,
+ (
+  select id, hqbh ,createdate  from T_PKJHTASK    where createdate >to_date('2020/10/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+    
+   union all 
+   select id ,hqbh ,createdate from T_PKJHTASK_bak    where createdate >to_date('2020/10/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+     ) p
+    where q.hqbh=p.hqbh and q.createdate=p.createdate group by lx
+    
+  

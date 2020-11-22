@@ -14,6 +14,9 @@ v_qxsl number;
   v_error char(1);
   v_dh char(6);
   v_my number;
+  v_pz number;
+  v_cs number;
+  v_sy number;
 begin
 
      update t_wlsh t set fllx='PT'
@@ -42,10 +45,10 @@ begin
 
       select count(distinct djlx) into v_rows from tmp_dhdj where flowid_tldjhz=cur.id  ;
       if v_rows> 1 then
-         update t_wlsh set cbtask='9',CBTASKMSG='单据类型不一致的单据' where id =cur.id ; 
+         update t_wlsh set cbtask='9',CBTASKMSG='单据类型不一致的单据' where id =cur.id ;
          continue;
       end if ;*/
-     
+
       v_error:='0';
       for cur2 in(select flowid_dj from tmp_dhdj where  flowid_dj =flowid_dj and flowid_tldjhz=cur.id)
        loop
@@ -54,7 +57,7 @@ begin
              rollback;
               Update tmp_dhdj    Set ywybh = '9999', sbbj = '5', note = substrb(errtext, 1, 50)
                      Where flowid_dj = cur2.flowid_dj;
-                     
+
               update t_wlsh set cbtask='9',CBTASKMSG='PROC_SX_JSDHSJ_YFSJ'||errtext where id =cur.id ;
               v_error:='1';
 
@@ -106,9 +109,10 @@ begin
         end if ;
        UPDATE t_wlsh SET  cbtask='1' WHERE ID=cur.id ;
        -- 青岛增加
-       select sum(ydmy) into v_my from tmp_dhdj where flowid_tldjhz=cur.id;
+       select sum(ydpz),sum(ydcs),sum(ydmy),sum(ydsy) into v_pz,v_cs, v_my ,v_cs 
+       from tmp_dhdj where flowid_tldjhz=cur.id;
        -- 青岛增加
-       
+
        select on1 into  v_lt  from t_lt;
        if v_lt='1' and v_qxsl =1   then
 
@@ -121,7 +125,7 @@ begin
             update tmp_dhdj set dh=v_dh where  flowid_tldjhz=cur.id ;
             update t_wlsh set kl_flag ='2'  where  id=cur.id ;
             update t_splitbagtask set kl_flag ='2'  where  flowid_tldjhz=cur.id ;
-           
+
              for cur2 in(select flowid_dj from tmp_dhdj where flowid_tldjhz=cur.id)
               loop
                 proc_sx_jsdhsj_lstdcl2(cur2.flowid_dj, errno, errtext);
@@ -134,14 +138,14 @@ begin
           end if ;
        end if ;
 
-      insert into t_dhfltask 
-       (flowid_tldjhz, createdate,  cfhw, zpz, zcs, zmy, ghdw,   yxj,zjs,fllx,ywbmbh,wldh )
-       select flowid_tldjhz,sysdate ,cfhw,zpz,zcs,zmy,ghdw,yxj,zjs,fllx,ywbmbh,cur.wldh
-        from t_splitbagtask where flowid_tldjhz=cur.id ;
+      insert into t_dhfltask
+       (flowid_tldjhz, createdate,  cfhw, zpz, zcs, zmy,zsy, ghdw,   yxj,zjs,fllx,ywbmbh,wldh )
+       select k.flowid_tldjhz,sysdate ,cfhw,v_pz,v_cs,v_my,v_sy ,ghdw,yxj,k.zjs,fllx,k.ywbmbh,cur.wldh
+        from t_splitbagtask k,tmp_dhdj j where k.flowid_tldjhz=cur.id and j.flowid_tldjhz=k.flowid_tldjhz;
 
-        if cur.ywbmbh <>'000001' then
+ /*       if cur.ywbmbh <>'000001' then
           update t_dhfltask  t set device='RF' ,trans='0' where  flowid_tldjhz= cur.id ;
-        else
+        else*/
               --去向少于4个，且不是馆配的用Rf分流
           update t_dhfltask t set device='RF' where  flowid_tldjhz= cur.id
           and   v_qxsl <4 and fllx<>'GP';
@@ -153,7 +157,7 @@ begin
 
           update t_dhfltask  t set trans='0' where  flowid_tldjhz= cur.id and fllx='GP';
 
-        end if ;
+       -- end if ;
       --commit;
 
      end loop;

@@ -1,0 +1,305 @@
+CREATE OR REPLACE Procedure PROC_CREATE_WLFL_XTW5
+-- 当到货拆包台选中一条到货记录后,
+    -- 调此过程生成ID, 同时生成物流分流数据
+(p_flowid_dhmx In Number,
+ p_flowid_dj in Number,
+ p_flowid_tldjhz number,
+ p_line in char,
+ errno         Out Number,
+ errtext       Out Varchar2) As
+
+v_cbname varchar2(10);
+v_id char(19);
+v_rows number;
+v_pass char(1);
+v_sjcs number;
+
+    v_dhmx tmp_dhmx%Rowtype;
+    v_ywbmbh char(6);
+    v_fllx  char(2);
+    l_fltbzxs_sx Number;
+    l_fltbzxs_xx Number;
+
+    l_fltbzcs_xx Number;
+
+    v_bj   Number;
+
+    v_hqbh      Char(4);
+    v_flqxmc    varChar2(60);
+     v_hw       Char(20);
+
+    v_dhzxid varchar2(30);
+    v_nxtzxid varchar2(30);
+    v_isgz char(1);
+    v_isgp char(1);
+    v_zddh char(6);
+    v_counter number;
+    v_line char(2);
+Begin
+
+    errno   := 0;
+    errtext := 'ok';
+
+    select id, pass into v_id,v_pass  from    tmp_dhmx
+    where flowid_dhmx = p_flowid_dhmx;
+    if v_pass='3' then
+       return;
+    end if ;
+
+    if v_pass ='0' then
+
+      If v_id Is Null Then
+        errno   := 0;
+        errtext := 'id为空';
+        Return;
+      End If;
+
+      update tmp_dhmx a set(dbbz,xbbz,zl)=(select dbbz,xbbz,zl from t_kcsm where id=a.id)
+       where flowid_dhmx=p_flowid_dhmx;
+
+      update  tmp_dhmx set pass='1'   where flowid_dhmx = p_flowid_dhmx and pass='0';
+
+      v_pass:='1';
+
+
+    end if ;
+
+    select * into v_dhmx from tmp_dhmx where flowid_dhmx = p_flowid_dhmx;
+    select ywbmbh,fllx into v_ywbmbh,v_fllx from t_wlsh where id =p_flowid_tldjhz;
+    select splitczyname into v_cbname from t_splitbagtask where flowid_tldjhz=p_flowid_tldjhz;
+
+    if v_pass ='1' then
+
+       insert into t_dh_yfsj
+      (flowid, flowid_dhmx, flowid_dj, dh, id, yfsl, sjsl, flqx,ywbmbh,
+      flqxmc, detailqx,  cgyj, cgyj_kh,djly,fhzk,SDHRQ,yxj,qsclfs,zddh,ddcdbj,tdpch,xh)
+        select   flowid_yfsj,  flowid, flowid_dj, dh, v_dhmx.id, yfsl, 0, 'FH',v_ywbmbh, '发货包装区', null,
+          ysdjh, trim(cgyj_kh) ,DJLY,fhzk,SDHRQ,yxj,qsclfs,zddh,ddcdbj,tdpch,0
+       from t_sl_yfsj  Where flowid = p_flowid_dhmx;
+
+
+ /*     if v_fllx= 'PT' then --馆配全播撒
+        Select nvl(min(sys_value),0)
+          Into l_fltbzxs_xx
+          From t_sysset
+         Where upper(sys_item) = 'L_FLTBZ_XX' And SYS_YWBMBH = v_ywbmbh;
+
+         l_fltbzcs_xx := ROUND(v_dhmx.dbbz * v_dhmx.xbbz * l_fltbzxs_xx, 0);
+
+          update t_dh_yfsj t set flqx='FH',flqxmc='发货包装区', xh=0
+          where  flowid_dhmx = p_flowid_dhmx
+          and ( yfsl >= l_fltbzcs_xx or v_dhmx.xbbz = 1
+          or exists (select 1 from t_fhdh where dh=t.dh and v_fllx='PT')
+          );
+       end if ;*/
+
+      /*  update t_dh_yfsj t set flqx='ZP',xh=1
+        where flowid_dhmx = p_flowid_dhmx and flqx is null;*/
+        -- yfsl < l_fltbzcs_xx  And  v_dhmx.xbbz <> 1
+        --and not  exists (select 1 from t_fhdh where dh=t.dh);
+
+        select v_dhmx.yssl- nvl(sum(yfsl),0) into v_sjcs from t_dh_yfsj
+        where  flowid_dhmx = p_flowid_dhmx ;
+
+
+     insert into t_dh_yfsj
+      (flowid, flowid_dhmx, flowid_dj, dh, id, yfsl, sjsl, flqx, ywbmbh,
+        flqxmc, detailqx, hw,  xh)
+      values
+      (all_flowid.Nextval,p_flowid_dhmx,v_dhmx.flowid_dj,null,v_dhmx.id,
+      v_sjcs,0,'CC',v_ywbmbh,null,null,null ,2);
+
+       update t_dh_yfsj set zddh=dh where flowid_dhmx = p_flowid_dhmx and zddh is null ;
+
+       update  tmp_dhmx set pass='2'   where flowid_dhmx = p_flowid_dhmx and pass='1';
+
+       v_pass:='2';
+
+       commit;
+    end if ;
+
+
+    if v_fllx ='GP' then
+      v_isgp:='1';
+    elsif  v_fllx='PT' then
+      v_isgp:='0';
+    end if;
+
+/*发货去向：ywbmbh（货主），flqx（FH），成包类型（G柜组 || 馆配P || 门店D），
+成包编号6位（柜组号 || 图书馆号 || 店号），是否单独成单（Y|| N）,单号||空
+
+播撒去向：ywbmbh（货主），flqx（ZP），播撒线号2位。
+计算去向线号时，要根据规则，查询下一个环节（RF播撒）使用的去向在播撒线上存不存在货位。
+下一环节去向计算方法，ywbmbh（货主），成包类型（G柜组 || 馆配P || 门店D），
+成包编号6位（柜组号 || 图书馆号 || 店号），是否单独成单（N）
+
+上架去向：ywbmbh（货主），flqx（CC），货区编号*/
+
+    for cur in (select dh,flqx,zddh,tdpch,ddcdbj ,flowid,yfsl from t_dh_yfsj
+       where flowid_dhmx=p_flowid_dhmx and dhzxid is null ) loop
+
+      v_dhzxid:=v_ywbmbh||cur.flqx;
+
+      if cur.flqx='FH' then
+
+        if v_fllx='GP' then
+           v_isgz:='0';
+           v_dhzxid:=v_dhzxid||'P';
+           v_zddh:=cur.zddh;
+
+
+        elsif v_fllx='PT' then
+
+            Select Count(*)   Into v_rows  From  t_guizu_fl
+              Where dh =cur.dh And  enable = '1';
+             if v_rows >0 and v_ywbmbh='000001' then
+
+                v_isgz:='1';
+                v_dhzxid:=v_dhzxid||'G';
+
+                Select min(gzbh) into v_zddh
+                 From  t_guizu_fl c
+                Where flbh=v_dhmx.fl And dh = cur.dh;
+                if v_zddh is null then
+                  select min(gzbh) into v_zddh  from t_guizu_fl  where  dh=cur.dh;
+                end if ;
+
+             else
+
+                v_isgz:='0';
+                v_dhzxid:=v_dhzxid||'D';
+                v_zddh:=cur.dh;
+
+             end if;
+        end if;
+        v_dhzxid:=v_dhzxid||v_zddh;
+        if cur.ddcdbj ='1' then
+
+          v_dhzxid:=v_dhzxid||'Y'||trim(cur.tdpch);
+
+        else
+
+          v_dhzxid:=v_dhzxid||'N';
+
+        end if ;
+        select trim(dm) into v_flqxmc from t_dm where dh=v_zddh;
+        update  t_dh_yfsj set isgp=v_isgp ,isgz=v_isgz, dhzxid=v_dhzxid,zddh=v_zddh ,
+        flqxmc= v_flqxmc
+        where flowid =cur.flowid;
+      end if;
+
+      if cur.flqx='ZP' then
+
+        v_nxtzxid:=v_ywbmbh||'FH';
+
+        if v_fllx='GP' then
+           v_isgz:='0';
+           v_nxtzxid:=v_nxtzxid||'P';
+           v_zddh:=cur.zddh;
+
+        elsif v_fllx='PT' then
+
+            Select Count(*)   Into v_rows  From  t_guizu_fl
+              Where dh =cur.dh And  enable = '1';
+             if  v_rows >0 and v_ywbmbh='000001' then
+
+                v_isgz:='1';
+                v_nxtzxid:=v_nxtzxid||'G';
+
+                Select min(gzbh) into v_zddh
+                 From  t_guizu_fl c
+                Where flbh=v_dhmx.fl And dh = dh;
+                if v_zddh is null then
+                  select min(gzbh) into v_zddh  from t_guizu_fl  where  dh=cur.dh;
+                end if ;
+             else
+
+                v_isgz:='0';
+                v_nxtzxid:=v_nxtzxid||'D';
+                v_zddh:=cur.dh;
+
+             end if;
+        end if;
+        v_nxtzxid:=v_nxtzxid||v_zddh||'N';
+        if p_line is null then
+
+           select min(counter) into v_counter from t_line_zp_hw2 where waitdisable='0' and zpzxid=v_nxtzxid;
+           if v_counter is not null then
+             select min(ywbmbh||'ZP'||line),min(line) into  v_dhzxid,v_line from t_line_zp_hw2
+             where waitdisable='0' and ZPZXID=v_nxtzxid and counter=v_counter;
+           else
+             v_dhzxid:=null;
+             v_line:=null;
+           end if;
+
+        else
+           select min(ywbmbh||'ZP'||line) into  v_dhzxid from t_line_zp_hw2 where waitdisable='0' and  ZPZXID=v_nxtzxid
+           and line=p_line;
+           v_line:=p_line;
+
+        end if ;
+        select min(trim(mc)) into v_flqxmc from t_line_zp where bh=v_line;
+
+        update  t_dh_yfsj set isgp=v_isgp ,isgz=v_isgz, dhzxid=v_dhzxid,zddh=v_zddh ,
+          nxtzxid=v_nxtzxid,line=v_line,flqxmc=v_flqxmc where flowid=cur.flowid;
+      end if ;
+
+      if cur.flqx='CC' then
+
+          proc_get_hqbh3(cur.yfsl, 'DH', v_dhmx.id, v_dhmx.dbbz, v_dhmx.xbbz,
+                      v_ywbmbh, '3001', v_hqbh, v_flqxmc, v_hw, errno,
+                      errtext);
+          if v_hqbh is null then
+            v_dhzxid:='';
+          else
+            v_dhzxid:=v_ywbmbh||'CC'||trim(v_hqbh);
+          end if ;
+
+          update  t_dh_yfsj set isgp='0' ,isgz='0', dhzxid=v_dhzxid,zddh=cur.dh ,
+          nxtzxid=null,hqbh=trim(v_hqbh),flqxmc=trim(v_flqxmc) where flowid=cur.flowid;
+
+      end if ;
+
+    end loop;
+
+
+    select   listagg( trim(dm), ',') within Group(Order By Null)
+    into errtext
+    from    t_dh_yfsj t ,t_dm d where  FLOWID_DHMX = p_flowid_dhmx
+    and flqx='ZP' and dhzxid is null and t.zddh=d.dh;
+    if errtext is not null then
+      errno:=-1;
+      errtext:=errtext||'在播撒线上没有绑定货位！';
+      return;
+    end if;
+    errtext:='ok';
+
+    select count(*) into v_rows  from t_dh_yfsj t where  FLOWID_DHMX = p_flowid_dhmx
+    and flqx='CC' and dhzxid is null;
+    if v_rows >0 then
+      errno:=-1;
+      errtext:='没有找到储备库上架货区';
+      return;
+    end if;
+
+   update  tmp_dhmx set pass='3'  where FLOWID_DHMX = p_flowid_dhmx ;
+
+   insert into t_tree
+     (tbid, tbname, pid, pname, note, id, cs,  orderno, lf,rt,rid,dm)
+   select
+    t.flowid, 't_dh_yfsj', flowid_yfsj, 't_sl_yfsj',
+     '到货分流指令,'||t.flqxmc||',任务号'||p_flowid_tldjhz||',拆包人'||v_cbname, t.id,
+     t.yfsl,  trim(s.ysdjh),1,2,t.flowid,
+     (select trim(dm) from t_dm where dh=t.zddh)
+   from t_dh_yfsj t left join t_sl_yfsj s
+   on t.flowid=s.flowid_yfsj  where  FLOWID_DHMX = p_flowid_dhmx;
+
+
+
+
+Exception
+    When Others Then
+        errno   := -1; --执行失败
+        errtext := 'PROC_CREATE_WLFL_XTW5' || Sqlerrm ;
+        Rollback;
+End;

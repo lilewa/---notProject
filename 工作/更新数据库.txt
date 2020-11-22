@@ -1,0 +1,5 @@
+ select * from  t_ddl t
+ where  (object_name,time) in
+ ( select object_name,max(time) time from t_ddl where time>to_date('2020/10/15 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+ and object_type='PROCEDURE' and operation='CREATE' group by object_name)
+ and not exists (select 1 from t_ddl_exclude where name=t.object_name)
