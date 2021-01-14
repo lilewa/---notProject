@@ -1,0 +1,26 @@
+ select  t1.lrczybh 编号, (select trim(name) from t_user where usr_id=t1.lrczybh) 名字,
+ sum(dzd) 电子单, sum(cs) 册数 ,sum(pz) 品种,sum(my) 码洋  from (
+  select lrczybh, sum(dzd) dzd from (
+  select lrczybh ,count(*) dzd from TMP_DHDJ t where exists (select 1 from t_user where t.lrczybh=usr_id)
+  and  oklrrq >to_date('2020/11/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+  and  oklrrq<to_date('2020/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss') group by lrczybh
+  union all 
+  select lrczybh ,count(*) dzd from TMP_DHDJ_xtw t where exists (select 1 from t_user where t.lrczybh=usr_id)
+  and  oklrrq >to_date('2020/11/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+  and  oklrrq<to_date('2020/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss') group by lrczybh)
+  group by lrczybh ) t1,
+  ( select lrczybh,sum(cs) cs,sum(pz) pz,sum(my) my from (
+      select t.lrczybh ,sum(yssl) cs,count(*) pz,sum(yssl*dj) my from TMP_DHDJ t, tmp_dhmx x where exists (select 1 from t_user where t.lrczybh=usr_id)
+      and  oklrrq >to_date('2020/11/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+      and  oklrrq<to_date('2020/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+      and t.flowid_dj=x.flowid_dj group by t.lrczybh
+      union all 
+      select t.lrczybh ,sum(yssl) cs ,count(*) pz,sum(yssl*dj) my from TMP_DHDJ_xtw t, tmp_dhmx_xtw x where exists (select 1 from t_user where t.lrczybh=usr_id)
+      and  oklrrq >to_date('2020/11/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+      and  oklrrq<to_date('2020/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+      and t.flowid_dj=x.flowid_dj 
+      group by t.lrczybh
+  )
+   group by lrczybh
+  ) t2
+  where t1.lrczybh=t2.lrczybh   group by t1.lrczybh

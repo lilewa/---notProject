@@ -1,0 +1,259 @@
+sdjcfy
+SDJCFY
+
+alter table T_KHTHZC2 add pid NUMBER;
+alter table T_KHTHZC2 add hzid number;
+
+
+-- Create table
+create table T_RQZY
+(
+  bh      CHAR(10) not null,
+  zydate  DATE,
+  czy     CHAR(4),
+  tbname  VARCHAR2(30),
+  tableid VARCHAR2(20),
+  note    VARCHAR2(70),
+  qx      VARCHAR2(10),
+  zylx    CHAR(1)
+)
+tablespace DATA_TABLESPACE
+  pctfree 10
+  initrans 1
+  maxtrans 255
+  storage
+  (
+    initial 64K
+    next 8K
+    minextents 1
+    maxextents unlimited
+  );
+-- Add comments to the columns 
+comment on column T_RQZY.qx
+  is '去向';
+comment on column T_RQZY.zylx
+  is '占用类型，s:书占用，q:其他占用';
+
+CREATE OR REPLACE TYPE "TY_STR_SPLIT"      AS TABLE OF   VARCHAR2(4000)；
+
+ 
+-- Create table
+create table T_THFLHZ
+(
+  id     NUMBER,
+  rqh    CHAR(10),
+  thzxid VARCHAR2(16),
+  ywbmbh CHAR(6),
+  flqx   CHAR(2),
+  zt     CHAR(1) default 0,
+  pch    CHAR(12),
+  czy    CHAR(4)
+)
+tablespace USERS
+  pctfree 10
+  initrans 1
+  maxtrans 255
+  storage
+  (
+    initial 64K
+    next 1M
+    minextents 1
+    maxextents unlimited
+  );
+-- Add comments to the columns 
+comment on column T_THFLHZ.zt
+  is '0:货位上，1:换箱';
+-- Create/Recreate indexes 
+create unique index IDX_THFLHZ on T_THFLHZ (DECODE(ZT,'1',NULL,PCH), DECODE(ZT,'1',NULL,CZY), DECODE(ZT,'1',NULL,FLQX), DECODE(ZT,'1',NULL,THZXID))
+  tablespace DATA_TABLESPACE
+  pctfree 10
+  initrans 2
+  maxtrans 255;
+
+
+
+-- Create table
+create table T_THZC_HW
+(
+  hw   VARCHAR2(10),
+  ban  CHAR(6),
+  hybh CHAR(6),
+  flqx CHAR(2)
+)
+tablespace DATA_TABLESPACE
+  pctfree 10
+  initrans 1
+  maxtrans 255;
+-- Add comments to the columns 
+comment on column T_THZC_HW.hybh
+  is 'jt存dh ，退货 存ghdwh';
+comment on column T_THZC_HW.flqx
+  is 'JT,ST';
+
+
+-- Create table
+create table T_JHTASK
+(
+  id         NUMBER not null,
+  rqh        CHAR(10),
+  zt         CHAR(1) default 0,
+  createdate DATE,
+  ywbmbh     CHAR(6),
+  dh         CHAR(6),
+  zpz        NUMBER(8),
+  zcs        NUMBER(8),
+  zmy        NUMBER(12,2),
+  zsy        NUMBER(12,2),
+  ywlx       CHAR(2),
+  jxfs       CHAR(2),
+  zzl        NUMBER(12,2),
+  js         NUMBER(10,2),
+  zddh       CHAR(6),
+  isgp       CHAR(1) default 0,
+  wcdate     DATE,
+  jhdate     DATE,
+  zb         VARCHAR2(60),
+  ddcdbj     CHAR(1),
+  tdpch      CHAR(20),
+  yxj        CHAR(1),
+  finished   CHAR(1) default 0,
+  isgz       CHAR(1) default 0,
+  sjlx       VARCHAR2(4),
+  jhzxid     VARCHAR2(30)
+)
+tablespace DATA_TABLESPACE
+  pctfree 10
+  initrans 1
+  maxtrans 255
+  storage
+  (
+    initial 64K
+    next 1M
+    minextents 1
+    maxextents unlimited
+  );
+-- Add comments to the columns 
+comment on column T_JHTASK.zt
+  is '0 正装箱, 1:装箱完成 2校核完';
+comment on column T_JHTASK.ywlx
+  is 'FH,ST';
+comment on column T_JHTASK.isgp
+  is '1 是馆配';
+comment on column T_JHTASK.wcdate
+  is '装箱完成日期';
+comment on column T_JHTASK.jhdate
+  is '校核完成日期';
+comment on column T_JHTASK.zb
+  is '备注';
+comment on column T_JHTASK.isgz
+  is '1 是柜组';
+comment on column T_JHTASK.sjlx
+  is '数据类型,明细存的是pxmx，stmx，jtmx';
+-- Create/Recreate primary, unique and foreign key constraints 
+alter table T_JHTASK
+  add constraint PK_JHTASK primary key (ID)
+  using index 
+  tablespace DATA_TABLESPACE
+  pctfree 10
+  initrans 2
+  maxtrans 255
+  storage
+  (
+    initial 64K
+    next 1M
+    minextents 1
+    maxextents unlimited
+  );
+
+-- Create table
+create table T_STJH
+(
+  id          CHAR(18) not null,
+  ywbmbh      CHAR(6) not null,
+  cybh        CHAR(6),
+  kfbh        CHAR(6) not null,
+  dbbz        NUMBER(6,2),
+  xbbz        NUMBER(6,2),
+  kccs        NUMBER(8),
+  zycs        NUMBER(8),
+  hw          CHAR(20),
+  ghdwh       CHAR(6) not null,
+  xm          CHAR(10),
+  sylx        CHAR(1),
+  zjxs        NUMBER(9,2),
+  sjly        CHAR(2),
+  thzk        NUMBER(9,2),
+  flowid      NUMBER(10) not null,
+  ywpc        CHAR(12),
+  sl          NUMBER,
+  jhcs        NUMBER(8) default 0,
+  zl          NUMBER(8,2),
+  cgyj        CHAR(12),
+  yscs        NUMBER(10),
+  pk          VARCHAR2(20) not null,
+  jhrq        DATE,
+  fbbj        CHAR(1) default 0,
+  fbcs        NUMBER default 0,
+  jhczy       CHAR(4),
+  bjlsh       NUMBER,
+  sourceid    NUMBER,
+  sourcetable VARCHAR2(30)
+)
+tablespace DATA_TABLESPACE
+  pctfree 10
+  initrans 1
+  maxtrans 255
+  storage
+  (
+    initial 64K
+    next 1M
+    minextents 1
+    maxextents unlimited
+  );
+
+-- Create table
+create table T_JTJH
+(
+  bh          NUMBER(4),
+  czybh       CHAR(4) not null,
+  dh          CHAR(6),
+  dj          NUMBER(9,2),
+  flowid      NUMBER(10) not null,
+  isbn        CHAR(15),
+  reason      CHAR(10),
+  sdsl        NUMBER(8) not null,
+  sm          CHAR(60),
+  thrq        DATE,
+  xtpch       CHAR(12),
+  ytpch       CHAR(12),
+  ywbmbh      CHAR(6) not null,
+  zjs         NUMBER(5),
+  id          CHAR(18),
+  rqh         CHAR(10),
+  bjlsh       NUMBER,
+  jhczy       CHAR(4),
+  jhcs        NUMBER default 0,
+  pk          VARCHAR2(20),
+  sourceid    NUMBER,
+  sourcetable VARCHAR2(30),
+  fbbj        CHAR(1) default 0,
+  fbcs        NUMBER default 0,
+  jhrq        DATE
+)
+tablespace DATA_TABLESPACE
+  pctfree 10
+  initrans 1
+  maxtrans 255
+  storage
+  (
+    initial 64K
+    next 1M
+    minextents 1
+    maxextents unlimited
+  );
+create table T_KHTHZC2_bak as select * from T_KHTHZC2 where 1=2;
+
+
+
+
+

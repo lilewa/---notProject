@@ -1,0 +1,8 @@
+   create table t_kc as 
+   select lk ,kc ,t.id from  
+   (select sum(kccs) lk,id from t_ltkf group by id) t 
+   right join 
+   (select kccs kc ,id from t_kcsl ) u on
+    t.id = u.id where lk<>kc and
+    not exists (select 1 from t_pmsjrwb where id=t.id)
+    and not exists (select 1 from t_zprw  where id=t.id)

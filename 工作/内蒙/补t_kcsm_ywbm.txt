@@ -1,0 +1,7 @@
+
+ insert into t_kcsm_ywbm
+ select id, ywbmbh, ywryh, firstdhrq, lastdhrq, jtjzrq, sl, pjzk, pjjj, sylx, pxdz, pxdj, fhzk, fhjg, 
+ jmbz, thbj, gddzdjbz, gdzkbj, xszq, ybxz, zxsbj, xtl,
+  xtbj, maxfhs, ghdwh, pzthl, jzxtrq, nojhbj, nofhbj, nostbj, noxtbj, nozpbj, bfbj 
+  from t_kcsm_ywbm@c_link_wl_sl  t where 
+  not exists (select 1 from t_kcsm_ywbm where id=t.id and ywbmbh=t.ywbmbh)

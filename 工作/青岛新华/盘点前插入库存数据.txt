@@ -1,0 +1,6 @@
+ Insert Into t_pkls_sl 
+            (id, hw, kfbh, ywbmbh, cybh, pkcs, ybcs, dbbz, xbbz, czybh, pkrq,
+               flowid_sj, zl, kccs,hqbh )
+          select id, hw, kfbh, ywbmbh, cybh,null,null,dbbz, xbbz,'null',sysdate,0,zl,kccs,hqbh 
+          from t_ltkf  t
+          where not exists (select 1 from t_pkls_sl where t.id=id and t.hw=hw)

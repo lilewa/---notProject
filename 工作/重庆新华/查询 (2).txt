@@ -20,6 +20,20 @@ x.flowid_dj=d.flowid_dj and
 dbrq>to_date('2019/01/01 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
 and dbrq<to_date('2019/12/26 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
   )
+
+ --盘点周期内无收发货记录的品种数、码洋
+select sum(kccs*dj),count(distinct t.id) from t_ltkf t,t_kcsm s where not exists (select 1 from  (
+select id from t_fhmx  where 
+dbrq>to_date('2019/11/27 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and dbrq<to_date('2020/11/19 00:00:00', 'yyyy/mm/dd hh24:mi:ss')  
+ union 
+ select id  from t_dhls_jx x,t_dhdj d   where 
+x.flowid_dj=d.flowid_dj and 
+dbrq>to_date('2019/11/27 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and dbrq<to_date('2020/11/19 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+  )    where id=t.id) and t.id=s.id  and kccs>0 
+
+
  /* select count(*) from T_LKCHECKTASK t where createdate >to_date('2019/01/01 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
 and createdate<to_date('2019/12/26 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
 7473 
@@ -31,6 +45,10 @@ and createdate<to_date('2019/12/26 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
 3、日常库存维护的盘点次数 :7473
 4、有收发货记录的品种数 : 159414
 
+select count(*),count(distinct hw),sum(jhcs),sum(jhcs*dj) from T_HWJH_SNAP t ,t_kcsm s where t.zt='1'
+and   jhdate >to_date('2020/1/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and  jhdate<to_date('2020/12/31 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+ and t.id=s.id
 
   select   sum(sjsl)/sum(yssl)  from t_agv_rw_xt_bak2 where lxbh='FH'
  and xjrq<to_date('2019/12/26 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
@@ -46,4 +64,51 @@ and createdate<to_date('2019/12/26 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
  xjrq >to_date('2019/01/01 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
  and b.flowid_xj=s.flowid
  
+
+     
+    select   from tmp_dhdj_xtw j, t_dh_yfsj_bak d ,t_dhfltask f where flqx='CC' and sjsl>0 
+    and j.flowid_dj=d.flowid_dj and j.flowid_tldjhz =f.flowid_tldjhz
+    and f.finishdate <to_date('2020/11/19 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+    and  f.finishdate >to_date('2019/11/28 00:00:00', 'yyyy/mm/dd hh24:mi:ss') ;
+    --8031
+    
+   create table   t_cs
+   as
+  select  d.flowid,sjsl,d.id from tmp_dhdj_xtw j, t_dh_yfsj_bak d ,t_dhfltask f where flqx='CC' and sjsl>0 
+    and j.flowid_dj=d.flowid_dj and j.flowid_tldjhz =f.flowid_tldjhz
+    and f.finishdate <to_date('2020/11/19 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+    and  f.finishdate >to_date('2019/11/28 00:00:00', 'yyyy/mm/dd hh24:mi:ss') ;  
+    
+  select * from t_cs;
+  
+  update t_cs t set sj=(select sum(sjsl)  from T_PMSJRWB_bak where sourceid=t.flowid )
+  where exists (select 1 from  T_PMSJRWB_bak where sourceid=t.flowid);
+  
+  update t_cs set sj=sjsl where sj is null ;
+  --select * from t_kcsm where id='9787509388426001  '
+  select * from t_cs where  sjsl>1000
+
+  select * from  T_PMSJRWB_bak where sourceid=181048292;
+   
+  select sum(sjsl),sum(sjsl*dj) from t_cs c,t_kcsm s where s.id=c.id 
+  -- 1551156  --54269151.23
+    留库  品种8031  册数 1551156  码洋  54269151.23
+
+--动销率
+   select count(distinct id) from t_fhmx  where 
+dbrq>to_date('2019/11/27 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and dbrq<to_date('2020/11/19 00:00:00', 'yyyy/mm/dd hh24:mi:ss')  ;
+--157416
+  --162570
+  
+ select  157416/162570  from dual;
+  
+ select count(distinct  id)  from  (
+select id from t_ltkf  where kccs>0
+ union 
+ select id  from t_dhls_jx x,t_dhdj d   where 
+x.flowid_dj=d.flowid_dj and 
+dbrq>to_date('2019/11/27 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and dbrq<to_date('2020/11/19 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+  ) ;
  
