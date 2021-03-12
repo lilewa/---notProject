@@ -1,0 +1,72 @@
+CREATE OR REPLACE Procedure "RF_OCCUPY_DHFL3"
+-- 山西到货分流程序.翻理台运号占用调用该过程
+    -- errno 占用成功返回   0
+    -- errno 占用成功返回 非0
+(p_flowid_tldjhz CHAR, --分流去向
+ p_czybh         Char,
+ errno           Out Number,
+ errtext         Out Varchar2) As
+
+    v_rows Number;
+
+    v_createdh char(1);
+Begin
+  -- t_dhfltask  0:未领取   1:已领取  2:正在分流   3:开始分流,已取消   4:完成,,9:分流任务异常
+
+  select count(*) into v_rows  from t_dhfltask  where   flowid_tldjhz= p_flowid_tldjhz and (zt='0' or zt='3') ;
+  if v_rows= 0 then
+    ERRNO   := -1;
+    ERRTEXT := '已被他人领取0';
+     return;
+  end if;
+
+   update t_dhfltask set zt='2' ,fldate=nvl(fldate,sysdate), flczybh=p_czybh ,
+  flczyname=(select trim(name) from t_user where usr_id=p_czybh)
+  where flowid_tldjhz = p_flowid_tldjhz and   (zt='3' or zt='0') ;
+  if sql%notfound then
+      ERRNO   := -1;
+     ERRTEXT := '已被他人领取';
+     rollback;
+  end if;
+
+
+   select   createdh  into v_createdh
+      from t_dhfltask  where   flowid_tldjhz= p_flowid_tldjhz ;
+
+   if v_createdh ='0' then
+     select count(*) into v_rows from tmp_dhmx x,tmp_dhdj j where
+     j.flowid_tldjhz= p_flowid_tldjhz  and x.flowid_dj=j.flowid_dj
+     and trim(x.id) is null ;
+     if v_rows> 0 then
+        ERRNO   := -1;
+        ERRTEXT := '有品种的id是空的';
+        rollback;
+        return;
+      end if;
+
+      PROC_JSDHSJ_AUTO_COMM(p_flowid_tldjhz,errno,errtext);
+     if errno<>0 then
+        rollback;
+        return;
+      end if;
+      update t_dhfltask set createdh='1' where flowid_tldjhz= p_flowid_tldjhz ;
+   end if;
+   
+   --使用kcsm更新 xbbz，zl
+   update tmp_dhmx t set (xbbz,zl)=(select xbbz,zl from t_kcsm where id=t.id)
+   where exists (select 1 from tmp_dhdj where  flowid_tldjhz= p_flowid_tldjhz and flowid_dj=t.flowid_dj);
+
+/*   insert into t_dhfloccupy (flowid_tldjhz,zjs)
+     select p_flowid_tldjhz, zjs from t_dhfltask where flowid_tldjhz = p_flowid_tldjhz;
+*/
+    ERRNO   := 0;
+    ERRTEXT := 'ok';
+    Return;
+Exception
+    When Others Then
+        ERRNO   := -1;
+        ERRTEXT := 'RF_OCCUPY_DHFL3' || Sqlerrm;
+        Rollback;
+        Return;
+End RF_OCCUPY_DHFL3;
+
