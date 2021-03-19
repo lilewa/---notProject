@@ -16,7 +16,11 @@ v_sjcs number;
     v_dhmx tmp_dhmx%Rowtype;
     v_ywbmbh char(6);
     v_fllx  char(2);
+    l_fltbzxs_sx Number;
   
+    l_fltbzcs_xx Number;
+
+    v_bj   Number;
 
     v_hqbh      Char(4);
     v_flqxmc    varChar2(60);
@@ -29,7 +33,6 @@ v_sjcs number;
     v_zddh char(6);
     v_counter number;
     v_line char(2);
-    v_device char(2);
 Begin
 
     errno   := 0;
@@ -50,9 +53,8 @@ Begin
   
 
     select * into v_dhmx from tmp_dhmx where flowid_dhmx = p_flowid_dhmx;
-    select ywbmbh,fllx,device into v_ywbmbh,v_fllx,v_device 
-    from t_dhfltask where flowid_tldjhz =p_flowid;
-    
+    select ywbmbh,fllx into v_ywbmbh,v_fllx from t_wlsh where id =p_flowid;
+    select splitczyname into v_cbname from t_splitbagtask where flowid_tldjhz=p_flowid;
     if v_fllx <>'PT' and v_fllx<>'GP' then
         errno   := -1; --执行失败
         errtext := '分流类型不对' || v_fllx ;
@@ -69,7 +71,6 @@ Begin
       update  tmp_dhmx set pass='1'   where flowid_dhmx = p_flowid_dhmx and pass='0';
 
       
-      
        insert into t_dh_yfsj
       (flowid, flowid_dhmx, flowid_dj, dh, id, yfsl, sjsl, flqx,ywbmbh,
       flqxmc, detailqx,  cgyj, cgyj_kh,djly,fhzk,SDHRQ,yxj,qsclfs,zddh,ddcdbj,tdpch,sylx)
@@ -78,29 +79,20 @@ Begin
        from t_sl_yfsj  Where flowid = p_flowid_dhmx;
 
        
-       --没有播撒去向
-       if v_device= 'RF' or v_ywbmbh <>'000001' or v_fllx ='GP'  then
-          update t_dh_yfsj t set flqx='FH',flqxmc='发货包装区', xh=0
-          where  flowid_dhmx = p_flowid_dhmx ;
-       else
-         
-         --xbbz =1 异形
-          update t_dh_yfsj t set flqx='FH',flqxmc='发货包装区', xh=0
-          where  flowid_dhmx = p_flowid_dhmx
-          and ( yfsl >= p_xbbz or v_dhmx.xbbz = 1
-          or exists (select 1 from t_fhdh where dh=t.dh  )
-          or not exists (select 1 from t_dzbq where dh=t.dh)
-          );
-            
-          update t_dh_yfsj t set flqx='ZP',xh=1
-          where flowid_dhmx = p_flowid_dhmx and flqx is null;
+        --xbbz =1 异形
+        
+        update t_dh_yfsj t set flqx='FH',flqxmc='发货包装区', xh=0
+        where  flowid_dhmx = p_flowid_dhmx
+        and ( yfsl >= p_xbbz or v_dhmx.xbbz = 1
+        or exists (select 1 from t_fhdh where dh=t.dh  )
+        );
           
-       end if ;
-       
-      
+        update t_dh_yfsj t set flqx='ZP',xh=1
+        where flowid_dhmx = p_flowid_dhmx and flqx is null;
+    
 
-       select v_dhmx.yssl- nvl(sum(yfsl),0) into v_sjcs from t_dh_yfsj
-       where  flowid_dhmx = p_flowid_dhmx ;
+        select v_dhmx.yssl- nvl(sum(yfsl),0) into v_sjcs from t_dh_yfsj
+        where  flowid_dhmx = p_flowid_dhmx ;
 
 
      insert into t_dh_yfsj
@@ -136,6 +128,7 @@ Begin
 
 上架去向：ywbmbh（货主），flqx（CC），货区编号*/
 
+--计算去向id
     for cur in (select dh,flqx,zddh,tdpch,ddcdbj ,flowid,yfsl from t_dh_yfsj
        where flowid_dhmx=p_flowid_dhmx and dhzxid is null ) loop
 
@@ -257,10 +250,7 @@ Begin
       end if ;
 
     end loop;
-
-
-
-
+ 
    select   listagg(dm , ',') within Group(Order By Null) into errtext  from(
          select  distinct trim(dm) dm from
      t_dh_yfsj t,t_dm d where FLOWID_DHMX=p_flowid_dhmx
@@ -282,8 +272,7 @@ Begin
     end if;
 
    update  tmp_dhmx set pass='2'  where FLOWID_DHMX = p_flowid_dhmx ;
-   
-   select splitczyname into v_cbname from t_splitbagtask where flowid_tldjhz=p_flowid;
+
    insert into t_tree
      (tbid, tbname, pid, pname, note, id, cs,  orderno, lf,rt,rid,dm)
    select

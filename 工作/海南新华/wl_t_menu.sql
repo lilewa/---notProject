@@ -54,7 +54,7 @@ insert into t_menu (YJMC, EJMC, FORM, ID, ENABLE, XH1, XH2, ID_APP)
 values ('物流结算', '与货主发货费用结算', null, 185, '0', null, 3, 3);
 
 insert into t_menu (YJMC, EJMC, FORM, ID, ENABLE, XH1, XH2, ID_APP)
-values ('样本管理', 'RF借还', 'JGWL.WindowsForm.WLSampleRoom.Form_SampleRoom_RF', 203, '1', 10, 1, 3);
+values ('样本管理', 'RF借还', 'JGWL.WindowsForm.WLSampleRoom.Form_SampleRoom_RFSelect', 203, '1', 10, 1, 3);
 
 insert into t_menu (YJMC, EJMC, FORM, ID, ENABLE, XH1, XH2, ID_APP)
 values ('样本管理', '现金客户交款', null, 206, '0', 10, 2, 3);
@@ -84,7 +84,7 @@ insert into t_menu (YJMC, EJMC, FORM, ID, ENABLE, XH1, XH2, ID_APP)
 values ('发运管理', '打印托运单', 'JGWL.WindowsForm.WLShipped.Form_Shi_TY_print', 98, '0', 4, 5, 3);
 
 insert into t_menu (YJMC, EJMC, FORM, ID, ENABLE, XH1, XH2, ID_APP)
-values ('质量管理', '作业差错统计', 'JGWL.WindowsForm.WLDailyReport.Form_DailyReport_cctj', 211, '1', 3, 1, 3);
+values ('质量管理', '作业差错统计', 'JGWL.WindowsForm.WLDailyReport.Form_DailyReport_cctj2', 211, '1', 3, 1, 3);
 
 insert into t_menu (YJMC, EJMC, FORM, ID, ENABLE, XH1, XH2, ID_APP)
 values ('质量管理', '工作量统计', 'JGWL.WindowsForm.WLDailyReport.Form_DailyReport_zlgl_gzltj', 210, '0', 3, 2, 3);
@@ -294,7 +294,7 @@ insert into t_menu (YJMC, EJMC, FORM, ID, ENABLE, XH1, XH2, ID_APP)
 values ('查询统计', '库存统计查询', 'JGWL.WindowsForm.WLDailyReport.Form_Dai_cxtj_kctjcx', 41, '0', 7, 13, 3);
 
 insert into t_menu (YJMC, EJMC, FORM, ID, ENABLE, XH1, XH2, ID_APP)
-values ('查询统计', '发退查询', 'JGWL.WindowsForm.WLDailyReport.Form_Dai_SelectTh', 31, '1', 7, 14, 3);
+values ('查询统计', '发退查询', 'JGWL.WindowsForm.WLDailyReport.Form_Dai_FtSelect', 31, '1', 7, 14, 3);
 
 insert into t_menu (YJMC, EJMC, FORM, ID, ENABLE, XH1, XH2, ID_APP)
 values ('查询统计', '包件统计', 'JGWL.WindowsForm.WLDailyReport.Form_Dai_bjdj_report', 24, '0', 7, 15, 3);
@@ -312,7 +312,7 @@ insert into t_menu (YJMC, EJMC, FORM, ID, ENABLE, XH1, XH2, ID_APP)
 values ('中转代运', '重打中转代运转移单', null, 214, '0', null, 3, 3);
 
 insert into t_menu (YJMC, EJMC, FORM, ID, ENABLE, XH1, XH2, ID_APP)
-values ('参数设置', '操作员维护', 'JGWL.WindowsForm.WLSystem.Form_Sys_czywh', 6, '1', 11, 3, 3);
+values ('参数设置', '操作员维护', 'JGWL.WindowsForm.WLSystem.Form_Sys_czywh2', 6, '1', 11, 3, 3);
 
 insert into t_menu (YJMC, EJMC, FORM, ID, ENABLE, XH1, XH2, ID_APP)
 values ('参数设置', '参数值设置', 'JGWL.WindowsForm.WLSystem.Form_Sys_csszMain', 5, '1', 11, 4, 3);
@@ -352,9 +352,6 @@ values ('进货管理', '上架交接', null, 294, '0', 11, 10, 4);
 
 insert into t_menu (YJMC, EJMC, FORM, ID, ENABLE, XH1, XH2, ID_APP)
 values ('进货管理', '挑包', null, 297, '0', 11, 12, 4);
-
-insert into t_menu (YJMC, EJMC, FORM, ID, ENABLE, XH1, XH2, ID_APP)
-values ('到货管理', '物流转发', 'JGWL.WindowsForm.WLGoosArrival.DHFY', 299, '1', 1, 28, 3);
 
 insert into t_menu (YJMC, EJMC, FORM, ID, ENABLE, XH1, XH2, ID_APP)
 values ('发运管理', '发运交接查询', 'JGWL.WindowsForm.WLShipped.Form_Shi_Fyjjcx', 301, '1', 4, 13, 3);
@@ -693,7 +690,7 @@ insert into t_menu (YJMC, EJMC, FORM, ID, ENABLE, XH1, XH2, ID_APP)
 values ('参数设置', '包装标准设置', 'JGWL.WindowsForm.WLSystem.Form_Sys_ChangeBzbz', 2, '1', 11, 16, 3);
 
 insert into t_menu (YJMC, EJMC, FORM, ID, ENABLE, XH1, XH2, ID_APP)
-values ('查询统计', '包件发运统计', 'JGWL.WindowsForm.WLDailyReport.Form_Dai_BjTj', 23, '1', 7, 24, 3);
+values ('查询统计', '包件发运统计', 'JGWL.WindowsForm.WLDailyReport.Form_Dai_BjTj', 23, '0', 7, 24, 3);
 
 insert into t_menu (YJMC, EJMC, FORM, ID, ENABLE, XH1, XH2, ID_APP)
 values ('库房管理', '盘点校核', null, 253, '0', 14, 6, 4);
@@ -862,5 +859,4 @@ values ('进货管理', '到货拆包', null, 323, '1', 1, 8, 5);
 
 insert into t_menu (YJMC, EJMC, FORM, ID, ENABLE, XH1, XH2, ID_APP)
 values ('退货管理', '退货分流', null, 324, '1', 4, 5, 5);
-
  
