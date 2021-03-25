@@ -11,64 +11,65 @@ CREATE OR REPLACE Procedure PROC_DZBQ
     v_bj       Number;
     v_cys    Number(9); --差异数
     d_jzthrq Date;
-    flowid  Number(10); 
-    v_bccs   Number(10); -- 本次册数 
-    v_rows     Number; 
+    flowid  Number(10);
+    v_bccs   Number(10); -- 本次册数
+    v_rows     Number;
     v_flowid number;
     v_rqh char(10);
     v_bz   varchar2(30);
     v_dm varchar2(60);
     v_jhzxid  varchar2(30);
-    v_czy t_user.usr_id%type;
+    --v_czy t_user.usr_id%type;
+    v_czy varchar2(20);
 Begin
 
- 
+
     for cur in( select t.*,rowid rid from MIDORDERS t where STATE='3') loop
-      
+
        if trim(cur.CONTAINERID) is null then
-          update MIDORDERS set STATE='9' , ERRMSG ='CONTAINERID null' where rowid=cur.rid; 
+          update MIDORDERS set STATE='9' , ERRMSG ='CONTAINERID null' where rowid=cur.rid;
           continue;
        end if;
-       
+
         v_rqh:=cur.CONTAINERID;
-        
+
         if cur.truequantity is null then
           update MIDORDERS set STATE='9' , ERRMSG ='truequantity null' where rowid=cur.rid;
           continue;
         end if ;
-        
+
         if cur.truequantity  < 0  then
-          update MIDORDERS set STATE='9' , ERRMSG ='truequantity <0' where rowid=cur.rid; 
+          update MIDORDERS set STATE='9' , ERRMSG ='truequantity <0' where rowid=cur.rid;
           continue;
         end if ;
-        
+
         if cur.truequantity  > cur.quantity  then
-          update MIDORDERS set STATE='9' , ERRMSG='truequantity  >  quantity' where rowid=cur.rid; 
+          update MIDORDERS set STATE='9' , ERRMSG='truequantity  >  quantity' where rowid=cur.rid;
           continue;
         end if ;
-        
+
         v_bccs := cur.truequantity;
         v_cys  := cur.quantity- v_bccs;
-        v_czy:= trim(cur.oprationcode);
-        
+       -- v_czy:= trim(cur.oprationcode);
+       v_czy:='0001';
         Select * Into v_zp From t_zprw Where flowid_zp = cur.ID_ZPRW;
         if v_zp.yssl-v_zp.sjsl < v_bccs then
-           update MIDORDERS set STATE='9' , ERRMSG='超量' where rowid=cur.rid; 
+           update MIDORDERS set STATE='9' , ERRMSG='超量' where rowid=cur.rid;
           continue;
         end if ;
-        
+
 
         If v_bccs > 0 Then
-          
+
            --插入校核任务
           Select  min(id),min(jhzxid)    Into v_bjlsh,v_jhzxid   From t_jhtask
             Where rqh = v_rqh   and zt='0';
           if v_bjlsh is null then
-            
+
              select sq_jhtask.nextval into v_flowid from  dual;
              v_bjlsh:=v_flowid;
              v_jhzxid:=v_zp.jhzxid;
-             
+
              insert into t_jhtask
              (id, rqh, zt, createdate, ywbmbh, dh, zpz,
               zcs, zmy, zsy, ywlx,sjlx, jxfs, zzl, js, zddh, isgp,isgz,jhzxid)
@@ -81,19 +82,19 @@ Begin
              (bh, zydate, czy, tbname, tableid, note,qx,zylx)
              select   v_rqh, sysdate, null, 't_jhtask',
              v_flowid,  trim(dm)||'的校核任务' ,'FHJH','s'  from
-             t_dm where dh=v_zp.dh; 
-             
-           
+             t_dm where dh=v_zp.dh;
+
+
           else
             if v_jhzxid<> v_zp.jhzxid then
                update MIDORDERS set STATE='9' ,
-                      ERRMSG='t_jhtask.jhzxid:' ||v_jhzxid||',t_zprw.jhzxid:'||v_zp.jhzxid 
-                where rowid=cur.rid; 
+                      ERRMSG='t_jhtask.jhzxid:' ||v_jhzxid||',t_zprw.jhzxid:'||v_zp.jhzxid
+                where rowid=cur.rid;
                continue;
             end if ;
           end if ;
-           
-         
+
+
            insert into t_gzltimes
              (czybh,   cs, my, id_job, proc, tablename, tablepk,YWBM)
              values
@@ -101,10 +102,10 @@ Begin
 
             update t_zprwhz set sjsl=sjsl+v_bccs,zpczy=v_czy,zt='1'
             where flowid=v_zp.Id_zprwhz;
-        
+
             Update t_zprw  Set   SJSL = SJSL+v_bccs
              Where flowid_zp = v_zp.flowid_zp;
-         
+
             --v_bj      := 4;
             v_one_sys := round(v_zp.zjxs * v_zp.zk * v_bccs / 100, 2);
             v_one_mys := v_dj * v_bccs;
@@ -125,7 +126,7 @@ Begin
             End If;
 
            select ALL_FLOWID.Nextval into  v_allflowid from dual;
-           
+
             Insert Into t_crkls
                 (flowid_crkls, id, ywpch, yspch, crkrq, ywlx, kfbh, lybh, cybh, ywbmbh,
                  crkcs, crksy, sylx, zk_jg, zjxs, bz, dbbz, xbbz, sl,
@@ -155,9 +156,9 @@ Begin
                  null, v_zp.cgyj, d_jzthrq, v_zp.zl, v_zp.sdhrq, cur.quantity, v_zp.cgyj_kh,
                     sysdate, v_zp.pk,v_czy,v_zp.zddh,v_zp.flowid_zp,'t_zprw');
 
- 
-           
-             
+
+
+
              Insert Into t_agv_rw_xt_bak
               (flowid_xj, ph, id, lxbh, ln_zp, kfbh, ywbmbh, cybh, dh, phdh, xsdh,
                tihfs, xhao, qshqbh, hqbh, hwh, pxhw, zrhq, zrhw, yssl, sl, zk, sylx,
@@ -173,14 +174,14 @@ Begin
                v_czy, '0', v_czy, v_zp.dbbz, v_zp.xbbz, '', 'AJ',
                v_zp.djly, Null, '', v_bccs, '', Sysdate, v_zp.zl, V_ZP.SDHRQ,
                V_ZP.CGYJ, V_ZP.XSZQ, '0', v_zp.cgyj_kh,   v_zp.pk);
-           
+
 
      End If;
-     
+
       If v_cys > 0   Then
            select ALL_FLOWID.Nextval into  v_allflowid from dual;
            select min(trim(dm)) into v_dm from t_dm where dh=v_zp.zddh;
-           
+
            insert into t_tree
               (tbid, tbname, pid, pname, note, id, cs,czy )
               values
@@ -202,7 +203,7 @@ Begin
                 Values
                     (Sysdate, 'ZPBZ', v_czy, v_czy, v_zp.id,
                      v_allflowid, v_zp.ywbmbh);
-              
+
                 proc_cycl(v_zp.ywbmbh, v_zp.kfbh, v_zp.id, -v_cys, v_bjlsh,
                           'RFBZ', v_czy, v_zp.cgyj, v_zp.cybh, v_zp.dh, 'ZP',
                           v_zp.zk, errno, errtext);
@@ -211,40 +212,40 @@ Begin
                     Return;
                 End If;
       end if ;
-       
-        
+
+
          Update t_kcsl
            Set KCCS = KCCS - cur.quantity,
-               ZYCS = ZYCS - cur.quantity 
+               ZYCS = ZYCS - cur.quantity
          Where id = v_zp.id And ywbmbh = v_zp.ywbmbh And kfbh = v_zp.kfbh And
                cybh = v_zp.cybh;
 
-          update MIDORDERS set STATE='4' where rowid=cur.rid; 
-          
-          select count(*) into v_rows from MIDORDERS where 
+          update MIDORDERS set STATE='4' where rowid=cur.rid;
+
+          select count(*) into v_rows from MIDORDERS where
            cur.ID_ZPRW=v_zp.flowid_zp and    state<>'4' ;
           if v_rows =0 then
-             
-             
+
+
              insert into t_zprw_bak
             (flowid_zp, lxbh, id, kfbh, ywbmbh, cybh, dbbz, xbbz, tihfs, dh, zpxyrqh, yssl, zk,
             sylx, zjxs, ysczybh, ln_zp_no, ln_zp_hw, zpczybh, sourceid, ddbj, djly, bz, sl, yspch,
              zl, cgyj, xszq, sdhrq, mdrqh, bzrq, cgyj_kh, fhyxj, pk, xrrq, sourcetable,
-             id_zprwhz, sjsl, zddh,jhzxid)
+             id_zprwhz, sjsl, zddh,jhzxid,id_wlsh)
              select   flowid_zp, lxbh, id, kfbh, ywbmbh, cybh, dbbz, xbbz, tihfs, dh, zpxyrqh, yssl, zk,
               sylx, zjxs, ysczybh, ln_zp_no, ln_zp_hw, zpczybh, sourceid, ddbj, djly, bz, sl, yspch,
                zl, cgyj, xszq, sdhrq,v_rqh, sysdate, cgyj_kh, fhyxj, pk, xrrq, sourcetable,
-               id_zprwhz, sjsl, zddh,jhzxid from
+               id_zprwhz, sjsl, zddh,jhzxid,id_wlsh from
               t_zprw where flowid_zp=v_zp.flowid_zp;
-          
+
               delete  t_zprw where flowid_zp=v_zp.flowid_zp;
-               
+
               select count(*) into v_rows from T_ZPRW where  id_zprwhz = v_zp.id_zprwhz;
               if v_rows=0 then
                   update t_zprwhz set finishdate=sysdate,finished=1,zt='2'
                   where flowid=v_zp.Id_zprwhz;
 
-                
+
                   delete t_rqzy where tbname='t_zprwhz' and bh=v_rqh;
 
                   insert into t_gzl2
@@ -253,13 +254,13 @@ Begin
                   t_zprwhz where flowid=v_zp.Id_zprwhz;
 
               end if;
- 
+
 
           end if ;
 
     end loop;
-   
- 
+
+
     errno := 0;
     errtext :='ok';
 Exception

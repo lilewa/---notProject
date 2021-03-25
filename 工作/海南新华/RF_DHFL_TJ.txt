@@ -1,0 +1,309 @@
+CREATE OR REPLACE Procedure RF_DHFL_TJ
+--------------$active$---------------------
+    -- 此过程为山西翻理台分流整运号提交处理
+    -- 思路: 循环tmp_dhmx 这个运号的
+    --
+    --       从t_dhfl1中取得所有实际分流数, 记入tmp_dhmx.djshsl,
+    --       从t_dhfl1中取得FLQX='ST'所有实际分流数, 记入tmp_dhmx.pssl
+    --       将t_sj_yfsj中的所有yqbzqcs=0的且分过流的记录,全部写入t_fhrwb
+    --       形成t_dhls_jx(对未分过流的要生成书目信息)
+    --       循环结束
+    --       2011-11-18 升级
+    --       根据t_dhls_jx形成t_dhdj及上报商流的到货表数据
+    --       删除t_dhfl1中的数据及t_sl_yfsj中的数据
+(p_flowid_tldjhz Number,
+p_czy Char,
+ errno           Out Number,
+ errtext         Out Varchar2) As
+    v_rows   Number;
+    v_zjxs   Number;
+    v_zcs number;
+
+    v_gzlmy number;
+    v_gzlcs number;
+    v_ysjs  number;
+    v_yssl number;
+    v_zddh char(6);
+    v_wlsh t_wlsh%rowtype;
+    v_gzjls   Number;
+    v_djsl    Number;
+    v_Addflag Char(1);
+    v_flcs    Number;
+Begin
+  v_gzlmy:=0;
+  v_gzlcs:=0;
+
+
+    select Count(*) Into v_rows from t_dhfltask where flowid_tldjhz = p_flowid_tldjhz
+    and  finished='0' ;
+    If v_rows = 0 Then
+        errno   := -12;
+        errtext := '运号内部码不存在或已分流确认!' || to_char(p_flowid_tldjhz);
+        Rollback;
+        Return;
+    End If;
+
+    select * into v_wlsh from t_wlsh where id=p_flowid_tldjhz;
+
+    select count(*) into v_rows from
+    (  select flowid_dhmx ,bdcs from tmp_dhmx x,tmp_dhdj j where flowid_tldjhz=p_flowid_tldjhz
+       and x.flowid_dj=j.flowid_dj) t1,
+
+    ( select flowid_dhmx, sum(sjsl) yfsj from t_dh_yfsj y ,tmp_dhdj j where
+        y.flowid_tldjhz=p_flowid_tldjhz and y.flowid_dj=j.flowid_dj  group by flowid_dhmx) t2
+   where t1.flowid_dhmx=t2.flowid_dhmx and bdcs >yfsj;
+   if v_rows> 0 then
+      errno   := -1;
+        errtext := p_flowid_tldjhz||'存在册数不符情况';
+        Return;
+   end if ;
+
+ -- t_dhfltask  0:未领取   1:已领取  2:正在分流   3:开始分流,已取消   4:完成,,9:分流任务异常
+    update t_dhfltask set zt='4',finishdate=sysdate,finished='1' where  flowid_tldjhz = p_flowid_tldjhz and zt='2';
+    if sql%notfound then
+        errno   := -1;
+        errtext := p_flowid_tldjhz||'任务已提交或不存在';
+        Return;
+    end if ;
+
+    for curDj in( select flowid_dj ,cybh,kfbh,ywbmbh ,ysdj,sl,ghdwh from tmp_dhdj where flowid_tldjhz=p_flowid_tldjhz and  nvl(zfzd,'0')<>'1')
+
+    loop
+       v_gzjls := 0;
+       v_djsl  := 0;
+       For c1 In (Select  flowid_dhmx,   id,yssl,bdcs,pssl, dbbz,xbbz, tm,xszq,fhzk, x.zz,x.kb,x.tm_flag
+               ,x.fl, x.isbn, x.sm, x.dj, x.sylx, x.jhzk, x.bc, x.yc, x.cbny, x.bz, x.yz, x.bb, x.sl
+                 From tmp_dhmx x
+                Where  flowid_dj =  curDj.flowid_dj )
+        Loop
+
+
+    ---------------
+
+
+
+       Select Count(*) Into v_rows From t_dhls_jx Where flowid_dhmx=c1.flowid_dhmx;
+        If v_rows>0 Then
+
+            Select djshsl Into v_yssl From t_dhls_jx Where flowid_dhmx=c1.flowid_dhmx;
+
+            -- 对已有记录，将破损数或拒收数写入t_dhls_jx.pscs中，以便后期备查
+            -- 对新增记录，在分流差异处理时，再将pscs写到正式到货的记录中。
+            Update t_dhls_jx Set pssl=c1.pssl Where flowid_dhmx=c1.flowid_dhmx;
+            Update t_dhls_jx@c_link_wl_sl Set pssl=c1.pssl Where flowid_dhmx=c1.flowid_dhmx;
+
+           v_Addflag := '0';
+        Else
+           v_yssl := 0;
+           v_Addflag := '1';
+        End If;
+
+        -- 如果到货分流结果与原单有差异，则生成到货更正计划数据：
+        -- 到货分流后出现差异，只能改变原记录的实际数量，不能修改其它项目
+        If c1.bdcs<>v_yssl Then
+
+            -- gzlx=0, 表示更正折扣, gzlx=1表示更正货源或者税率更正
+            -- addflag=1, 表示为到货分流中新增的到货记录
+            -- dhflflag=1，表示为到货分流生成的更正计划，正常的更正处理将不涉及此类更正计划
+            Insert Into t_sl_dhgzjh@c_link_wl_ex
+              (flowid_dj, flowid_dhmx, ysdj, shrq, ghdwh,
+               isbn, sm, dj, sylx, jhzk, bc, yc, cbny, bz, yz, bb, fl,
+               tm_flag, kb, zz, sl, ghdw, receflag, sendbmbh, senddate, recedate,
+               flowid_dhmx_old, yssl, xsl, jtjzrq, fhzk, xszq, tm, id, gzlx, remark, newsl, addflag, dhflflag)
+            Values
+              (curDj.flowid_dj, c1.flowid_dhmx, curDj.ysdj, Null, curDj.ghdwh,
+               c1.isbn, c1.sm, c1.dj, c1.sylx, c1.jhzk, c1.bc, c1.yc, c1.cbny, c1.bz, c1.yz, c1.bb, c1.fl,
+               c1.tm_flag, c1.kb, c1.zz, curDj.sl, curDj.ghdwh, '0',  curDj.cybh, Sysdate, Null,
+               c1.flowid_dhmx, v_yssl, c1.bdcs, Null, c1.fhzk, c1.xszq, c1.tm, c1.id, '0', '到货分流差异',
+               curDj.sl, v_addflag, '1');
+
+            v_gzjls := v_gzjls + 1;
+            v_djsl  := v_djsl + c1.yssl;
+
+            -- 原记录置更正占用标记：
+            If v_Addflag = '0' Then
+               Update t_dhls_jx Set gzbj='8' Where flowid_dhmx=c1.flowid_dhmx;
+            End If;
+
+         End If;
+
+    -- 如果该品种除破损以外分流过,
+            -- 将除已经去往包装区的分配数外的其它任务,
+            -- 全部转入t_fhrwb, 为调度做准备
+            -- 注意: 即使本次到货数不能满足所有待分配数,
+            --       也转入t_fhrwb,因为库存有可能能够满足
+            -- 如果该品种除破损以外分流过, 将t_sl_yfsj中YQBZQCS=0的记录全部写入t_fhrwb:
+
+         if c1.bdcs-c1.pssl>0 then
+            -- 因为t_sl_yfsj.ysdjh是个varchar型的,
+                -- 所以在下边的语句中要用substrb(trim(t_sl_yfsj.ysdjh)||'            ',1,12)
+                -- t_sl_yfsj.ysdjh保存的是t_dpls.dbdh, 根据这个值从t_dpls中取得tdpch
+                -- 写入t_fhrwb中.
+                --
+                -- 需要特别注意的是调度程序, 必须按ysdjh+dh来判断是否为同一张单据
+                -- 2011-03-04 yangyi: 新增【单独成单标记】bdbj,【配货备注】phbz
+                --2011-06-27 修改 lb 将条件nvl(YQBZQCS,0) = 0 改为 nvl(yfsl,0) - nvl(YQBZQCS,0) >0
+                --插入册数改为nvl(yfsl,0) - nvl(YQBZQCS,0),因为存在部分不去包装区的情况
+                select count(*) into v_rows from t_dh_yfsj where flowid_dhmx =c1.flowid_dhmx ;
+                if v_rows = 0 then
+                     insert into t_dh_yfsj
+                      (flowid, flowid_dhmx, flowid_dj, dh, id, yfsl, sjsl, flqx,ywbmbh,
+                      flqxmc, detailqx,  cgyj, cgyj_kh,djly,fhzk,SDHRQ,yxj,qsclfs,zddh,ddcdbj,tdpch)
+                        select   flowid_yfsj,  flowid, flowid_dj, dh, c1.id, yfsl, 0, null,v_wlsh.ywbmbh, null, null,
+                          ysdjh, trim(cgyj_kh) ,DJLY,fhzk,SDHRQ,yxj,qsclfs,zddh,ddcdbj,tdpch
+                       from t_sl_yfsj  Where flowid = c1.flowid_dhmx ;
+
+                     if v_wlsh.fllx='PT' then
+                        for cur in (select flowid,dh from t_dh_yfsj where  flowid_dhmx = c1.flowid_dhmx  ) loop
+                             Select min(gzbh) into v_zddh
+                             From  t_guizu_fl c
+                            Where flbh=c1.fl And dh = cur.dh;
+                            if v_zddh is null then
+                              select min(gzbh) into v_zddh  from t_guizu_fl  where  dh=cur.dh;
+                            end if ;
+                            update t_dh_yfsj set zddh=v_zddh  where flowid =cur.flowid;
+                        end loop;
+                     end if ;
+
+                end if;
+
+                Insert Into t_fhrwb
+                    (flowid_fhrw, ysdjh, dh, id, kfbh, ywbmbh, cybh, dbbz, xbbz, djsl,
+                     fhzk, sylx, zjxs, djly, qsts, QSCLFS, FYFSH, FHFS, DJ, KJXBJ, FHYXJ,
+                     QSDS, RQ, sdhrq, yxrq, cgyj, cgyj_kh,  bdbj, phbz,sl,zddh)
+                    Select all_flowid.Nextval /*flowid_yfsj*/,
+                           (Select Min(tdpch)
+                               From t_dpls
+                              Where trim(dbdh) = t.cgyj ),
+                           dh, id, curDj.kfbh, curDj.ywbmbh, curDj.cybh, c1.dbbz,
+                           c1.xbbz,  yfsl - sjsl , fhzk, c1.sylx,
+                           v_zjxs, djly, 0, qsclfs, '01' ,   '01' ,
+                           c1.dj, '1', YXJ, 0, Sysdate, SDHRQ, (Sysdate + 30), cgyj,
+                           cgyj_kh,
+                           (Select nvl(t_dpls.spbj, '0')   From t_dpls   Where  trim(dbdh) =  t.cgyj),
+                           (Select t_dpls.note_gp  From t_dpls  Where trim(dbdh) =  t.cgyj),
+                           c1.sl,zddh
+                      From t_dh_yfsj t
+                     Where flowid_dhmx = c1.flowid_dhmx And  yfsl-sjsl > 0 and (flqx='FH' or flqx='ZP');
+         else
+             -- 如果该品种没分流过, 将t_sl_yfsj中的记录全部写入t_wl_bmzdj:
+                -- 并将类型(LX)置为'XX', 商流将据此将t_dpls相应记录的状态恢复
+                -- 为未分书状态(参见商流proc_get_bmzdj)
+                Insert Into t_wl_bmzdj
+                    (YSDJH, YWBMBH, DH, CKBH, RKBH, ID, CS, SJKCS, QSCLFS, RQ, LX, FLOWID,
+                     BZ, SENDBMBH, SENDDATE, RECEBMBH, RECEFLAG, ZK)
+                    Select ysdjh, curDj.ywbmbh, dh, curDj.kfbh, '', id, yfsl, 0, qsclfs,
+                           Sysdate, 'XX', flowid_yfsj, '到货分流时未发现该品种', cybh, Sysdate,
+                           curDj.ywbmbh, '0', fhzk
+                      From t_sl_yfsj
+                     Where flowid = c1.flowid_dhmx;
+         end if;
+
+
+
+    End Loop;
+
+          -- 更正计划来源：1/物流，2/B2B，3/直发单收货差异
+      If v_gzjls>0 Then
+          Insert Into t_sl_dhgzjh_hz@c_link_wl_ex
+            (flowid_dj, djsl, jls, zjs, sendbmbh, senddate, recebmbh, recedate, reason, receflag, gzczy, djly, dhflflag)
+          Values
+            (curDj.flowid_dj, v_djsl, v_gzjls, 1, curDj.cybh, Sysdate, curDj.ywbmbh, Null, '到货分流差异', '0', p_czy, '1', '1');
+      Else
+          -- 若无差异，则将gzbj置为0，解除对正常更正的限制。
+          Update t_dhdj Set gzbj='0' Where flowid_dj=curDj.flowid_dj;
+          Update t_dhdj@c_link_wl_sl Set gzbj='0' Where flowid_dj=curDj.flowid_dj;
+          Update t_dhdj_cf@c_link_wl_sl Set gzbj='0' Where flowid_dj=curDj.flowid_dj;
+      End If;
+
+      -- 2017-08-03 add by yangyi:
+      -- 商流的tmp_dhmx/tmp_dhdj由 物流分流结束后删除，商流不再进行删除处理
+      -- 商流接物流到货时，物流还未做分流，如果此时删除，将无法进行补样处理
+      insert into tmp_dhdj_bak@c_link_wl_sl select * from tmp_dhdj@c_link_wl_sl where flowid_dj=curDj.flowid_dj;
+      insert into tmp_dhmx_bak@c_link_wl_sl select * from tmp_dhmx@c_link_wl_sl where flowid_dj=curDj.flowid_dj;
+      delete from tmp_dhdj@c_link_wl_sl where flowid_dj=curDj.flowid_dj;
+      delete from tmp_dhmx@c_link_wl_sl where flowid_dj=curDj.flowid_dj;
+
+    end loop;
+
+    -- 循环tmp_dhmx当前运号的到货明细:
+
+
+
+   -- Update t_tldjhz Set flbj = '1', flrq = Sysdate Where flowid_tldjhz = p_flowid_tldjhz;
+    -- 临时表数据备份及删除:
+    For c3 In (Select flowid_dj From tmp_dhdj Where flowid_tldjhz = p_flowid_tldjhz and  nvl(zfzd,'0')<>'1')
+    Loop
+
+        Insert Into tmp_dhmx_xtw
+            Select * From tmp_dhmx Where flowid_dj = c3.flowid_dj;
+        Delete From tmp_dhmx Where flowid_dj = c3.flowid_dj;
+
+        insert into t_dh_yfsj_bak
+        (flowid, flowid_dhmx, flowid_dj, dh, id, yfsl, sjsl, flqx, flqxmc, detailqx, active,
+        cgyj, cgyj_kh, finished, djly, fhzk, sdhrq, yxj, hw, xh, qsclfs, flowid_tldjhz, zddh, hqbh,
+        ddcdbj, tdpch, ttbz, dhzxid, isgz, isgp, nxtzxid, line, ywbmbh)
+
+       select flowid, flowid_dhmx, flowid_dj, dh, id, yfsl, sjsl, flqx, flqxmc, detailqx, active,
+        cgyj, cgyj_kh, finished, djly, fhzk, sdhrq, yxj, hw, xh, qsclfs, flowid_tldjhz, zddh, hqbh,
+        ddcdbj, tdpch, ttbz, dhzxid, isgz, isgp, nxtzxid, line, ywbmbh
+         from t_dh_yfsj Where flowid_dj = c3.flowid_dj;
+
+        Delete From T_DH_YFSJ Where flowid_dj = c3.flowid_dj;
+
+       Insert Into t_sl_yfsj_bak
+            Select * From t_sl_yfsj Where flowid_dj = c3.flowid_dj;
+        Delete From t_sl_yfsj Where flowid_dj = c3.flowid_dj;
+
+
+
+        Insert Into t_flrqh_bak
+            Select * From t_flrqh Where flowid_dj = c3.flowid_dj;
+        Delete From t_flrqh Where flowid_dj = c3.flowid_dj;
+
+        --delete t_linehw_dhmx where flowid_dj = c3.flowid_dj;
+    End Loop;
+
+    Insert Into tmp_dhdj_xtw
+        Select * From tmp_dhdj Where flowid_tldjhz = p_flowid_tldjhz and  nvl(zfzd,'0')<>'1';
+    Delete From tmp_dhdj Where flowid_tldjhz = p_flowid_tldjhz and  nvl(zfzd,'0')<>'1';
+
+
+    select ssjs into v_ysjs from t_wlsh where id=p_flowid_tldjhz;
+      Insert Into t_gzl
+        (czybh, czlx, czrq, jls, cs, my, js, flowid,TABLE_NAME,FLOWID_TABLE,YWBMBH,PROC_NAME)
+    Values
+        (p_czy, 'DHFL', Sysdate, 1, v_gzlcs, v_gzlmy, v_ysjs,
+         all_flowid.Nextval,'t_wlsh',p_flowid_tldjhz,'000001','proc_goo_dhlr_tj_zjs');
+
+
+    select sum(cs) into v_flcs from T_FLRecord where   flowid_tldjhz=p_flowid_tldjhz;
+    if v_flcs >0 then
+      select  zcs into v_zcs from t_dhfltask where    flowid_tldjhz=p_flowid_tldjhz;
+       insert into t_gzl2
+       (czybh,    pz, js, id_job, proc, tablename, tablepk)
+     select
+        czybh ,   count(distinct id),
+        round (v_ysjs*sum(cs)/v_zcs,2),
+        'DHFL', 'proc_goo_dhlr_tj_zjs2', 'T_FLRecord' ,p_flowid_tldjhz from T_FLRecord where flowid_tldjhz=p_flowid_tldjhz
+        group by czybh ;
+    end if;
+      
+   insert into midorders (orderid, storeid, matchid, containerid, barcode, quantity, truequantity, 
+   oprationcode, state, downdate, oprationtime, bookid, goodsname, price, giveoutdiscount, 
+   giveoutid, id_zprw, errmsg )
+   select zpxyrqh,trim(dh),id_wlsh,null,isbn,yssl,null,null,0,null,null,t.id,trim(sm),dj,
+   null,null,t.flowid_zp,  null from 
+   t_zprw t,t_kcsm s where id_wlsh=p_flowid_tldjhz and t.id=s.id;
+   
+    errno   := 0;
+    errtext := 'ok';
+    Return;
+Exception
+    When Others Then
+        errno   := Sqlcode;
+        errtext := 'proc_goo_dhlr_tj_zjs' || Sqlerrm;
+        Rollback;
+        Return;
+End RF_DHFL_TJ;
+
