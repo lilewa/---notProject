@@ -292,7 +292,7 @@ Begin
    insert into midorders (orderid, storeid, matchid, containerid, barcode, quantity, truequantity, 
    oprationcode, state, downdate, oprationtime, bookid, goodsname, price, giveoutdiscount, 
    giveoutid, id_zprw, errmsg )
-   select zpxyrqh,trim(dh),id_wlsh,null,isbn,yssl,null,null,0,null,null,t.id,trim(sm),dj,
+   select zpxyrqh,trim(zddh),id_wlsh,null,trim(isbn),yssl,null,null,0,null,null,t.id,trim(sm),dj,
    null,null,t.flowid_zp,  null from 
    t_zprw t,t_kcsm s where id_wlsh=p_flowid_tldjhz and t.id=s.id;
    

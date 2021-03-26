@@ -20,6 +20,7 @@ CREATE OR REPLACE Procedure PROC_DZBQ
     v_dm varchar2(60);
     v_jhzxid  varchar2(30);
     --v_czy t_user.usr_id%type;
+    v_ysrqh char(10);
     v_czy varchar2(20);
 Begin
 
@@ -32,7 +33,8 @@ Begin
        end if;
 
         v_rqh:=cur.CONTAINERID;
-
+        v_ysrqh:=cur.orderid;
+        
         if cur.truequantity is null then
           update MIDORDERS set STATE='9' , ERRMSG ='truequantity null' where rowid=cur.rid;
           continue;
@@ -48,8 +50,9 @@ Begin
           continue;
         end if ;
 
+        
         v_bccs := cur.truequantity;
-        v_cys  := cur.quantity- v_bccs;
+      --  v_cys  := cur.quantity- v_bccs;
        -- v_czy:= trim(cur.oprationcode);
        v_czy:='0001';
         Select * Into v_zp From t_zprw Where flowid_zp = cur.ID_ZPRW;
@@ -153,7 +156,7 @@ Begin
                 (v_allflowid, v_bjlsh, v_bjlsh,   v_zp.id, v_zp.ywbmbh,
                  v_zp.kfbh, v_zp.cybh, v_zp.dh, v_bccs, v_zp.sylx, v_zp.zjxs, v_zp.zk,
                  v_zp.sl, '01', v_zp.tihfs, 'ZP', V_BJLSH, V_ZP.DBBZ, V_ZP.XBBZ, V_ONE_SYS,
-                 null, v_zp.cgyj, d_jzthrq, v_zp.zl, v_zp.sdhrq, cur.quantity, v_zp.cgyj_kh,
+                 null, v_zp.cgyj, d_jzthrq, v_zp.zl, v_zp.sdhrq, v_bccs, v_zp.cgyj_kh,
                     sysdate, v_zp.pk,v_czy,v_zp.zddh,v_zp.flowid_zp,'t_zprw');
 
 
@@ -178,7 +181,32 @@ Begin
 
      End If;
 
-      If v_cys > 0   Then
+    
+
+       Update t_kcsl
+         Set KCCS = KCCS - v_bccs,
+             ZYCS = ZYCS - v_bccs
+       Where id = v_zp.id And ywbmbh = v_zp.ywbmbh And kfbh = v_zp.kfbh And
+             cybh = v_zp.cybh;
+
+        update MIDORDERS set STATE='4' where rowid=cur.rid;
+
+        select count(*) into v_rows from MIDORDERS where
+          ID_ZPRW=v_zp.flowid_zp and    state<>'4' ;
+        
+        if v_rows =0 then
+          --处理差异
+          
+         select v_zp.yssl- sum(truequantity) into v_cys from MIDORDERS 
+         where  cur.ID_ZPRW=v_zp.flowid_zp;
+         If v_cys > 0   Then
+           
+             Update t_kcsl
+             Set KCCS = KCCS - v_cys,
+                 ZYCS = ZYCS - v_cys
+             Where id = v_zp.id And ywbmbh = v_zp.ywbmbh And kfbh = v_zp.kfbh And
+                 cybh = v_zp.cybh;
+             
            select ALL_FLOWID.Nextval into  v_allflowid from dual;
            select min(trim(dm)) into v_dm from t_dm where dh=v_zp.zddh;
 
@@ -211,52 +239,40 @@ Begin
                     Rollback;
                     Return;
                 End If;
-      end if ;
-
-
-         Update t_kcsl
-           Set KCCS = KCCS - cur.quantity,
-               ZYCS = ZYCS - cur.quantity
-         Where id = v_zp.id And ywbmbh = v_zp.ywbmbh And kfbh = v_zp.kfbh And
-               cybh = v_zp.cybh;
-
-          update MIDORDERS set STATE='4' where rowid=cur.rid;
-
-          select count(*) into v_rows from MIDORDERS where
-           cur.ID_ZPRW=v_zp.flowid_zp and    state<>'4' ;
-          if v_rows =0 then
-
-
-             insert into t_zprw_bak
-            (flowid_zp, lxbh, id, kfbh, ywbmbh, cybh, dbbz, xbbz, tihfs, dh, zpxyrqh, yssl, zk,
-            sylx, zjxs, ysczybh, ln_zp_no, ln_zp_hw, zpczybh, sourceid, ddbj, djly, bz, sl, yspch,
-             zl, cgyj, xszq, sdhrq, mdrqh, bzrq, cgyj_kh, fhyxj, pk, xrrq, sourcetable,
-             id_zprwhz, sjsl, zddh,jhzxid,id_wlsh)
-             select   flowid_zp, lxbh, id, kfbh, ywbmbh, cybh, dbbz, xbbz, tihfs, dh, zpxyrqh, yssl, zk,
-              sylx, zjxs, ysczybh, ln_zp_no, ln_zp_hw, zpczybh, sourceid, ddbj, djly, bz, sl, yspch,
-               zl, cgyj, xszq, sdhrq,v_rqh, sysdate, cgyj_kh, fhyxj, pk, xrrq, sourcetable,
-               id_zprwhz, sjsl, zddh,jhzxid,id_wlsh from
-              t_zprw where flowid_zp=v_zp.flowid_zp;
-
-              delete  t_zprw where flowid_zp=v_zp.flowid_zp;
-
-              select count(*) into v_rows from T_ZPRW where  id_zprwhz = v_zp.id_zprwhz;
-              if v_rows=0 then
-                  update t_zprwhz set finishdate=sysdate,finished=1,zt='2'
-                  where flowid=v_zp.Id_zprwhz;
-
-
-                  delete t_rqzy where tbname='t_zprwhz' and bh=v_rqh;
-
-                  insert into t_gzl2
-                 (czybh,    pz, js, id_job, proc, tablename, tablepk,YWBM)
-                 select v_czy,zpz,0,'ZPBZ','RF_RFBZ2','t_zprwhz',v_zp.Id_zprwhz,ywbmbh from
-                  t_zprwhz where flowid=v_zp.Id_zprwhz;
-
-              end if;
-
-
           end if ;
+
+
+
+           insert into t_zprw_bak
+          (flowid_zp, lxbh, id, kfbh, ywbmbh, cybh, dbbz, xbbz, tihfs, dh, zpxyrqh, yssl, zk,
+          sylx, zjxs, ysczybh, ln_zp_no, ln_zp_hw, zpczybh, sourceid, ddbj, djly, bz, sl, yspch,
+           zl, cgyj, xszq, sdhrq, mdrqh, bzrq, cgyj_kh, fhyxj, pk, xrrq, sourcetable,
+           id_zprwhz, sjsl, zddh,jhzxid,id_wlsh)
+           select   flowid_zp, lxbh, id, kfbh, ywbmbh, cybh, dbbz, xbbz, tihfs, dh, zpxyrqh, yssl, zk,
+            sylx, zjxs, ysczybh, ln_zp_no, ln_zp_hw, zpczybh, sourceid, ddbj, djly, bz, sl, yspch,
+             zl, cgyj, xszq, sdhrq,v_rqh, sysdate, cgyj_kh, fhyxj, pk, xrrq, sourcetable,
+             id_zprwhz, sjsl, zddh,jhzxid,id_wlsh from
+            t_zprw where flowid_zp=v_zp.flowid_zp;
+
+            delete  t_zprw where flowid_zp=v_zp.flowid_zp;
+
+            select count(*) into v_rows from T_ZPRW where  id_zprwhz = v_zp.id_zprwhz;
+            if v_rows=0 then
+                update t_zprwhz set finishdate=sysdate,finished=1,zt='2'
+                where flowid=v_zp.Id_zprwhz;
+
+
+                delete t_rqzy where tbname='t_zprwhz' and bh=v_ysrqh;
+
+                insert into t_gzl2
+               (czybh,    pz, js, id_job, proc, tablename, tablepk,YWBM)
+               select v_czy,zpz,0,'ZPBZ','RF_RFBZ2','t_zprwhz',v_zp.Id_zprwhz,ywbmbh from
+                t_zprwhz where flowid=v_zp.Id_zprwhz;
+
+            end if;
+
+
+        end if ;
 
     end loop;
 
