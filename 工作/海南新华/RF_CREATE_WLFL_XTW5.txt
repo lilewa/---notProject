@@ -16,7 +16,7 @@ v_sjcs number;
     v_dhmx tmp_dhmx%Rowtype;
     v_ywbmbh char(6);
     v_fllx  char(2);
-  
+    v_ghdw char(6);
 
     v_hqbh      Char(4);
     v_flqxmc    varChar2(60);
@@ -50,7 +50,7 @@ Begin
   
 
     select * into v_dhmx from tmp_dhmx where flowid_dhmx = p_flowid_dhmx;
-    select ywbmbh,fllx,device into v_ywbmbh,v_fllx,v_device 
+    select ywbmbh,fllx,device,ghdw into v_ywbmbh,v_fllx,v_device ,v_ghdw
     from t_dhfltask where flowid_tldjhz =p_flowid;
     
     if v_fllx <>'PT' and v_fllx<>'GP' then
@@ -87,7 +87,7 @@ Begin
          --xbbz =1 异形
           update t_dh_yfsj t set flqx='FH',flqxmc='发货包装区', xh=0
           where  flowid_dhmx = p_flowid_dhmx
-          and ( yfsl >= p_xbbz or v_dhmx.xbbz = 1
+          and ( yfsl >= p_xbbz or p_xbbz = 1
           or exists (select 1 from t_fhdh where dh=t.dh  )
           or not exists (select 1 from t_dzbq where dh=t.dh)
           );
@@ -151,27 +151,40 @@ Begin
 
         elsif v_fllx='PT' then
 
-            Select Count(*)   Into v_rows  From  t_guizu_fl
-              Where dh =cur.dh And  enable = '1';
+             Select Count(*)  Into v_rows  From  t_guizu_ghdw
+              Where dh =cur.dh And  ghdwh = v_ghdw;
              if v_rows >0 and v_ywbmbh='000001' then
-
-                v_isgz:='1';
-                v_dhzxid:=v_dhzxid||'G';
-
-                Select min(gzbh) into v_zddh
-                 From  t_guizu_fl c
-                Where flbh=v_dhmx.fl And dh = cur.dh;
-                if v_zddh is null then
-                  select min(gzbh) into v_zddh  from t_guizu_fl  where  dh=cur.dh;
-                end if ;
-
+                  
+                  v_isgz:='1';
+                  v_dhzxid:=v_dhzxid||'G'; 
+                  Select min(gzbh) into v_zddh
+                   From  t_guizu_ghdw c
+                  Where dh = cur.dh And  ghdwh = v_ghdw; 
              else
+                Select Count(*)   Into v_rows  From  t_guizu_fl
+                Where dh =cur.dh And  enable = '1';
+               if v_rows >0 and v_ywbmbh='000001' then
 
-                v_isgz:='0';
-                v_dhzxid:=v_dhzxid||'D';
-                v_zddh:=cur.dh;
+                  v_isgz:='1';
+                  v_dhzxid:=v_dhzxid||'G';
 
-             end if;
+                  Select min(gzbh) into v_zddh
+                   From  t_guizu_fl c
+                  Where flbh=v_dhmx.fl And dh = cur.dh;
+                  if v_zddh is null then
+                    select min(gzbh) into v_zddh  from t_guizu_fl  where  dh=cur.dh;
+                  end if ;
+
+               else
+
+                  v_isgz:='0';
+                  v_dhzxid:=v_dhzxid||'D';
+                  v_zddh:=cur.dh;
+
+               end if;
+             
+             end if; 
+           
         end if;
         v_dhzxid:=v_dhzxid||v_zddh;
         if cur.ddcdbj ='1' then
@@ -199,27 +212,39 @@ Begin
            v_zddh:=cur.zddh;
 
         elsif v_fllx='PT' then
-
-            Select Count(*)   Into v_rows  From  t_guizu_fl
-              Where dh =cur.dh And  enable = '1';
-             if  v_rows >0 and v_ywbmbh='000001' then
-
-                v_isgz:='1';
-                v_nxtzxid:=v_nxtzxid||'G';
-
-                Select min(gzbh) into v_zddh
-                 From  t_guizu_fl c
-                Where flbh=v_dhmx.fl And dh = dh;
-                if v_zddh is null then
-                  select min(gzbh) into v_zddh  from t_guizu_fl  where  dh=cur.dh;
-                end if ;
+           
+           Select Count(*)  Into v_rows  From  t_guizu_ghdw
+              Where dh =cur.dh And  ghdwh = v_ghdw;
+             if v_rows >0 and v_ywbmbh='000001' then
+                  
+                  v_isgz:='1';
+                  v_dhzxid:=v_dhzxid||'G'; 
+                  Select min(gzbh) into v_zddh
+                   From  t_guizu_ghdw c
+                  Where dh = cur.dh And  ghdwh = v_ghdw; 
              else
+                Select Count(*)   Into v_rows  From  t_guizu_fl
+                Where dh =cur.dh And  enable = '1';
+               if  v_rows >0 and v_ywbmbh='000001' then
 
-                v_isgz:='0';
-                v_nxtzxid:=v_nxtzxid||'D';
-                v_zddh:=cur.dh;
+                  v_isgz:='1';
+                  v_nxtzxid:=v_nxtzxid||'G';
 
-             end if;
+                  Select min(gzbh) into v_zddh
+                   From  t_guizu_fl c
+                  Where flbh=v_dhmx.fl And dh = dh;
+                  if v_zddh is null then
+                    select min(gzbh) into v_zddh  from t_guizu_fl  where  dh=cur.dh;
+                  end if ;
+               else
+
+                  v_isgz:='0';
+                  v_nxtzxid:=v_nxtzxid||'D';
+                  v_zddh:=cur.dh;
+
+               end if;
+            end if;
+          
         end if;
         v_nxtzxid:=v_nxtzxid||v_zddh||'N';
          

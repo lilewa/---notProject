@@ -1,0 +1,1 @@
+create table t_guizu_ghdw(dh char(6),gzbh char(6),ghdwh char(6));
