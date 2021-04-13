@@ -1,0 +1,4 @@
+update t_ltkf t set zycs=0 
+ where 
+zycs >0 and not exists (select 1 from t_agv_rw_xt where t.hw=hwh
+and t.id=id);

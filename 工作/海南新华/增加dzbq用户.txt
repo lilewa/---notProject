@@ -1,0 +1,20 @@
+-- Create the user 
+create user dzbq
+  default tablespace DATA_TABLESPACE
+  temporary tablespace TEMP
+  profile DEFAULT;
+-- Grant/Revoke object privileges 
+grant select, insert, update, delete, references, alter, index on T_TRANSRECORD to DBPT;
+grant select, insert, update, delete, references, alter, index on T_WEIGHTRECORD to DBPT;
+-- Grant/Revoke role privileges 
+grant connect to DBPT;
+grant create synonym to dzbq
+grant resource to dzbq;
+-- Grant/Revoke system privileges 
+grant unlimited tablespace to dzbq;
+
+grant select on v_$session to dzbq;
+
+grant select on v_$sesstat to dzbq;
+
+grant select on v_$statname to dzbq;
