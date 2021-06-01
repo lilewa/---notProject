@@ -1,0 +1,2 @@
+  update  midorders set truequantity  = quantity,state='3'
+    where  state='9' and errmsg='truequantity  >  quantity'

@@ -1,0 +1,14 @@
+ Insert Into t_fhmx
+                  (FHFS, BZ, SL, ZJXS, SYLX, SYS, TIHFS, PFPCH, ID, ZDH, DH, SFCS, FHZK,
+                   BZJS, YWBMBH, KFBH, BJLSH, HW, DJLY, CBJ, PJZK, dbdh, PFRQ, DBRQ, pfbmbh,
+                   fhbmbh, txy, gzbj, ysdbdh, ysbbj, yh, jzthrq, yscs, zzpc, cgyj, cgyj_kh,
+                   thl, thcs, YSPFPCH, ysdbrq, gzdbdh, dbbz, xbbz, gzczy, zl,fyjhpc,flowid_xj)
+                  Select '01', 'T_chd_fh', 13, a7, 0, a7*a5*a6, 'C ', all_flowid.nextval, ID, null, 
+                  
+                  (select wl_dh from cbs_yyunits_out@c_link_wl_jhq where uno=a2 and receflag='1' ), a5,
+                         a6, 1, 'qdydj ', '2001  ', all_flowid.nextval, null, 'FH', null, null, all_flowid.nextval,
+                         Sysdate, Sysdate, 'qdydj', 'qdydj ', 'no  ', '1', all_flowid.nextval, '1', null, Sysdate,
+                         a5, null, '402855', a1, null, 0, null, rq, null, null,
+                         null, null, null,null,all_flowid.nextval
+                    From T_chd_fh
+                  where a0='XS' and id='Y9787555285298001  ' and a5='3052';
