@@ -1,0 +1,19 @@
+-- Add/modify columns 
+alter table T_FYBJ add xxmc varchar2(60);
+-- Add comments to the columns 
+comment on column T_FYBJ.xxmc
+  is '学校名称';
+
+
+-- Add/modify columns 
+alter table T_FYBJ_bak add xxmc varchar2(60);
+-- Add comments to the columns 
+comment on column T_FYBJ_bak.xxmc
+  is '学校名称';
+
+PROC_DYTT_FH_LN
+PROC_SX_DFBJ_JJ_XTW
+PROC_SX_DFBJ_JJ_XTW_TP
+TG_T_DFBJ
+PROC_CREATE_WLFL_CC
+RF_DHFL_TJ
