@@ -1,0 +1,71 @@
+CREATE OR REPLACE Procedure PROC_CREATE_WLFL_CC
+-- 当到货拆包台选中一条到货记录后,
+    -- 调此过程生成ID, 同时生成物流分流数据
+(p_flowid_dhmx In Number,
+ p_cs          in Number,
+ p_flowid_yfsj out number,
+ p_detailqx out Varchar2,
+ errno         Out Number,
+ errtext       Out Varchar2) As
+   
+    v_dhmx tmp_dhmx%Rowtype;
+    v_ywbmbh char(6);
+    v_rows       Number;
+    ls_hqbh   Char(4);
+    ls_flqxmc Char(60);
+    v_hw Char(20);
+  
+Begin
+
+    Select min(flowid),min(p_detailqx) into p_flowid_yfsj,p_detailqx  From t_dh_yfsj Where flowid_dhmx = p_flowid_dhmx
+    and flqx='CC';
+    If  p_flowid_yfsj is not null Then
+        errno   := 0;
+        errtext := 'OK';
+        Return;
+    End If;
+ 
+    select * into v_dhmx from tmp_dhmx where flowid_dhmx = p_flowid_dhmx;
+    select ywbmbh into v_ywbmbh from tmp_dhdj where flowid_dj=v_dhmx.flowid_dj;
+    -- 剩余到货数上架处理（可能包含一些没有在播种线上定义了货位的店）:
+    -- 为了处理特殊情况，l_kccs <0 的情况，在此处判断l_kccs 如果小于零，将l_kccs 赋值成0
+
+    -- 剩余到货如果是新品且有高架区, 则去高架区, 否则, 去普通货区
+    proc_get_hqbh3(p_cs,
+                   'DH',
+                   v_dhmx.id,
+                   v_dhmx.dbbz,
+                   v_dhmx.xbbz,
+                   v_ywbmbh,
+                  '3001',
+                   ls_hqbh,
+                   ls_flqxmc,
+                   v_hw,
+                   errno,
+                   errtext);
+    If errno <> 0 Then
+        errtext := 'proc_get_hqbh2:' || errtext;
+        Rollback;
+        Return;
+    End If;
+    
+    select all_flowid.Nextval into p_flowid_yfsj from dual;
+    
+    Insert Into t_dh_yfsj
+        (flowid, flowid_dhmx, flowid_dj, dh, id, yfsl, sjsl, flqx, flqxmc, detailqx, hw,
+         xh)
+    Values
+        (p_flowid_yfsj, p_flowid_dhmx, v_dhmx.flowid_dj, Null, v_dhmx.id, p_cs, 0,
+         'CC', Trim(ls_flqxmc), ls_hqbh, v_hw, 2);
+
+  
+    p_detailqx:=trim(ls_hqbh);
+
+    errno   := 0;
+    errtext := 'ok';
+Exception
+    When Others Then
+        errno   := -1; --执行失败
+        errtext := 'PROC_CREATE_WLFL_CC' || Sqlerrm ;
+        Rollback;
+End;
