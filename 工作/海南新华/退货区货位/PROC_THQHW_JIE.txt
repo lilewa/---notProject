@@ -1,0 +1,62 @@
+CREATE OR REPLACE PROCEDURE PROC_THQHW_JIE
+ (
+   p_hw char,
+   errno out number,
+   errtext out varchar2
+ )
+ IS
+ v_rows NUMBER; 
+ v_ghdwh char(6);
+
+BEGIN
+ 
+   select count(*) into v_rows from t_thqhw where hw= p_hw;
+   if v_rows<1  then
+     --货位不存在
+     errno := -400;
+     errtext := '货位未定义';
+     return;
+   end if;
+
+    
+   Select ghdwh Into v_ghdwh From t_thqhw  where hw=p_hw;
+    If v_ghdwh is null Then
+        errno := -1;
+        errtext := '货位没有绑定供货商!';
+        return;
+    end if;
+
+    select count(*)  into v_rows from t_fjrwsjb where  ghdwh=v_ghdwh and hw=p_hw; 
+    if v_rows> 0 then
+      errno := -2;
+      errtext := '还有没完成的上架任务不能解绑!';
+      return;
+    end if ;
+
+    select count(*) into v_rows from t_hykchz  where
+    zt='0' and ghdw=v_ghdwh;
+    if v_rows>0 then
+
+      errno := -2;
+      errtext := '货位上有箱子没有换箱，不能解绑!';
+      return;
+
+    end if ;
+
+    update t_thqhw set ghdwh=Null,rqh=null where hw=p_hw;
+
+
+    errno := 0;
+    errtext := 'ok';
+
+ 
+ 
+
+ EXCEPTION
+
+ WHEN OTHERS THEN
+   errno := -1;
+   errtext := sqlerrm;
+   rollback;
+   return;
+ END PROC_THQHW_JIE;

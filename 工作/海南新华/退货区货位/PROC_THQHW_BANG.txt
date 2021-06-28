@@ -1,0 +1,56 @@
+CREATE OR REPLACE PROCEDURE PROC_THQHW_BANG
+ (
+   p_hw char,
+   p_ghdwh char,
+   errno out number,
+   errtext out varchar2
+ )
+ IS
+ v_rows NUMBER;
+ v_ywbmbh char(6);
+ v_ghdwh char(6);
+
+BEGIN
+
+
+
+   select count(*) into v_rows from t_thqhw where hw= p_hw;
+   if v_rows<1  then 
+     errno := -400;
+     errtext := '货位未定义';
+     return;
+   end if;
+
+ 
+   select count(*) into v_rows from t_thqhw where hw= p_hw and ghdwh is not null;
+
+   if v_rows>0  then 
+     errno := -100;
+     errtext := '该货位已经绑定供货单位'; 
+     return;
+   end if;
+
+   Select ywbmbh Into v_ywbmbh From t_thqhw  where hw=p_hw; 
+ 
+   select count(*) into v_rows from t_thqhw where  ghdwh= p_ghdwh and  ywbmbh=v_ywbmbh;
+   if v_rows>0  then 
+     errno := -100;
+     errtext := '该货位已经绑定供货单位'; 
+     return;
+   end if;
+     
+   update t_thqhw set ghdwh=p_ghdwh where hw=p_hw;
+
+     
+   errno := 0;
+   errtext := 'ok';
+   
+
+ EXCEPTION
+
+ WHEN OTHERS THEN
+   errno := -1;
+   errtext := sqlerrm;
+   rollback;
+   return;
+ END PROC_THQHW_BANG;
