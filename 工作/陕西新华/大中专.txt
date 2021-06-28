@@ -1,3 +1,6 @@
+insert into  t_menu (yybh, yymc, yjmc, ejmc)
+values ('04','RF无线射频系统  ','进货管理  ','大中专分流')
+
 -- Add/modify columns 
 alter table T_FYBJ add xxmc varchar2(60);
 -- Add comments to the columns 
