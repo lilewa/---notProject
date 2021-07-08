@@ -1,0 +1,15 @@
+select * from t_pxmx where bjlsh='2044460     ' or bjlsh='2044461     ' for update ;
+select bjlsh,dh from t_dfbj where ( rqh='000421' or  rqh='000018') and ybzbj='0' for update;
+
+712204965         	      	101212  G10341
+9787545068122004  	      	101351 G10344
+;
+ 
+select d.dh  from MV_XHD_KCSL m,t_dm d 
+where  m.ywbmbh='101351' and d.fatherdh='101351'
+ and m.id='9787545068122004' and m.hqbh=d.station and rownum=1;
+
+select fl from t_kcsm where id='9787545068122004';
+
+Select c.gzbh From t_guizu_fl c
+  Where c.flbh = '02010704' And c.dh = '101351';

@@ -2,3 +2,27 @@ PROC_GOO_DHLR_FL_ZJS
 PROC_CREATE_WLFL_XTW2
 PROC_GOO_DHLR_MX_SAVE_ZJS2
 PROC_SX_DFBJ_BTP_XTW
+
+-- Add/modify columns 
+alter table T_TLDJHZ  modify yh varchar2(100);
+alter table T_TLDJHZ_back  modify yh varchar2(100);
+alter table T_TLDJHZ_bak  modify yh varchar2(100);
+alter table T_TLDJHZ_del  modify yh varchar2(100);
+alter table T_TLDJHZ_old  modify yh varchar2(100);
+alter table T_TLDJHZ_qdr  modify yh varchar2(100);
+alter table T_TLDJHZ_qsr  modify yh varchar2(100);
+alter table T_TLDJHZ_tlr  modify yh varchar2(100);
+alter table T_TLDJHZ_wdb  modify yh varchar2(100);
+
+
+-- Add/modify columns 
+alter table TMP_DHMX add flcs number;
+-- Add comments to the columns 
+comment on column TMP_DHMX.flcs
+  is '已分流册数';
+
+-- Add/modify columns 
+alter table TMP_DHMX_xtw add flcs number;
+-- Add comments to the columns 
+comment on column TMP_DHMX_xtw.flcs
+  is '已分流册数';

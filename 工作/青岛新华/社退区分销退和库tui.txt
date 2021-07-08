@@ -1,0 +1,11 @@
+PROC_THFL_HX
+RF_HX_THSJ
+RF_THSJ
+PROC_JH_SPLIT
+PROC_WRITE_HYTHMX_XTW2
+
+-- Add/modify columns 
+alter table t_hykcsl_bak2   add thlx CHAR(2);
+-- Add comments to the columns 
+comment on column t_hykcsl_bak2.thlx
+  is 'XT=销退，KT=库退';

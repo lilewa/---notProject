@@ -1,0 +1,12 @@
+ insert into t_dm_ywbm
+ (dh, ywbmbh, khlxbh, tsbj, lsdbj, yxy, zzbj, zzbh, zzbh1, jsdbj, jsdh, jiesdm, fpdh, 
+ tsddm, khh, zh, sh, lxr, addr, yb, tele, fax, email, http, dz, mxbh, yqjkbj, gdzk, 
+ modifydate, ywshbj, nofhbj, xtgz, zpbj, fyfsh, xyed, xyed_qy, xsbj, txy, jshxye, nothbj, 
+ nojsbj, dianhua, cwdzm, txdz, slbh, kybj, zysl, kccb, qhq_qkje, nmjcfhbj )
+
+ select dh, ywbmbh, khlxbh, tsbj, lsdbj, yxy, zzbj, zzbh, zzbh1, jsdbj, jsdh, jiesdm, fpdh, 
+ tsddm, khh, zh, sh, lxr, addr, yb, tele, fax, email, http, dz, mxbh, yqjkbj, gdzk, 
+ modifydate, ywshbj, nofhbj, xtgz, zpbj, fyfsh, xyed, xyed_qy, xsbj, txy, jshxye, nothbj, 
+ nojsbj, dianhua, cwdzm, txdz, slbh, kybj, null, null, qhq_qkje, nmjcfhbj 
+ from t_dm_ywbm@c_link_wl_sl  t where 
+  not exists (select 1 from t_dm_ywbm where dh=t.dh and ywbmbh=t.ywbmbh)
