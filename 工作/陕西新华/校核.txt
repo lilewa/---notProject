@@ -1,14 +1,15 @@
-RF_XJHG3
-RF_XJHG_HX3
-PROC_DFBJTOTHFL2
-PROC_DFBJTOZP2
-PROC_THFLPACK2
-PROC_GOO_DHLR_FL_ZJS5
-PROC_JH
-
+T_FHJH
+T_STJH
+T_JHTASK
 T_JHTASK_xj2zp
 t_stjh_XJ2thfl
 t_fhjh_XJ2thfl
+t_fhjh_bak
+t_stjh_bak
+t_tietou
+TG_T_DFBJ
+
+alter table T_DFBJ add id_jhtask number;
 
 -- Create sequence 
 create sequence SQ_JHTASK
@@ -19,188 +20,19 @@ increment by 1
 nocache;
 
 
--- Create table
-create table T_JHTASK
-(
-  id         NUMBER not null,
-  rqh        CHAR(10),
-  zt         CHAR(1) default 0,
-  createdate DATE,
-  ywbmbh     CHAR(6),
-  dh         CHAR(6),
-  zpz        NUMBER(8),
-  zcs        NUMBER(8),
-  zmy        NUMBER(12,2),
-  zsy        NUMBER(12,2),
-  ywlx       CHAR(2),
-  jxfs       CHAR(2),
-  zzl        NUMBER(12,2),
-  js         NUMBER(10,2),
-  zddh       CHAR(6),
-  isgp       CHAR(1) default 0,
-  wcdate     DATE,
-  jhdate     DATE,
-  zb         VARCHAR2(60),
-  ddcdbj     CHAR(1),
-  tdpch      CHAR(20),
-  yxj        CHAR(1),
-  finished   CHAR(1) default 0,
-  isgz       CHAR(1) default 0,
-  sjlx       VARCHAR2(4),
-  jhzxid     VARCHAR2(30)
-)
-tablespace DATA_TABLESPACE
-  pctfree 10
-  initrans 1
-  maxtrans 255
-  storage
-  (
-    initial 64K
-    next 1M
-    minextents 1
-    maxextents unlimited
-  );
--- Add comments to the columns 
-comment on column T_JHTASK.zt
-  is '0 正装箱, 1:装箱完成 2校核完';
-comment on column T_JHTASK.ywlx
-  is 'FH,ST';
-comment on column T_JHTASK.isgp
-  is '1 是馆配';
-comment on column T_JHTASK.wcdate
-  is '装箱完成日期';
-comment on column T_JHTASK.jhdate
-  is '校核完成日期';
-comment on column T_JHTASK.zb
-  is '备注';
-comment on column T_JHTASK.isgz
-  is '1 是柜组';
-comment on column T_JHTASK.sjlx
-  is '数据类型,明细存的是pxmx，stmx，jtmx';
--- Create/Recreate primary, unique and foreign key constraints 
-alter table T_JHTASK
-  add constraint PK_JHTASK primary key (ID)
-  using index 
-  tablespace DATA_TABLESPACE
-  pctfree 10
-  initrans 2
-  maxtrans 255
-  storage
-  (
-    initial 64K
-    next 1M
-    minextents 1
-    maxextents unlimited
-  );
+PROC_CHK_BZJH_RQH
+RF_XJHG3
+RF_XJHG_HX3
+PROC_DFBJTOTHFL2
+PROC_DFBJTOZP2
+PROC_THFLPACK2
+PROC_GOO_DHLR_FL_ZJS5
+PROC_JH
+PROC_JH_TJ2
 
--- Create table
-create table T_FHJH
-(
-  fhfs        CHAR(2),
-  bz          CHAR(20),
-  sl          NUMBER(3),
-  zjxs        NUMBER(9,2),
-  sylx        CHAR(1),
-  sys         NUMBER(12,2),
-  thfs        CHAR(2),
-  pxdh        CHAR(12) not null,
-  id          CHAR(18) not null,
-  zdh         CHAR(12),
-  dh          CHAR(6),
-  pxcs        NUMBER(8),
-  pxzk        NUMBER(9,2),
-  ywbmbh      CHAR(6),
-  kfbh        CHAR(6),
-  djly        CHAR(2),
-  cybh        CHAR(6),
-  flowid      NUMBER(10) not null,
-  dbbz        NUMBER(6,2),
-  xbbz        NUMBER(6,2),
-  txy         CHAR(4),
-  jhcs        NUMBER(8) default 0,
-  jzthrq      DATE,
-  zl          NUMBER(8,2),
-  cgyj        CHAR(12),
-  yscs        NUMBER(10),
-  sdhrq       DATE,
-  cgyj_kh     CHAR(60),
-  pfrq        DATE,
-  zdqh        CHAR(10),
-  bzth        NUMBER,
-  jhrq        DATE,
-  pk          VARCHAR2(20),
-  jhczybh     CHAR(4),
-  sourceid    NUMBER,
-  sourcetable VARCHAR2(30),
-  ysczy       CHAR(4),
-  zpdh        CHAR(6),
-  xh          NUMBER,
-  zddh        CHAR(6),
-  fbbj        CHAR(1) default 0,
-  fbcs        NUMBER default 0,
-  bjlsh       NUMBER
-)
-tablespace DATA_TABLESPACE
-  pctfree 10
-  initrans 1
-  maxtrans 255
-  storage
-  (
-    initial 64K
-    next 1M
-    minextents 1
-    maxextents unlimited
-  );
--- Create/Recreate check constraints 
-alter table T_FHJH
-  add constraint CHK_FHJH
-  check (fbcs<=jhcs);
 
--- Create table
-create table T_STJH
-(
-  id          CHAR(18) not null,
-  ywbmbh      CHAR(6) not null,
-  cybh        CHAR(6),
-  kfbh        CHAR(6) not null,
-  dbbz        NUMBER(6,2),
-  xbbz        NUMBER(6,2),
-  kccs        NUMBER(8),
-  zycs        NUMBER(8),
-  hw          CHAR(20),
-  ghdwh       CHAR(6) not null,
-  xm          CHAR(10),
-  sylx        CHAR(1),
-  zjxs        NUMBER(9,2),
-  sjly        CHAR(2),
-  thzk        NUMBER(9,2),
-  flowid      NUMBER(10) not null,
-  ywpc        CHAR(12),
-  sl          NUMBER,
-  jhcs        NUMBER(8) default 0,
-  zl          NUMBER(8,2),
-  cgyj        CHAR(12),
-  yscs        NUMBER(10),
-  pk          VARCHAR2(20) not null,
-  jhrq        DATE,
-  fbbj        CHAR(1) default 0,
-  fbcs        NUMBER default 0,
-  jhczy       CHAR(4),
-  bjlsh       NUMBER,
-  sourceid    NUMBER,
-  sourcetable VARCHAR2(30)
-)
-tablespace DATA_TABLESPACE
-  pctfree 10
-  initrans 1
-  maxtrans 255
-  storage
-  (
-    initial 64K
-    next 1M
-    minextents 1
-    maxextents unlimited
-  );
+
+
 
 
 

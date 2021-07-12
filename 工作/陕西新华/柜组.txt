@@ -13,3 +13,6 @@ select fl from t_kcsm where id='9787545068122004';
 
 Select c.gzbh From t_guizu_fl c
   Where c.flbh = '02010704' And c.dh = '101351';
+
+ update t_dfbj  set dh='G10301'  where bjlsh='2045693     ';
+   update t_pxmx  set dh='G10301'  where bjlsh='2045693     ';
