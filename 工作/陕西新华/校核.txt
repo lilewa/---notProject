@@ -10,6 +10,9 @@ t_tietou
 TG_T_DFBJ
 
 alter table T_DFBJ add id_jhtask number;
+alter table T_DFBJ_bak1 add id_jhtask number;
+alter table T_DFBJ_bak2 add id_jhtask number;
+alter table T_DFBJ_bak3 add id_jhtask number;
 
 -- Create sequence 
 create sequence SQ_JHTASK
@@ -29,9 +32,11 @@ PROC_THFLPACK2
 PROC_GOO_DHLR_FL_ZJS5
 PROC_JH
 PROC_JH_TJ2
-
-
-
+RF_DHFL2
+RF_HX_BZ3
+RF_RFBZ3
+PROC_CHKRQH
+PROC_OCCUPYXJRW2
 
 
 
