@@ -1,0 +1,48 @@
+---发货未校核
+                   
+  insert into t_dfbj2jhtask
+   (id  ,bjlsh ,bz )
+   select  sq_jhtask.nextval,bjlsh,'发货未校核' from T_DFBJ t where  wcbj='1' and ybzbj='0' 
+    and  ywlx ='FH' 
+    and  nvl(gkh,'1')<> 'LT0'
+    and  nvl(gkh,'1')<> 'LT1' and rownum=1;
+   
+ 
+           
+--插汇总
+ Insert Into t_jhtask
+                (id, RQH, zt, createdate, YWBMBH, DH,   ZPZ, ZCS, ZMY, ZSY,
+                  JXFS, YWLX,  sjlx, zzl, js,
+                  yxj, ddcdbj,zb)
+  select t.id,  rqh, '1', pfrq, ywbmbh ,dh,
+                    ZPZ, ZCS, ZMY, ZSY, jxfs, 'FH','FH', 0, 1,
+                   null,null,null
+                   from t_dfbj d,  t_dfbj2jhtask t
+  where d.bjlsh=t.bjlsh and t.bz='发货未校核';
+  
+  insert into  t_dfbj_jh 
+  select * from  t_dfbj d where exists (select  1 from   t_dfbj2jhtask 
+         where d.bjlsh=bjlsh and bz='发货未校核');
+  
+   
+ delete t_dfbj d where exists (select  1 from   t_dfbj2jhtask 
+         where d.bjlsh=bjlsh and bz='发货未校核');
+         
+ --插明细
+ 
+ Insert Into t_fhjh
+                (flowid, pxdh, bjlsh,  id, ywbmbh, kfbh, cybh, dh, pxcs, sylx, zjxs,
+                 pxzk, sl, fhfs, thfs, djly, ZDH, DBBZ, XBBZ, sys, txy, cgyj, jzthrq, zl,
+                 sdhrq, yscs, cgyj_kh,   pfrq, pk,ysczy)
+  select flowid, pxdh, t.id,  d.id, ywbmbh, kfbh, cybh, dh, pxcs, sylx, zjxs,
+                 pxzk, sl, fhfs, thfs, djly, ZDH, DBBZ, XBBZ, sys, txy, cgyj, jzthrq, zl,
+                 sdhrq, yscs, cgyj_kh,   pfrq, pk,ysczy
+           from t_pxmx d,  t_dfbj2jhtask t
+         where d.bjlsh=t.bjlsh and t.bz='发货未校核'; 
+ 
+ insert into  t_pxmx_jh  select * from  t_pxmx d  where exists (select  1 from   t_dfbj2jhtask 
+         where d.bjlsh=bjlsh and bz='发货未校核');
+         
+  delete t_pxmx d where exists (select  1 from   t_dfbj2jhtask 
+         where d.bjlsh=bjlsh and bz='发货未校核');
+ 
