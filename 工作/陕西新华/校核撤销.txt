@@ -1,0 +1,13 @@
+  delete T_WLCCB t where lx ='HQXJ'  and 
+     trim(id) in('9787564091880001','9787568283755001','9787568283755001' ) ;
+    
+  delete T_WLCCB_MX_XTW where  lx='CKJH' and 
+   trim(id) in('9787564091880001','9787568283755001','9787568283755001' ) ;
+ 
+  delete   t_crkls  where   
+  id in('9787564091880001','9787568283755001','9787568283755001' ) and ywlx='CY' ;
+   
+  select * from t_stjh_bak where bjlsh='196';
+  update t_stjh_bak set jhcs =kccs  where bjlsh='196';
+  insert into  t_stjh  select * from t_stjh_bak  where bjlsh='196';
+  update t_jhtask set zt='1' where id=196;

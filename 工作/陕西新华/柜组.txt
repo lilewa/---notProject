@@ -1,18 +1,5 @@
-select * from t_pxmx where bjlsh='2044460     ' or bjlsh='2044461     ' for update ;
-select bjlsh,dh from t_dfbj where ( rqh='000421' or  rqh='000018') and ybzbj='0' for update;
-
-712204965         	      	101212  G10341
-9787545068122004  	      	101351 G10344
-;
- 
-select d.dh  from MV_XHD_KCSL m,t_dm d 
-where  m.ywbmbh='101351' and d.fatherdh='101351'
- and m.id='9787545068122004' and m.hqbh=d.station and rownum=1;
-
-select fl from t_kcsm where id='9787545068122004';
-
-Select c.gzbh From t_guizu_fl c
-  Where c.flbh = '02010704' And c.dh = '101351';
-
- update t_dfbj  set dh='G10301'  where bjlsh='2045693     ';
-   update t_pxmx  set dh='G10301'  where bjlsh='2045693     ';
+select * from t_jhtask where rqh='001506' and finished=0;
+select  gzbh from t_fhjh f,t_kcsm s ,t_guizu_fl l where f.bjlsh=1370 and s.id=f.id
+and l.flbh=s.fl and f.dh=l.dh ;
+update t_fhjh set dh='G10344' where bjlsh='1370' ;
+update t_jhtask set dh='G10344' where  id='1370' ;
