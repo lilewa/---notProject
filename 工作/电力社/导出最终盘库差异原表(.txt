@@ -1,0 +1,98 @@
+select  
+       sm,
+       isbn,
+       dj,
+       kccs,
+       pkcs,
+       cys,
+       zcmy,
+       spmy,
+       cymy,
+       czybh,
+       id,
+       (select bsno from cbs_yybooks_out@c_link_wl_jhq where wl_id = x.id) bsno,
+       pscs
+  from (select  
+               min(b.sm) sm,
+               min(b.isbn) isbn,
+               min(b.dj) dj,
+               sum(a.kccs) kccs,
+               sum(a.pkcs) pkcs,
+               sum(a.pkcs - a.kccs) cys,
+               sum(a.kccs * b.dj) zcmy,
+               sum(a.pkcs * b.dj) spmy,
+               sum((a.pkcs - a.kccs) * b.dj) cymy,
+               max(czybh) czybh,
+               a.id,
+               sum(a.pscs) pscs
+          from (select  
+                 id, sum(kccs) kccs, 0 pkcs, '' czybh,  0 pscs
+                  from t_ltkf
+                 where exists (select 1
+                          from t_hwdy
+                         where   hw = t_ltkf.hw
+                           and hw not like '5000%')
+                   and kfbh = '2001'
+                   
+                 group by id 
+                union all
+                select  
+                 id, sum(kccs) kccs, 0 pkcs, '' czybh,   0 pscs
+                  from t_kcsl
+                 where kfbh = '2005'
+                   
+                 group by id 
+                union all
+                select  
+                 id, sum(kccs) kccs, 0 pkcs, '' czybh,  0 pscs
+                  from t_hykcsl
+                 where  
+                     decode(kfbh, '2001', '2002', '2002') = '2002'
+                 group by id 
+                union all
+                select  
+                 id,
+                 0 kccs,
+                 sum(pkcs) pkcs,
+                 max(czybh) czybh,
+                 
+                 sum(ybcs) pscs
+                  from t_pkls_sl
+                 where   exists (select 1
+                          from t_hwdy
+                         where 
+                             hw = t_pkls_sl.hw
+                           and t_pkls_sl.kfbh = '2001'
+                           and hw not like '5000%')
+                 group by id 
+                union
+                select  
+                 id,
+                 0 kccs,
+                 sum(pkcs) pkcs,
+                 max(czybh) czybh,
+                  
+                 sum(ybcs) pscs
+                  from t_pkls_sl
+                 where    exists (select 1
+                          from t_hwdy_ybs
+                         where hw = t_pkls_sl.hw
+                           and t_pkls_sl.kfbh = '2005'
+                           and hw not like '5000%')
+                 group by id 
+                union all
+                select  
+                 id,
+                 0 kccs,
+                 sum(pkcs) pkcs,
+                 max(czybh) czybh,
+              
+                 sum(ybcs) pscs
+                  from t_pkls_sl
+                 where  
+                     kfbh = '2002'
+                 group by id) a,
+               t_kcsm b
+         where b.id = a.id
+         group by a.id ) x
+  

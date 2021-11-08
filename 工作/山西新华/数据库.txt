@@ -1,0 +1,21 @@
+insert into t_user select * from t_user@linkhai;
+insert into t_dm select * from t_dm@linkhai;
+insert into t_ghdw select * from t_ghdw@linkhai;
+insert into t_kcsm select * from t_kcsm@linkhai;
+insert into t_hqdy select * from t_hqdy@linkhai;
+insert into t_hwdy select * from t_hwdy@linkhai;
+insert into t_group select * from t_group@linkhai;
+insert into t_group_operator select * from t_group_operator@linkhai;
+insert into t_group_user select * from t_group_user@linkhai;
+insert into t_sysset select * from t_sysset@linkhai;
+insert into t_kcsm_ywbm select * from t_kcsm_ywbm@linkhai;
+insert into t_dm_ywbm select * from t_dm_ywbm@linkhai;
+insert into t_ghdw_ywbm select * from t_ghdw_ywbm@linkhai;
+insert into t_ltkf select * from t_ltkf@linkhai;
+insert into t_kcsl select * from t_kcsl@linkhai;
+insert into t_job select * from t_job@linkhai;
+insert into t_wl_exe select * from t_wl_exe@linkhai;
+insert into t_user_control_hz select * from t_user_control_hz@linkhai;
+insert into t_user_menu select * from t_user_menu@linkhai;
+
+

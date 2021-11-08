@@ -1,0 +1,8 @@
+ insert into t_dm
+  (dh, dmjc, dm, py, lxbh, djt, cybh, dxbh, kflx, czybh_ktqr, snswbj, flxbh, sdh, dqbh, thqbj, jsdh, jiesdm, khh, zhanghao, suihao, tsddm, dzdh, tsbj, fpdh, txy, khlb, renkousl, modifydate, yshengdianjl, yzhzhdianjl, logpass, yb, jsry, khlxbh, qhrq, dianhua, cwdzm, txdz, lxr, jsdbj, yymj, nxsmy, nxsml, tgnxsmy, glfyed, cwfyed, xsfyed, jyyeed, gly, sbbj, shbj, thbj, ktsjs, lrfs, fjw, fxbj, ztsj, xdrq, gzbj, dz, dz1, zzfy, zf, sxf, station, xtwbz, isgz, zddbj, zpdh)
+ select dh, dmjc, dm, py, lxbh, djt, cybh, dxbh, kflx, czybh_ktqr, snswbj, flxbh, sdh, dqbh, thqbj, 
+ jsdh, jiesdm, khh, zhanghao, suihao, tsddm, dzdh, tsbj, fpdh, txy, khlb, renkousl, modifydate, yshengdianjl,
+  yzhzhdianjl, logpass, yb, jsry, khlxbh, qhrq, dianhua, null, txdz, lxr, jsdbj, yymj,
+   nxsmy, nxsml, tgnxsmy, glfyed, cwfyed, xsfyed, jyyeed, gly, sbbj, shbj, thbj, ktsjs,
+    lrfs, fjw, fxbj, ztsj, xdrq, gzbj, dz, dz1, zzfy, zf, sxf, station, xtwbz, null, zddbj, zpdh
+  from t_dm@c_link_wl_sl where dh='G00001';

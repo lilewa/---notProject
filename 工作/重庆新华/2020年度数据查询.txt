@@ -1,4 +1,8 @@
- --新货调度数据：下达收货任务单2.1万批
+to_date('2020/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+                   and xjrq <
+                       to_date('2021/10/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+
+--新货调度数据：下达收货任务单2.1万批
  select count(*) from t_splitbagtask  
    where zt<>'0' and 
    plandate> to_date('2019/12/21 00:00:00','yyyy/mm/dd hh24:mi:ss')

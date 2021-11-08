@@ -20,3 +20,33 @@
    and  plandate< to_date('2020/11/01 00:00:00','yyyy/mm/dd hh24:mi:ss')  and
    j.flowid_tldjhz=t.flowid_tldjhz
    and x.flowid_dj=j.flowid_dj and x.id='9787514709858001       ';
+
+select trim(sm),dj,isbn ,id from t_kcsm where isbn='9787010231846'union all
+select trim(sm),dj,isbn ,id from t_kcsm where isbn='9787010237268'union all
+select trim(sm),dj,isbn ,id from t_kcsm where isbn='9787010237275'union all
+select trim(sm),dj,isbn ,id from t_kcsm where isbn='9787010231860'union all
+select trim(sm),dj,isbn ,id from t_kcsm where isbn='9787514710755'union all
+select trim(sm),dj,isbn ,id from t_kcsm where isbn='9787514710748'union all
+select trim(sm),dj,isbn ,id from t_kcsm where isbn='9787229158477'union all
+select trim(sm),dj,isbn ,id from t_kcsm where isbn='9787507348057'union all
+select trim(sm),dj,isbn ,id from t_kcsm where isbn='9787507348033'union all
+select trim(sm),dj,isbn ,id from t_kcsm where isbn='9787507348088'union all
+select trim(sm),dj,isbn ,id from t_kcsm where isbn='9787507348071'union all
+select trim(sm),dj,isbn ,id from t_kcsm where isbn='9787010232034'union all
+select trim(sm),dj,isbn ,id from t_kcsm where isbn='9787514710298'union all
+select trim(sm),dj,isbn ,id from t_kcsm where isbn='9787514710304'union all
+select trim(sm),dj,isbn ,id from t_kcsm where isbn='9787515409740'union all
+select trim(sm),dj,isbn ,id from t_kcsm where isbn='9787514710533' 
+ ;
+ 
+ select sum(bzjs) from (
+select d.bjlsh,min(d.bzjs) bzjs from t_dfbj d, t_fhmx x 
+where d.bjlsh=x.bjlsh and x.id='9787514710533001         '
+and x.dbrq> to_date('2021/01/01 00:00:00', 'yyyy/mm/dd hh24:mi:ss') group by d.bjlsh);
+
+
+select sum(sfcs*dj),sum(sfcs)  from  t_fhmx x ,t_kcsm s
+where   x.id='9787514710533001           '
+and x.dbrq> to_date('2021/01/01 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and   nvl(x.zl,992)<>1
+and x.id=s.id ;

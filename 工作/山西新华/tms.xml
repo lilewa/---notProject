@@ -1,0 +1,316 @@
+<?xml version="1.0" standalone="yes" ?>
+<root>
+	<desc>
+		一件理货 扫包件带出托盘有多少件
+		出库清点 
+		出库打印 一个收货单位一个出库批次号
+		发运计划
+		教材交接 点交接 进入发运计划
+		发运计划保存，多个批次生成一个发运批次。确认发运界面。确认计划到发运清单
+		发运清单打印，不同到站不能打到一起
+		发运计划输入中转店就中转
+		中转到侯马的，收侯马的签收单
+		发运计划_发运回告
+		发运回告查询，生成交接单
+		承付计划，按发运计划批次做 生成承付批次
+	</desc>
+	<一键理货>
+		<u_dw1 d="d_dfbj_yjlh">
+			Select 
+			'0' as xz,
+			Bjlsh,
+			Ywbmbh,
+			(Select Dm From t_dm Where Dh = Ywbmbh) Ywbmmc,
+			Bzjs,
+			round(zzl/1000,5) Zzl,
+			Dh,
+			fun_getShdw(dh,ywlx,bjlx) Dm,
+			jjrq  Jsrq,
+			decode(ywlx,'FH',
+				(Select mc From t_station Where bh = (select station from t_all_dmxx where dh = a.dh and ywbmbh=a.ywbmbh And ywlx = 'FH' And cybh = a.jsbmbh)),
+				(Select mc From t_station Where bh = (select station from t_all_dmxx where dh = a.dh and ywbmbh=a.ywbmbh And ywlx = 'TH' And cybh = a.jsbmbh))
+				) station_mc,
+					tph,:p_station ab
+				From t_Dfbj a
+				Where  Lhbj = '0' and ywbmbh<>'3F'
+				And Ywbmbh in (:p_Ywbmbh_Kh)
+				And Ywlx In (:p_Ywlx)
+				and dh like :p_dh || '%'
+
+				and jjrq > to_date(:p_rq1,'yyyy-mm-dd') and jjrq < to_date(:p_rq2,'yyyy-mm-dd') + 1
+				And (Nvl(jjbj,'0') = '1'
+				or Exists (Select 1 From T_FY_BTP_JJ_QK  b Where a.bjlsh = b.bjlsh And Nvl(b.jjbj,'0') = '1')
+				or
+				decode(ywlx,'FH',
+				(Select mc From t_station Where bh = (select station from t_dm_ywbm where dh = a.dh and ywbmbh=a.ywbmbh)),
+				(Select mc From t_station Where bh = (select station from t_ghdw_ywbm where ghdwh = a.dh and ywbmbh=a.ywbmbh))
+				) like trim(:p_station) || '%')
+				union  
+				Select 
+					'0' as xz,
+					Bjlsh,
+					Ywbmbh,
+					(Select Dm From t_dm Where Dh = Ywbmbh) Ywbmmc,
+					Bzjs,
+					round(zzl/1000,5) Zzl,
+					Dh,
+					fun_getShdw(dh,ywlx,bjlx)  Dm,
+					jjrq  Jsrq,
+					decode(ywlx,'FH',
+				(Select mc From t_station Where bh = (select station from t_all_dmxx where dh = a.dh and ywbmbh=a.ywbmbh And ywlx = 'FH' And cybh = a.jsbmbh)),
+				(Select mc From t_station Where bh = (select station from t_all_dmxx where dh = a.dh and ywbmbh=a.ywbmbh And ywlx = 'TH' And cybh = a.jsbmbh))
+				)station_mc,
+					tph,:p_station ab
+				From t_Dfbj a
+				Where  Lhbj = '0' and ywbmbh='3F'
+				And Ywbmbh in (:p_Ywbmbh_Kh)
+				And Ywlx In (:p_Ywlx)
+				and dh like :p_dh || '%'
+				and
+				decode(ywlx,'FH',
+				(Select mc From t_station Where bh =(select min(station) from t_all_dmxx where dh = a.dh and ywbmbh=a.ywbmbh and cybh=a.JSBMBH)),
+				(Select mc From t_station Where bh = (select station from t_ghdw_ywbm where ghdwh = a.dh and ywbmbh=a.ywbmbh))
+				) like trim(:p_station) || '%'
+				and jjrq > to_date(:p_rq1,'yyyy-mm-dd') and jjrq < to_date(:p_rq2,'yyyy-mm-dd') + 1
+				And Nvl(jjbj,'0') = '1' and wcbj='1'
+	
+		</u_dw1>
+		<Lhbj = '0'  And Nvl(jjbj,'0') = '1' and wcbj='1'/>
+		<一键理货 选包件理="proc_dfbj_yjlh">
+			Update t_dfbj Set lhbj = '1',lhrq = Sysdate,hw = v_hwh.hwh,tph= v_tph Where bjlsh = rpad(trim(c1.column_value),12,' ');
+		</一键理货>
+	</一键理货>
+	<出库清点>
+		<u_dw1 d="d_ckpd">
+			Select bjlsh,
+			bzjs,
+			hw,
+			tph,
+			lhrq,
+			fun_getShdw(dh, ywlx, bjlx) shdw,
+			round(zzl / 1000, 2) zzl,
+			fun_tms_getstation(dh, ywbmbh, jsbmbh, ywlx) dz,
+			ktpch,
+			dh,
+			decode(nvl((select jzfybj
+							from v_dh_fydj
+						where ywbmbh = a.ywbmbh
+							and dh = a.dh
+							and ywlx =
+								decode(a.ywlx, 'ST', 'TH', 'SC', 'TH', 'FH')),
+						'0'),
+					'0',
+					'1',
+					'0') as xz,
+			nvl((select jzfybj
+					from v_dh_fydj
+					where ywbmbh = a.ywbmbh
+					and dh = a.dh
+					and ywlx = decode(a.ywlx, 'ST', 'TH', 'SC', 'TH', 'FH')),
+				'0') jzfybj
+
+			From t_dfbj a
+			Where nvl(trim(Fyjhpc), 'X') = 'X'
+			And Ktpch Is Null
+			and lhbj = '1'
+			and cybh = :p_jsbmbh
+			and ywlx in (:p_ywlx)
+			and ywbmbh in (:p_ywbmbh)
+			and lhrq > to_date(:p_rq1, 'yyyy-mm-dd')
+			and lhrq <= to_date(:p_rq2, 'yyyy-mm_dd') + 1
+			and (dh = nvl(:p_dh, dh) or
+					(Dh, Ywbmbh, cybh) In
+					(Select Dh, Ywbmbh, cybh
+					From t_All_Dmxx
+					Where 
+					Cybh = :p_jsbmbh
+					And Nvl(Station, 'X') In (:p_station)))
+
+		</u_dw1>
+		
+		<按发运路线筛选到站>
+			 select station, stationmc
+				from (select distinct nvl(station, 'X') station,
+								nvl((select trim(mc)
+									from t_station
+									where bh = a.station),
+									'其他（未设置到站）') stationmc
+						from t_all_dmxx a
+						where cybh = :p_cybh
+							and nvl(fylx, 'X') = :p_fylx
+							and ywlx = :p_ywlx)
+				order by stationmc, station
+		</按发运路线筛选到站>
+		<生成出库单>
+			Update t_dfbj set ktpch = :p_ckpch,ktrq = sysdate 
+			where bjlsh in (Select  rpad(Column_Value,12,' ') From Table(Split_Str2(:p_bjlsh, ',')))
+		</生成出库单>
+	</出库清点>
+
+	<出库打印>
+		<u_dw1 d="d_ckpd_hz">
+			SELECT ktpch ckpch,
+			round(Sum(zzl) / 1000, 2) zl,
+			Sum(js) js,
+			decode(min(ywlx), 'FH', '发货', 'SC', '退货', 'ST', '退货') as ywlxmc,
+			min(bjlx) bjlx,
+			max(jcqb) jcqb,
+			min(dh) dh,
+			Decode(Min(Ywlx),
+					'FH',
+					Decode(Min(Bjlx),
+							'1',
+							min((Select Dm
+								From t_all_dmxx
+								Where Dh = a.dh
+									And ywbmbh = a.ywbmbh
+									And hzlx = 'JC'
+									And cybh = a.jsbmbh)),
+							'0',
+							min((Select Dm From t_Dm Where Dh = a.Dh)),
+							'3',
+							Decode(Min(Ywbmxd),
+									'TS',
+									min((Select Dm From t_Dm Where Dh = a.Dh)),
+									'JC',
+									min((Select Dm From t_dm_jc_all Where Dh = a.zzbh)),
+									min((Select Dm From t_Dm_3f Where Dh = a.Dh)))),
+					min((Select Mc From t_Ghdw Where Bh = a.Dh))) As dm,
+			Min((Select Trim(Dm)
+					From t_All_Dmxx
+					Where Ywlx = decode(a.Ywlx, 'FH', 'FH', 'TH')
+					And Dh = a.zzbh
+					And Ywbmbh = a.Ywbmbh
+					And Hzlx = Decode(Substr2(a.Ywbmbh, 0, 3), '900', 'JC', 'TS')
+					And Cybh = a.jsbmbh)) zzdm,
+			Min((Select Trim(mc)
+					From t_station
+					Where bh =
+						(Select station
+							From t_All_Dmxx
+							Where Ywlx = decode(a.Ywlx, 'FH', 'FH', 'TH')
+							And Dh = a.zzbh
+							And Ywbmbh = a.Ywbmbh
+							And Hzlx =
+								Decode(Substr2(a.Ywbmbh, 0, 3), '900', 'JC', 'TS')
+							And Cybh = a.jsbmbh))) stationmc
+			FROM t_dfbj a
+			where contract_id_root is null
+			and jhpch is null
+			And ktpch Is Not Null
+			and lhbj = '1'
+			And fyjhpc = 'X'
+			And hw is not null 
+			and ywlx in (:p_ywlx)
+			And trim(jsbmbh) = trim(:p_jsbmbh)
+			And ywbmbh in (:p_ywbmbh)
+			And ktrq >= to_date(:p_rq1, 'yyyy-mm-dd')
+			and ktrq < to_date(:p_rq2, 'yyyy-mm-dd') + 1
+			And dh = nvl(:p_dh, dh) 
+			group by ktpch
+
+		</u_dw1>
+		<where>
+			FROM t_dfbj a
+			where contract_id_root is null
+			and jhpch is null
+			And ktpch Is Not Null
+			and lhbj = '1'
+			And fyjhpc = 'X'
+			And hw is not null 
+			and ywlx in (:p_ywlx)
+			And trim(jsbmbh) = trim(:p_jsbmbh)
+			And ywbmbh in (:p_ywbmbh)
+			And ktrq >= to_date(:p_rq1, 'yyyy-mm-dd')
+			and ktrq < to_date(:p_rq2, 'yyyy-mm-dd') + 1
+			And dh = nvl(:p_dh, dh) 
+			group by ktpch
+		</where >
+		<u_dw2 d="d_ckpd_mx">
+			Select bjlsh,
+			bzjs,
+			hw,
+			tph,
+			lhrq,
+			fun_getShdw(dh, ywlx, bjlx) shdw,
+			round(zzl / 1000, 2) zzl,
+			fun_tms_getstation(dh, ywbmbh, cybh, ywlx) dz,
+			ktpch,
+			dh,
+			
+			nvl((select jzfybj
+					from v_dh_fydj
+					where ywbmbh = a.ywbmbh
+					and dh = a.dh
+					and ywlx = decode(a.ywlx, 'ST', 'TH', 'SC', 'TH', 'FH')),
+				'0') jzfybj,
+			a.ywbmbh 
+
+			From t_dfbj a
+			Where ktpch = :p_ckpch
+			and ktpch is not null
+		</u_dw2>
+	</出库打印>
+
+	<发运计划>
+		<u_dw_dfbj_ckpch_hz d="d_dfbj_ckpch_hz">
+			SELECT '0' as xz,
+			ktpch ckpch,
+			round(Sum(zzl) / 1000, 2) zl,
+			Sum(js) js,
+			decode(min(ywlx), 'FH', '发货', 'SC', '退货', 'ST', '退货') as ywlxmc,
+			min(bjlx) bjlx,
+			max(jcqb) jcqb,
+			min(dh) dh,
+			
+			Min((Select Trim(Dm)
+					From t_All_Dmxx
+					Where Ywlx = decode(a.Ywlx, 'FH', 'FH', 'TH')
+					And Dh = a.dh
+					And Ywbmbh = a.Ywbmbh
+					And Hzlx = Decode(Substr2(a.Ywbmbh, 0, 3), '900', 'JC', 'TS')
+					And Cybh = a.jsbmbh)) as dm,
+			Min((Select Trim(Dm)
+					From t_All_Dmxx
+					Where Ywlx = decode(a.Ywlx, 'FH', 'FH', 'TH')
+					And Dh = a.zzbh
+					And Ywbmbh = a.Ywbmbh
+					And Hzlx = Decode(Substr2(a.Ywbmbh, 0, 3), '900', 'JC', 'TS')
+					And Cybh = a.jsbmbh)) zzdm,
+			Min((Select Trim(mc)
+					From t_station
+					Where bh =
+						(Select station
+							From t_All_Dmxx
+							Where Ywlx = decode(a.Ywlx, 'FH', 'FH', 'TH')
+							And Dh = a.zzbh
+							And Ywbmbh = a.Ywbmbh
+							And Hzlx =
+								Decode(Substr2(a.Ywbmbh, 0, 3), '900', 'JC', 'TS')
+							And Cybh = a.jsbmbh))) stationmc
+			FROM t_dfbj a
+			where contract_id_root is null
+			and jhpch is null
+			And ktpch Is Not Null
+			and lhbj = '1'
+			and decode(ywlx, 'BF', 'FH', 'SC', 'ST', ywlx) =
+				decode(:p_ywlx, 'FH', 'FH', 'ST')
+			And fyjhpc = 'X'
+			And hw is not null
+			And trim(jsbmbh) = trim(:p_jsbmbh)
+			And ktpch = nvl(:p_ckpch, ktpch)
+
+			group by ktpch
+
+		</u_dw_dfbj_ckpch_hz>
+		<设置中转店 p="proc_fyjh_ckpch_zzdh">
+			 Update t_dfbj Set zzbh = p_zzdh Where ktpch = p_ckpch And contract_id_root Is Null;
+		</设置中转店 >
+		<制定运输计划 p="proc_fyjh_ckpch">
+		</制定运输计划>
+	</发运计划>
+</root>
+
+
+
+	

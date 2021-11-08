@@ -1,0 +1,57 @@
+WMS_WCS_CHANGE_WEIGHT 称重
+WMS_WCS_GETPATH 查询箱子路径
+到货分流书号回车
+   不上立库 WMS_CHECK2_GETPATH_JG
+	查询路径 WMS_CHECK2_GETPATH
+	MoveContainer
+   上立库 UptoAccessSystem
+	得到xml UptoAccessSystemXML
+	查询高架库允许入库GetAccessSystemImportPermit
+	 	不允许专项散货区 PROC_CHANGE_FLQX
+		允许UptoAccessSystem
+		
+
+
+分流台台号按钮MoveConveyorLine
+	WMS_CHECK2_GETPATH_JG
+		查询路径WMS_CHECK2_GETPATH
+		MoveContainer
+	MoveConveyorLine
+
+库房作业调度下达 WL_Sch_Adfhdd_Webservice
+
+
+高架库下架调度窗口 Form_Sch_GJKXD
+	OutofAccessSystemDetailXML
+	以波次为单位调用OutofAccessSystem
+	update T_WMS_XJRWB_BCJHB set yjsbj='1'
+
+分流提交 按flowid_dj 和 c_gj.dh;
+
+If v_bch Is Null Then
+    Select nvl(Max(bch), '0')
+        Into v_bch
+        From T_WMS_XJRWB_BCJHB
+        Where yjsbj = '0';
+    Select Count(*) Into v_rows From t_agv_rw_xt_bak Where bch = v_bch;
+    Select sys_value Into v_set From t_sysset Where sys_item = 'GMSBCJLS';
+    If (v_rows >= v_set Or v_rows = 0) Then
+            Select Trim(to_char(gms_all_flowid.Nextval)) Into v_bch From dual;
+    End If;
+End If;
+
+WMS_WCS_AUTOSELECTBCH
+WMS_WCS_AUTOSELECT_HG
+
+SELECT "T_WMS_XJRWB_BCJHB"."XLH",   
+         trim("T_WMS_XJRWB_BCJHB"."BCH") BCH,   
+         "T_WMS_XJRWB_BCJHB"."QDBJ",   
+         "T_WMS_XJRWB_BCJHB"."YJSBJ",   
+         "T_WMS_XJRWB_BCJHB"."WCBJ",   
+         "T_WMS_XJRWB_BCJHB"."LXBH",   
+         "T_WMS_XJRWB_BCJHB"."RWRQ",   
+         "T_WMS_XJRWB_BCJHB"."YXJ",
+         '0' XZ  
+    FROM "T_WMS_XJRWB_BCJHB"   
+where not exists(select 1 from v_ltkf_gms where trim(bch)=trim("T_WMS_XJRWB_BCJHB"."BCH")  and xjsl>kccs)
+and exists(select 1 from v_ltkf_gms where trim(bch)=trim("T_WMS_XJRWB_BCJHB"."BCH")  and xjsl=kccs and kccs<>0)

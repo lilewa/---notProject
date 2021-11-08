@@ -1,0 +1,80 @@
+   
+     
+     
+      insert into T_DM ( dh, dmjc, dm, py, lxbh, djt, cybh, dxbh, kflx, czybh_ktqr, snswbj,
+      flxbh, sdh, dqbh, thqbj, jsdh, jiesdm, khh, zhanghao, suihao, tsddm, dzdh, tsbj,
+       fpdh, txy, khlb, renkousl, modifydate, yshengdianjl, yzhzhdianjl, logpass, yb, 
+       jsry, khlxbh, qhrq, dianhua, cwdzm, txdz, lxr, jsdbj, yymj, nxsmy, nxsml, tgnxsmy,
+        glfyed, cwfyed, xsfyed, jyyeed, gly, sbbj, shbj, thbj, ktsjs, lrfs, fjw, fxbj, ztsj, xdrq, gzbj,
+      dz, dz1, zzfy, zf, sxf, station, xtwbz, fatherdh, isgz, zddbj, zpdh ) 
+      select  dh, dmjc, dm, py, lxbh, djt, cybh, dxbh, kflx, czybh_ktqr, snswbj,
+      flxbh, sdh, dqbh, thqbj, jsdh, jiesdm, null, zhanghao, suihao, tsddm, dzdh, tsbj,
+       fpdh, txy, khlb, renkousl, modifydate, yshengdianjl, yzhzhdianjl, logpass, yb, 
+       jsry, khlxbh, qhrq, dianhua, null, txdz, lxr, jsdbj, yymj, nxsmy, nxsml, tgnxsmy,
+        glfyed, cwfyed, xsfyed, jyyeed, gly, sbbj, shbj, thbj, ktsjs, lrfs, fjw, fxbj, ztsj, xdrq, gzbj,
+      dz, dz1, zzfy, zf, sxf, station, xtwbz, null, null, zddbj, zpdh from T_DM@c_linK_wl_sl;
+      
+      
+         
+         insert into T_ALLFL(
+         ywybh, flbh, flmc, blbh, jb, py, modifydate, tbts_fl1, 
+         tbts_fl2, tbts_fl3, tbyx_fl1, tbyx_fl2, tbyx_fl3, cip, djbj, 
+         sptz, ywbmbhs )
+         select ywybh, flbh, flmc, blbh, jb, py, modifydate, tbts_fl1, 
+         tbts_fl2, tbts_fl3, tbyx_fl1, tbyx_fl2, tbyx_fl3, cip, djbj, 
+         sptz, ywbmbhs from t_allfl@c_linK_wl_sl;
+   
+   insert into T_FL(
+    bh, mc, py, lbbh, modifydate)
+   select bh, mc, py, lbbh, modifydate from t_fl@c_linK_wl_sl;
+    
+   insert into T_DM_YWBM
+   (dh, ywbmbh, khlxbh, tsbj, lsdbj, yxy, zzbj, zzbh, zzbh1, jsdbj, jsdh, jiesdm, fpdh, tsddm, khh, zh, sh,
+    lxr, addr, yb, tele, fax, email, http, dz, mxbh, yqjkbj, gdzk, modifydate, ywshbj, nofhbj, xtgz, zpbj, 
+    fyfsh, xyed, xyed_qy, xsbj, txy, jshxye, nothbj, nojsbj, dianhua, cwdzm, txdz, slbh, 
+    kybj, zysl, kccb, qhq_qkje )
+   select dh, ywbmbh, khlxbh, tsbj, lsdbj, yxy, zzbj, zzbh, zzbh1, jsdbj, jsdh, jiesdm, fpdh, tsddm, khh, zh, sh,
+    lxr, addr, yb, tele, fax, email, http, dz, mxbh, yqjkbj, gdzk, modifydate, ywshbj, nofhbj, xtgz, zpbj, 
+    fyfsh, xyed, xyed_qy, xsbj, txy, jshxye, nothbj, nojsbj, dianhua, cwdzm, txdz, slbh, 
+    kybj, null, null, qhq_qkje from  
+    T_DM_YWBM@c_linK_wl_sl;
+    
+   insert into T_GHDW
+   (bh, mc, py, snswbj, gjdrbj, zh, sh, lxr, khh, sf, dz, yb, tele, fax, email, http, addr, gkh, lastjzrq, ysfje, modifydate, 
+   zyghzk, zgywy, yfsk, ztsj, yshengdianjl, txdz, sdh, dz1, dh, cwdzm, qc, flxbh, station, my_flag, ghdwpq )
+   select bh, mc, py, snswbj, gjdrbj, zh, sh, lxr, khh, sf, dz, yb, tele, fax, email, http, addr, gkh, lastjzrq, ysfje, modifydate, 
+   zyghzk, zgywy, yfsk, ztsj, yshengdianjl, txdz, sdh, dz1, dh, null, qc, flxbh, station, my_flag, ghdwpq 
+   from   T_GHDW@c_linK_wl_sl;
+
+ insert into T_GHDW_YWBM(
+  ghdwh, ywbmbh, ywybh, kcmy, kcsy, yfmy, yfsy, fhmy, fhsy, hkmy, hksy, wdmy, wdsy, symy, sysy, bfmy, bfsy, lastcfrq, 
+  lastcfje, zq, yjzmy, yjzsy, ysfje, xhkye, fhkye, modifydate, lxr, zh, sh, khh, dz, yb, addr, tele, fax, email, http,
+   ywshbj, rgthbj, zgywy, kdkthmy, ztsy, kdkthsy, zfzdshbj, qzbj, yfkye, yfkye_zy, lqflag, yfmy_old, 
+   yfsk_old, yghyftbl, ghdwlx, snswbj, xyed, xyed_qy, nojhbj, nothbj, nojsbj, ywlxr, slbh, kybj, ljqfpje, zysl, nofybj 
+ )
+  select ghdwh, ywbmbh, ywybh, kcmy, kcsy, yfmy, yfsy, fhmy, fhsy, hkmy, hksy, wdmy, wdsy, symy, sysy, bfmy, bfsy, lastcfrq, 
+  lastcfje, zq, yjzmy, yjzsy, ysfje, xhkye, fhkye, modifydate, lxr, zh, sh, khh, dz, yb, addr, tele, fax, email, http,
+   ywshbj, rgthbj, zgywy, kdkthmy, ztsy, kdkthsy, zfzdshbj, qzbj, yfkye, yfkye_zy, lqflag, yfmy_old, 
+   yfsk_old, yghyftbl, ghdwlx, snswbj, xyed, xyed_qy, nojhbj, nothbj, nojsbj, ywlxr, slbh, kybj, ljqfpje, null, nofybj 
+   from t_ghdw_ywbm@c_linK_wl_sl;
+   
+   insert into T_KCSM (
+   id, bb, fl, cip, lb, isbn, sm, dj, tm, bc, yc, cbny, bianzh, yizh, dbbz, xbbz, mkzl, bblx, nj, nz, xz, zfk, splx, 
+   sptz, zt, ywryh, fjw, firstdhrq, lastdhrq, jtjzrq, sl, pjzk, pjjj, sylx, pxdz, pxdj, fhzk, fhjg, jmbz, thbj, gddzdjbz, 
+   gdzkbj, wz, kb, zz, djfw_bh, prn_tm, tm_yb, ysbbj, kzxsbj, yxbz, ghdwh, nian, fl1, fl2, fl3, cbzb, fxzb, kmfl, bcfl, 
+   mfjcbj, fhfs, jcnf, jcjslx, sm_cs, sm_fcs, sm_bl, yx, yfbbj, lsj, tsbj, jsbj, jslx, zl, tj, changdu, kuandu, gaodu, 
+   prn_tm_yb, czcycs, tgyz, gysspid, spdm, ysxlh, ywfl
+   )
+   select id, bb, fl, null, lb, isbn, sm, dj, tm, bc, yc, cbny, bianzh, yizh, dbbz, xbbz, mkzl, bblx, nj, nz, xz, zfk, splx, 
+   sptz, zt, ywryh, fjw, firstdhrq, lastdhrq, jtjzrq, sl, pjzk, pjjj, sylx, pxdz, pxdj, fhzk, fhjg, jmbz, thbj, gddzdjbz, 
+   gdzkbj, wz, kb, zz, djfw_bh, prn_tm, tm_yb, ysbbj, kzxsbj, yxbz, ghdwh, nian, fl1, fl2, fl3, cbzb, fxzb, kmfl, bcfl, 
+   mfjcbj, fhfs, jcnf, jcjslx, sm_cs, sm_fcs, sm_bl, yx, yfbbj, lsj, tsbj, jsbj, jslx, zl, tj, changdu, kuandu, gaodu, 
+   prn_tm_yb, czcycs, tgyz, gysspid, spdm, ysxlh, ywfl from t_kcsm@c_linK_wl_sl;
+   
+   insert into t_kcsm_ywbm(
+   id, ywbmbh, ywryh, firstdhrq, lastdhrq, jtjzrq, sl, pjzk, pjjj, sylx, pxdz, pxdj, fhzk, fhjg, jmbz, thbj, gddzdjbz, 
+   gdzkbj, xszq, ybxz, zxsbj, xtl, xtbj, maxfhs, ghdwh, pzthl, jzxtrq, nojhbj, nofhbj, nostbj, noxtbj, nozpbj, bfbj 
+   )
+   select id, ywbmbh, ywryh, sysdate, sysdate, jtjzrq, sl, pjzk, pjjj, sylx, pxdz, pxdj, fhzk, fhjg, jmbz, thbj, gddzdjbz, 
+   gdzkbj, xszq, ybxz, zxsbj, xtl, xtbj, maxfhs, ghdwh, pzthl, jzxtrq, nojhbj, nofhbj, nostbj, noxtbj, nozpbj, bfbj 
+   from t_kcsm_ywbm@c_linK_wl_sl;
