@@ -18,5 +18,11 @@ and bindrq > to_date('2019/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
  Where shrq is null
    and ytrq > to_date('2020/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
  group by ytpch, ywbmbh)
- 
  group by   部门
+
+Select trim(s.sm),s.dj,yts, (select trim(dm)  from t_dm where dh=t.dh)   店名, trim(ytpch) 单号 ,
+(select trim(dm)  from t_dm where dh=t.ywbmbh) 部门
+   From T_XHDYTSJ_SL@c_link_wl_sl t ,t_kcsm s Where shrq is null
+   and ytrq > to_date('2020/12/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and t.id=s.id
+    order by  ytpch,ywbmbh

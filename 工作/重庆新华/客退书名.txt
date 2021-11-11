@@ -1,0 +1,3 @@
+select  f.sm 书名,d.dm 店名,f.ysxm 包号,b.tph 托盘,f.ywsl 数量  from t_fjrwb f,t_khthbj b ,t_dm d where sm like '%爱心%'
+and f.ysxm=b.bjlsh and d.dh=b.dh
+order by ysxm

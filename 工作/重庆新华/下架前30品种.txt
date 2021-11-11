@@ -12,12 +12,12 @@
          where t.id=s.id and rownum<31；
 
 
- select  isbn 书号 ,sm 书名 ,dj 定价 , cs 发货数 , 
- (select trim(mc) from t_bb where bh=s.bb) 版别  from ( 
- select id,sum(sjsl) cs from  t_agv_rw_xt_bak2  t 
- where  xjrq> to_date('2020/7/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
- and xjrq<to_date('2020/8/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
- and exists (select 1  from t_hqdy   where t.hqbh= bh and (hqlx='CC' or hqlx='DL')  ) 
-and lxbh ='FH' 
- group by id  order by cs desc ) t, t_kcsm s where t.id=s.id 
- and rownum <30
+ select  isbn 书号 ,sm 书名 ,dj 定价 , cs 发货数 ,
+ (select trim(mc) from t_bb where bh=s.bb) 版别  from (
+ select id,sum(sjsl) cs from  t_agv_rw_xt_bak2  t
+ where  xjrq> to_date('2021/10/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+ and xjrq<to_date('2021/11/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+ and exists (select 1  from t_hqdy   where t.hqbh= bh and (hqlx='CC' or hqlx='DL')  )
+and lxbh ='FH'
+ group by id  order by cs desc ) t, t_kcsm s where t.id=s.id
+ and rownum <31

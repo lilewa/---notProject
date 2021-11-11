@@ -1,0 +1,7 @@
+ select trim(sm) 书名,isbn,
+ (select trim(mc) from t_bb where bh=s.bb) 出版社,
+ dj 定价,
+ kccs 册数,
+ kccs*dj  码洋,hw
+  from t_ltkf l,t_kcsm s
+ where l.id=s.id and l.hqbh in ('70','80')

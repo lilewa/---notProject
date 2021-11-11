@@ -38,4 +38,30 @@ select    *  from t_pkls_sl20171125
              and s.id = p.id
 
 
+ --明细内容有：货区，品种，册数，码洋
+
+  select q.mc,
+         a.pz 立库品种,
+         b.pz 盘点品种,
+         a.cs 立库册数,
+         b.cs 盘点册数,
+         a.my 立库码洋,
+         b.my 盘点码洋
+    from (select count(distinct l.id) pz,
+                 sum(kccs) cs,
+                 sum(kccs * dj) my,
+                 hqbh
+            from t_ltkf l, t_kcsm s
+           where l.id = s.id
+           group by hqbh) a
+         ,
+         (select count(distinct l.id) pz,
+                 sum(pkcs) cs,
+                 sum(pkcs * dj) my,
+                 hqbh
+            from t_pkls_sl l, t_kcsm s
+           where l.id = s.id
+           group by hqbh) b,
+         t_hqdy q
+  where a.hqbh=b.hqbh and a.hqbh=q.bh
  

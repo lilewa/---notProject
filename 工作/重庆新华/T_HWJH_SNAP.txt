@@ -1,0 +1,8 @@
+select t.hw, kccs 库存,jhcs 册数, trim(sm) 书名,isbn,dj 定价
+  from T_HWJH_SNAP t, t_kcsm s,t_hwdy q
+ where t.zt = '1'
+   and jhdate > to_date('2020/11/18 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+   and q.hqbh='14'
+   and kccs<>jhcs
+   and q.hw=t.hw
+   and t.id = s.id

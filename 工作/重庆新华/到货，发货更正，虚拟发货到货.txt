@@ -12,3 +12,15 @@ from T_DHLS_JX x,t_kcsm s,t_ghdw g where gzbj='1' and lrczybh='2033' and x.id=s.
 select * from t_fhmx  where cgyj_kh='发货补单' and yh='2033'
 --虚拟到货
  select * from T_DHLS_JX where gzbj='0' and lrczybh='2033' and remark='虚拟到货'
+
+--虚拟发货
+select sm 书名,isbn,dj 定价,sfcs 册数,dbrq  from t_fhmx  j,t_kcsm s  where cgyj_kh='发货补单'
+and     dbrq>to_date('2020/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+ and dbrq<to_date('2021/11/11 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+ and j.id=s.id
+
+--虚拟到货
+ select  sm 书名,isbn,dj 定价,djshsl 册数,shrq  from T_DHLS_JX  j,t_kcsm s  where  remark='虚拟到货'
+  and shrq>to_date('2020/12/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+ and shrq<to_date('2021/11/11 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+ and j.id=s.id

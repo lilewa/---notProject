@@ -253,62 +253,529 @@
 	</出库打印>
 
 	<发运计划>
-		<u_dw_dfbj_ckpch_hz d="d_dfbj_ckpch_hz">
-			SELECT '0' as xz,
-			ktpch ckpch,
-			round(Sum(zzl) / 1000, 2) zl,
-			Sum(js) js,
-			decode(min(ywlx), 'FH', '发货', 'SC', '退货', 'ST', '退货') as ywlxmc,
-			min(bjlx) bjlx,
-			max(jcqb) jcqb,
-			min(dh) dh,
-			
-			Min((Select Trim(Dm)
-					From t_All_Dmxx
-					Where Ywlx = decode(a.Ywlx, 'FH', 'FH', 'TH')
-					And Dh = a.dh
-					And Ywbmbh = a.Ywbmbh
-					And Hzlx = Decode(Substr2(a.Ywbmbh, 0, 3), '900', 'JC', 'TS')
-					And Cybh = a.jsbmbh)) as dm,
-			Min((Select Trim(Dm)
-					From t_All_Dmxx
-					Where Ywlx = decode(a.Ywlx, 'FH', 'FH', 'TH')
-					And Dh = a.zzbh
-					And Ywbmbh = a.Ywbmbh
-					And Hzlx = Decode(Substr2(a.Ywbmbh, 0, 3), '900', 'JC', 'TS')
-					And Cybh = a.jsbmbh)) zzdm,
-			Min((Select Trim(mc)
-					From t_station
-					Where bh =
-						(Select station
-							From t_All_Dmxx
-							Where Ywlx = decode(a.Ywlx, 'FH', 'FH', 'TH')
-							And Dh = a.zzbh
-							And Ywbmbh = a.Ywbmbh
-							And Hzlx =
-								Decode(Substr2(a.Ywbmbh, 0, 3), '900', 'JC', 'TS')
-							And Cybh = a.jsbmbh))) stationmc
-			FROM t_dfbj a
-			where contract_id_root is null
-			and jhpch is null
-			And ktpch Is Not Null
-			and lhbj = '1'
-			and decode(ywlx, 'BF', 'FH', 'SC', 'ST', ywlx) =
-				decode(:p_ywlx, 'FH', 'FH', 'ST')
-			And fyjhpc = 'X'
-			And hw is not null
-			And trim(jsbmbh) = trim(:p_jsbmbh)
-			And ktpch = nvl(:p_ckpch, ktpch)
+		<发运计划>
+			<u_dw_dfbj_ckpch_hz d="d_dfbj_ckpch_hz">
+				SELECT '0' as xz,
+				ktpch ckpch,
+				round(Sum(zzl) / 1000, 2) zl,
+				Sum(js) js,
+				decode(min(ywlx), 'FH', '发货', 'SC', '退货', 'ST', '退货') as ywlxmc,
+				min(bjlx) bjlx,
+				max(jcqb) jcqb,
+				min(dh) dh,
+				
+				Min((Select Trim(Dm)
+						From t_All_Dmxx
+						Where Ywlx = decode(a.Ywlx, 'FH', 'FH', 'TH')
+						And Dh = a.dh
+						And Ywbmbh = a.Ywbmbh
+						And Hzlx = Decode(Substr2(a.Ywbmbh, 0, 3), '900', 'JC', 'TS')
+						And Cybh = a.jsbmbh)) as dm,
+				Min((Select Trim(Dm)
+						From t_All_Dmxx
+						Where Ywlx = decode(a.Ywlx, 'FH', 'FH', 'TH')
+						And Dh = a.zzbh
+						And Ywbmbh = a.Ywbmbh
+						And Hzlx = Decode(Substr2(a.Ywbmbh, 0, 3), '900', 'JC', 'TS')
+						And Cybh = a.jsbmbh)) zzdm,
+				Min((Select Trim(mc)
+						From t_station
+						Where bh =
+							(Select station
+								From t_All_Dmxx
+								Where Ywlx = decode(a.Ywlx, 'FH', 'FH', 'TH')
+								And Dh = a.zzbh
+								And Ywbmbh = a.Ywbmbh
+								And Hzlx =
+									Decode(Substr2(a.Ywbmbh, 0, 3), '900', 'JC', 'TS')
+								And Cybh = a.jsbmbh))) stationmc
+				FROM t_dfbj a
+				where contract_id_root is null
+				and jhpch is null
+				And ktpch Is Not Null
+				and lhbj = '1'
+				and decode(ywlx, 'BF', 'FH', 'SC', 'ST', ywlx) =
+					decode(:p_ywlx, 'FH', 'FH', 'ST')
+				And fyjhpc = 'X'
+				And hw is not null
+				And trim(jsbmbh) = trim(:p_jsbmbh)
+				And ktpch = nvl(:p_ckpch, ktpch)
 
-			group by ktpch
+				group by ktpch
 
-		</u_dw_dfbj_ckpch_hz>
-		<设置中转店 p="proc_fyjh_ckpch_zzdh">
-			 Update t_dfbj Set zzbh = p_zzdh Where ktpch = p_ckpch And contract_id_root Is Null;
-		</设置中转店 >
-		<制定运输计划 p="proc_fyjh_ckpch">
-		</制定运输计划>
+			</u_dw_dfbj_ckpch_hz>
+			<设置中转店 p="proc_fyjh_ckpch_zzdh">
+				Update t_dfbj Set zzbh = p_zzdh Where ktpch = p_ckpch And contract_id_root Is Null;
+			</设置中转店 >
+			<制定运输计划 p="proc_fyjh_ckpch">
+				Select dh,ywbmbh From t_Dfbj Where Contract_Id_Root Is Null 
+						And BJZY_CZY = p_cjr And ktpch = out_ckpch.ckpch  and fyjhpc='X'
+								Group By dh,ywbmbh
+
+				Update t_dfbj Set contract_id_root = v_contract_id,jhpch=v_jhpc Where bjlsh = v_dfbj.bjlsh;
+				Update t_wcbj Set contract_id_root = v_contract_id Where bjlsh = v_dfbj.bjlsh;
+				
+				Insert Into t_ht(contract_id,contract_id_farther,contract_id_root,ywbmbh,ywbmbh_kh,ywbmmc_kh,tran_id,station_id_qs,
+								station_id_md,sdrq,js,my,
+								station,htrq,mode_id_act,mode_id,dh,dm,dz,tel,lxr,zl,bz,ywlx,zzbj,cjr,cjrq,flowid_car,jhpc,jhpcrq,cs,sy,yh,ywbmmc,zzbh)
+							Values(v_contract_id,null,v_contract_id_root,p_ywbmbh,v_ywbm_kh,trim(v_dfbj_ywbm.dm),p_tran_id,nvl(v_yf_station_ywbm.station_id_qs,'2005'),
+									v_station_id_md,v_sdrq,v_zjs,v_zmy,
+									v_station,Sysdate,p_mode_id,v_mode_id,v_dh,v_dm,v_dz,v_tel,v_lxr,
+									v_zzl,p_bz,out_ckpch.ywlx,v_zzbj,p_cjr,Sysdate,p_flowid_car,v_jhpc,sysdate,v_zcs,nvl(v_zsy,0),v_yh,
+									(select trim(dm) from t_dm where dh=p_ywbmbh),v_zzbh);
+
+			</制定运输计划>
+		</发运计划>
+		<发运确认>
+			<u_dw_ht_hz d="d_ht_hz">
+				Select '0' As Xz,
+					Min(Ywbmbh) ywbmbh,
+					Min(Ywbmbh_Kh) Ywbmbh_Kh,
+					Min(Ywbmmc_Kh) Ywbmmc_Kh,
+					Sum(Js) Js,
+					Sum(Round(Nvl(Zl, 0) / 1000, 2)) Zl,
+					Sum(My) My,
+					Min(jhpcrq) Fyrq,
+					Min((Select mc From t_ysdw Where trim(bh) = trim(a.Tran_Id))) As Tran_Mc,
+					Min((Select Mode_Mc From t_Yf_Mode Where Mode_Id = Mode_Id_Act)) As Mode_Mc,
+					Min(Ywlx) Ywlx,
+					Min(Tran_Id) Tran_Id,
+					Min(Mode_Id_Act) Mode_Id_Act,
+					jhpc
+				From t_Ht a
+				Where Fyjhpc Is Null
+				And Ywbmbh = :p_ywbmbh
+				And Ywbmbh_Kh In (:p_ywbmbh_kh)
+				And Ywlx In (:p_ywlx)
+				And Cjr Like :p_cjr || '%'
+				And Tran_Id like :p_tran_id || '%'
+				Group By Jhpc
+
+				Ywbmbh是3001
+				Ywbmbh_Kh 是ywbmbh
+				Jhpc 是调度生成的计划批次号，可以勾选多个ktpch 生成一个jhpc
+				ktpch 是在出库清点 按dh 生成的
+			</u_dw_ht_hz>
+
+			<u_dw_ht d="d_ht"> 
+				Select '0' as xz,
+					CONTRACT_ID,
+					ywbmbh,
+					fyjhpc,
+					ywbmbh_kh,
+					ywbmmc_kh,
+					dm || '(' || dh || ')' as dh,
+					station,
+					(select mc from t_station where bh = station_id_qs) as station_mc_qs,
+					(select mc from t_station where bh = station) as station_mc,
+					(select mc from t_station where bh = station_id_md) as station_id_md_mc,
+					dz,
+					tel,
+					lxr,
+					js,
+					round(Nvl(zl, 0) / 1000, 2) zl,
+					my,
+					fyrq,
+					sdrq,
+					(select mc from t_ysdw where trim(bh) = trim(a.tran_id)) as tran_mc,
+					(select mode_mc from t_yf_mode where mode_id = mode_id_act) as mode_mc,
+					ywlx,
+					tran_id,
+					mode_id_act,
+					(select dm from t_dm where dh = ywbmbh) ywbmmc,
+					contract_id_root,
+					yh,
+					jhpc,
+					station_id_md,
+					dh dh_,
+					dm,
+					bz,
+					zcr,
+					(select decode(nvl(min(contract_id_farther), '0'), '0', '0', '1')
+						from t_ht
+						where contract_id_farther = a.contract_id) as flag,
+					zl ld_zl,
+					cs,
+					sy
+					From t_ht a
+					where jhpc = :p_jhpc
+					and contract_id_farther is null  
+
+					t_ht 是上一步按 ktpch，ywmbjh，dh 生成的
+			</u_dw_ht>
+
+			<u_dw_ld d="d_ht_ld">
+				Select CONTRACT_ID,
+				ywbmbh,
+				fyjhpc,
+				ywbmbh_kh,
+				ywbmmc_kh,
+				dh,
+				dm,
+				station,
+				(select mc from t_station where bh = station_id_qs) as station_mc_qs,
+				(select mc from t_station where bh = station) as station_mc,
+				(select mc from t_station where bh = station_id_md) as station_id_md_mc,
+				dz,
+				tel,
+				lxr,
+				js,
+				zl zl,
+				my,
+				sy,
+				fyrq,
+				sdrq,
+				(select mc from t_ysdw where trim(bh) = trim(a.tran_id)) as tran_mc,
+				(select mode_mc from t_yf_mode where mode_id = mode_id_act) as mode_mc,
+				ywlx,
+				tran_id,
+				mode_id_act,
+				(select dm from t_dm where dh = ywbmbh) ywbmmc,
+				contract_id_root,
+				yh,
+				jhpc,
+				station_id_md,
+				station_id_qs,
+				contract_id_farther,
+				htrq,
+				mode_id,
+				bz,
+				cjrq,
+				cjr,
+				zcr,
+				cs
+				From t_ht a
+				where contract_id_farther = :p_contract_id_farther
+			</u_dw_ld>
+			<合同确认 p="proc_yfjs" p="proc_fyjh_confirm">
+				Update t_ht Set fyjhpc = jhpc,cph = p_cph,fyrq = Sysdate,car_zl = p_car_zl,zcr = p_zcr,yh=v_yh,sj=v_sj_bh
+					,thr = p_thr  	Where contract_id = v_contract_id;
+
+				   
+				Update t_dfbj Set fyjhpc = trim(v_ht.jhpc),cydw = v_ht.tran_id,fyjhrq=Sysdate,jhpch=Null
+						Where contract_id_root = v_contract_id;
+				
+				 Insert Into t_ht_print Values(v_contract_id,v_bjlsh_arr,c2.ywbmbh);
+			</合同确认>
+		</发运确认>
 	</发运计划>
+
+	<发运清单打印>
+		<u_dw1 d="d_ht_hz_fyjhpc">
+				Select Min(Ywbmbh) ywbmbh,
+				Min(Ywbmbh_Kh) Ywbmbh_Kh,
+				Min(Ywbmmc_Kh) Ywbmmc_Kh,
+				Sum(Js) Js,
+				Sum(Round(Zl / 1000, 2)) Zl,
+				Sum(My) My,
+				Min(Fyrq) Fyrq,
+				Min((Select trim(mc) From t_ysdw Where trim(bh) = trim(a.Tran_Id))) As Tran_Mc,
+				Min((Select Mode_Mc From t_Yf_Mode Where Mode_Id = Mode_Id_Act)) As Mode_Mc,
+				Min(Ywlx) Ywlx,
+				Min(Tran_Id) Tran_Id,
+				Min(Mode_Id_Act) Mode_Id_Act,
+				fyjhpc fyjhpc,
+				jhpc
+			From t_Ht a
+			Where jhpc Is not Null
+			And Ywbmbh = :p_ywbmbh
+			And Ywbmbh_Kh In (:p_ywbmbh_kh)
+			And Ywlx In (:p_ywlx)
+			And Cjr Like :p_cjr || '%'
+			And Tran_Id Like :p_tran_id || '%'
+			and jhpc LIke :p_fyjhpc || '%'
+			and fyrq >= to_date(:p_rq1, 'yyyy-mm-dd')
+			and fyrq < to_date(:p_rq2, 'yyyy-mm-dd') + 1
+			Group By jhpc, fyjhpc, tran_id
+			Order by fyrq desc
+
+		</u_dw1>
+		
+		<u_dw2 d="d_ht_hz_fyjhpc_mx">
+				Select '0' as xz,
+				CONTRACT_ID,
+				ywbmbh,
+				fyjhpc,
+				ywbmbh_kh,
+				ywbmmc_kh,
+				dm || '(' || dh || ')' as dh,
+				station,
+				(select mc from t_station where bh = station) as station_mc,
+				dz,
+				tel,
+				lxr,
+				js,
+				round(zl / 1000, 2) zl,
+				my,
+				fyrq,
+				sdrq,
+				(select trim(mc) from t_ysdw where trim(bh) = trim(a.tran_id)) as tran_mc,
+				(select mode_mc from t_yf_mode where mode_id = mode_id_act) as mode_mc,
+				ywlx,
+				tran_id,
+				mode_id_act,
+				(select dm from t_dm where dh = ywbmbh) ywbmmc,
+				contract_id_root,
+				(select mc from t_station where bh = station_id_md) As station_id_mc,
+				station_id_md,
+				DH DH1
+			From t_ht a
+			where jhpc = :p_fyjhpc
+			and tran_id = nvl(:p_tran_id, tran_id)
+			order by yh, station_id_mc
+
+		</u_dw2>
+
+		<汇总清单打印 d="d_fyjhpc_hz">
+				Select Fyjhpc,
+				Contract_Id Xh,
+				Dm,
+				(Select Trim(Mc) From t_Station Where Bh = a.Station) Stationmc,
+				Js,
+				Round(Zl / 1000, 2) Zl,
+				Ywbmmc_Kh,
+				(Select ktpch
+					From t_dfbj
+					Where contract_id_root = a.contract_id
+					And Rownum = 1
+					And Substr2(ywbmbh, 0, 3) = '900') Jcjhpc,
+				(Select mc From t_ysdw Where bh = rpad(a.tran_id, 6, ' ')) tranmc,
+				(Select Name From t_ysdw_sj Where bh = a.sj) sjmc,
+				(Select tel From t_ysdw_sj Where bh = a.sj) sjtel,
+				fyrq
+			From t_Ht a
+			Where fyjhpc = :p_fyjhpc
+			and tran_id = :p_tran_id
+
+		</汇总清单打印>
+
+		<发货清单打印 d="d_fhqd"> 
+			Select min(a.Fyrq) fyrq,
+				min(a.Fyjhpc) fyjhpc,
+				
+				(Select max(htbh)
+					from (select wmsys.wm_concat(contract_id) over(partition by fyjhpc order by contract_id) htbh
+							from t_ht
+							where fyjhpc = :p_fyjhpc
+							and contract_id in (:p_contract_id)
+							and substr2(ywbmbh_kh, 0, 3) != '900')) yh,
+				min((Select mc From t_station Where bh = a.Station_Id_Md)) As station_mc,
+				(select dm
+					from t_ht
+					where fyjhpc = :p_fyjhpc
+					and contract_id in (:p_contract_id)
+					and rownum = 1) dm,
+				(select tel
+					from t_ht
+					where fyjhpc = :p_fyjhpc
+					and contract_id in (:p_contract_id)
+					and rownum = 1) tel,
+				(select dz
+					from t_ht
+					where fyjhpc = :p_fyjhpc
+					and contract_id in (:p_contract_id)
+					and rownum = 1) dz,
+				(select lxr
+					from t_ht
+					where fyjhpc = :p_fyjhpc
+					and contract_id in (:p_contract_id)
+					and rownum = 1) lxr,
+				
+				wmsys.wm_concat(distinct a.ywbmbh_kh) As ywbmmc,
+				'(' || min(trim((Select dm From t_dm Where dh = a.ywbmbh_kh))) || ')' As ywbmmckh,
+				min((Select mc From t_ysdw Where trim(bh) = trim(a.tran_id))) As tran_mc,
+				sum(a.js) js,
+				min(a.contract_id_root) contract_id_root,
+				min(cph) cph,
+				trim(min(sj)) sj,
+				min((Select tel From t_ysdw_sj Where bh = sj)) tell,
+				min(bz) bz,
+				sum(a.zl / 1000) zl
+			From t_Ht a
+			Where fyjhpc = :p_fyjhpc
+			and substr2(ywbmbh_kh, 0, 3) != '900'
+			and contract_id in (:p_contract_id)
+			group by fyjhpc
+
+		</发货清单打印>
+		<派车单 d="d_zy_pcd">
+				Select min((Select Trim(Mc) From t_Station Where Bh = Station_Id_Qs)) Station_Id_Qs,
+				min(fyrq) fyrq,
+				min(cph) cph,
+				min(fyjhpc) fyjhpc,
+				max((Select Trim(Mc) From t_Station Where Bh = Station)) Station_Id_md,
+				min((Select Name From t_user Where usr_id = zcr)) zcr,
+				min((Select Name From t_ysdw_sj Where bh = sj)) sj,
+				max((Select jl * 2
+						From t_yf_station_ywbm
+						Where Station_Id_Qs = a.Station_Id_Qs
+						And Station_Id_md = a.Station)) jl,
+				sum(Round(zl / 1000, 2)) zl,
+				fun_tms_get_stationmc_h(fyjhpc) station,
+				sum(js) js,
+				min(bz) bz
+			From t_Ht a
+			Where fyjhpc = :p_fyjhpc
+			group by fyjhpc
+		</派车单>
+
+	</发运清单打印>
+
+	<教材交接 w="JGWL.WindowsForm.Tms.Form_jc_ysjj">
+		<u_dw1 d="d_jc_ysjj">
+				Select Fypc,
+				min(bjlsh) Bjlsh,
+				Sum(bzjs) Bzjs,
+				Sum(zpz) Zpz,
+				Sum(zcs) Zcs,
+				Sum(zmy) Zmy,
+				Min(yh) Yh,
+				Min(fyrq) Fyrq,
+				Min((Select Dm From t_Dm@c_Link_Tms_Jc Where Dh = a.zzbh)) Dm
+
+			From t_wcbj@c_link_tms_jc a
+			Where fyrq > date '2018-11-01'
+			and fypc = nvl(:p_fypc, fypc)
+			And fyrq > to_date(:p_rq1, 'yyyy-mm-dd')
+			And fyrq < to_date(:p_rq2, 'yyyy-mm-dd') + 1
+			And yh = nvl(:p_yh, yh)
+			and cybh = :p_ywbmbh
+			And nvl(tmsjsflag, '0') = '0'
+			Group By fypc
+			union all
+			select ywpch,
+				ywpch,
+				bjs,
+				zpz,
+				zcs,
+				zmy,
+				ywpch,
+				thrq,
+				(select mc from t_ghdw@c_link_tms_jc where bh = b.hybh) dm
+			from t_hythhz@c_link_tms_jc b
+			where not exists (select 1 from t_wcbj where bjlsh = b.ywpch)
+			and cybh = :p_ywbmbh
+			and ywpch = nvl(:p_yh, ywpch)
+			and thrq > to_date(:p_rq1, 'yyyy-mm-dd')
+			And thrq < to_date(:p_rq2, 'yyyy-mm-dd') + 1
+
+		</u_dw1>
+		<Form_jc_ysjj_confirm p="proc_ysjj">
+		<Form_jc_ysjj_confirm>
+	</教材交接>
+	
+	<rf托盘绑定 w="TayyShippBindForm">
+		<包号回车>
+			select t_dm.dh, bzjs js, pfrq, bjlsh, ywbmbh, t_dm.dm, b.dm bmmc
+			from t_dfbj
+			left join t_dm
+			on t_dm.dh = t_dfbj.dh
+			left join t_dm b
+			on t_dfbj.ywbmbh = b.dh
+		where bjlsh = '  bjlshOrYh  '
+			and ywlx <> 'ST'
+			and nvl(jjbj, '0') = '0'
+			and ybzbj = '1';
+		
+		select t_dm.dh, bzjs js, pfrq, bjlsh, ywbmbh, t_dm.dm, b.dm bmmc
+			from t_dfbj
+			left join t_dm
+			on t_dm.dh = t_dfbj.dh
+			left join t_dm b
+			on t_dfbj.ywbmbh = b.dh
+		where yh = '  bjlshOrYh  '
+			and ywlx <> 'ST'
+			and nvl(jjbj, '0') = '0'
+			and ybzbj = '1';
+		</包号回车>
+		<PROC_SX_DFBJ_BTP_XTW>
+			UPDATE T_DFBJ SET TPH = P_TPH, bjfjbj='1' WHERE BJLSH = P_BJLSH;
+		</PROC_SX_DFBJ_BTP_XTW>
+	</rf托盘绑定>
+
+	<rf包件交接 w="TayyExceForm">
+	  select a.dh,
+       a.js,
+       a.pfrq,
+       a.bjlsh,
+       a.ywbmbh,
+       a.dm,
+       a.bmmc,
+       a.jsjs,
+       a.tph,
+       c.zs
+	from (select t_dfbj.dh,
+				bzjs      js,
+				pfrq,
+				bjlsh,
+				ywbmbh,
+				t_dm.dm,
+				b.dm      bmmc,
+				jsjs,
+				tph
+			from t_dfbj
+			left join t_dm
+				on t_dm.dh = t_dfbj.dh
+			left join t_dm b
+				on t_dfbj.ywbmbh = b.dh
+			where tph = '  tph  '
+			and ywlx <> 'ST'
+			and nvl(jjbj, '0') = '0'
+			and ybzbj = '1') a,
+		(select sum(bzjs) zs
+			from t_dfbj
+			where tph = '  tph  '
+			and ywlx <> 'ST'
+			and nvl(jjbj, '0') = '0'
+			and ybzbj = '1') c;
+
+		select a.dh,
+			a.js,
+			a.pfrq,
+			a.bjlsh,
+			a.ywbmbh,
+			a.dm,
+			a.bmmc,
+			a.jsjs,
+			a.tph,
+			c.zs
+		from (select t_dfbj.dh,
+					bzjs      js,
+					pfrq,
+					bjlsh,
+					ywbmbh,
+					t_dm.dm,
+					b.dm      bmmc,
+					tph,
+					jsjs
+				from t_dfbj
+				left join t_dm
+					on t_dm.dh = t_dfbj.dh
+				left join t_dm b
+					on t_dfbj.ywbmbh = b.dh
+				where (t_dfbj.bjlsh = '  bjlsh  ' or t_dfbj.yh = '  bjlsh  ')
+				and ywlx <> 'ST'
+				and nvl(jjbj, '0') = '0'
+				and ybzbj = '1') a,
+			(select sum(bzjs) zs
+				from t_dfbj
+				where (t_dfbj.bjlsh = '  bjlsh  ' or t_dfbj.yh = '  bjlsh  ')
+				and ywlx <> 'ST'
+				and nvl(jjbj, '0') = '0'
+				and ybzbj = '1') c;
+		
+		<包号交接 p="PROC_SX_DFBJ_JJ_XTW"></包号交接>
+		<托盘交接 p="PROC_SX_DFBJ_JJ_XTW_TP">
+			Update t_dfbj
+				Set jsjs = bzjs, jjbj = '1', bjfjbj = '1'
+			Where bjlsh = c2.bjlsh;
+
+			Insert Into t_dfbj_jj
+					(bjlsh, cfczy, rfczy, rq, js)
+			Values
+					(c2.bjlsh, p_cfczybh, p_rfczybh, Sysdate, c2.bzjs);
+		</托盘交接>
+	</rf包件交接>
 </root>
 
 
