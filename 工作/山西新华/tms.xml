@@ -776,6 +776,44 @@
 					(c2.bjlsh, p_cfczybh, p_rfczybh, Sysdate, c2.bzjs);
 		</托盘交接>
 	</rf包件交接>
+
+	<中转交接>
+		<u_dw1 w="d_ht_zzjj">
+			Select contract_id,
+			fyjhpc,
+			Station_Id_Md,
+			Station,
+			(Select Mc From t_Station Where Bh = Station_Id_Md) Station_Mc_Md,
+			(Select Mc From t_Station Where Bh = Station) Station_Mc,
+			dm,
+			(Select dm From t_dm where dh = ywbmbh) sfd,
+			fyrq,
+			js,
+			round(zl / 1000, 2) zl,
+			(select min(zzbh)
+				from t_dfbj
+				where fyjhpc = rpad(t_ht.fyjhpc, 12, ' ')
+				and contract_id_root = t_ht.contract_id) zzbh
+		From t_Ht
+		Where Nvl(jjbj, 0) = '0'
+		and station_id_md <> station
+		and (
+				--榆次(从榆次中转)
+				(Station_Id_Md = '2005' And ywbmbh in ('4001', '8001') and
+				:p_ywbmbh = '3001')
+				--侯马(从侯马中转)
+				or
+				(Station_Id_Md = '2007' And ywbmbh = '3001' and :p_ywbmbh = '8001' and
+				(select trim(min(zzbh))
+					from t_dfbj
+					where fyjhpc = rpad(t_ht.fyjhpc, 12, ' ')
+					and contract_id_root = t_ht.contract_id) = '8001'))
+		And fyjhpc Like :p_fyjhpc || '%'
+		And fyrq > to_date(:p_rq1, 'yyyy-mm-dd')
+		And fyrq < to_date(:p_rq2, 'yyyy-mm-dd') + 1
+
+		</u_dw1>
+	</中转交接>
 </root>
 
 

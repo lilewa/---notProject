@@ -1,0 +1,10 @@
+cat /opt/gitlab/embedded/service/gitlab-rails/VERSION
+13.10.2
+
+The backup archive is saved in backup_path, which is specified in the config/gitlab.yml file. 
+/opt/gitlab/embedded/service/gitlab-rails/config
+path: "/var/opt/gitlab/backups"   
+
+gitlab-backup create
+
+ cp -R /etc/gitlab/  /var/opt/gitlab/backups/
