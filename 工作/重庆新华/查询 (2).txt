@@ -1,8 +1,8 @@
 select id from t_pkjhtask where hqbh='05' 
-and createdate >to_date('2019/01/01 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and createdate >to_date('2020/11/20 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
 union 
  select id from t_pkjhtask_bak where hqbh='05' 
-and createdate >to_date('2019/01/01 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and createdate >to_date('2020/11/20 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
 union
 select id from t_pkls_sl where hqbh='05' 
 
@@ -12,13 +12,13 @@ select id from t_pkls_sl where hqbh='05'
 
 select count(*) from (
 select id from t_fhmx  where 
-dbrq>to_date('2019/01/01 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
-and dbrq<to_date('2019/12/26 00:00:00', 'yyyy/mm/dd hh24:mi:ss')  
+dbrq>to_date('2020/11/20 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and dbrq<to_date('2021/11/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')  
  union 
  select id  from t_dhls_jx x,t_dhdj d   where 
 x.flowid_dj=d.flowid_dj and 
-dbrq>to_date('2019/01/01 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
-and dbrq<to_date('2019/12/26 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+dbrq>to_date('2020/11/20 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and dbrq<to_date('2021/11/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
   )
 
  --盘点周期内无收发货记录的品种数、码洋
@@ -34,34 +34,41 @@ and dbrq<to_date('2020/11/19 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
   )    where id=t.id) and t.id=s.id  and kccs>0 
 
 
- /* select count(*) from T_LKCHECKTASK t where createdate >to_date('2019/01/01 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
-and createdate<to_date('2019/12/26 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+ /* select count(*) from T_LKCHECKTASK t where createdate >to_date('2020/11/20 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and createdate<to_date('2021/11/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
 7473 
 
  */
  
- 1 二配指令的满足率 99.731667027705
- 2、退货指令的完成率 :99.6388629542513
-3、日常库存维护的盘点次数 :7473
-4、有收发货记录的品种数 : 159414
+1 二配指令的满足率    99.8860635008542
+2、退货指令的完成率 :  99.2570158407381
+3、日常库存维护的盘点次数 :  92463
+4、被占用的货位数量/总货位数量   6.1698691539501
+5  动销率 985.225420966866
+6 拆包完成时间在8点前占的比例  89.0129180357384
+
+  select count(*) from t_splitbagtask  where 
+finishdate>to_date('2020/11/20 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and finishdate<to_date('2021/11/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')  
+and to_number( TO_CHAR(finishdate,'HH24'))<8
 
 select count(*),count(distinct hw),sum(jhcs),sum(jhcs*dj) from T_HWJH_SNAP t ,t_kcsm s where t.zt='1'
-and   jhdate >to_date('2020/1/1 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
-and  jhdate<to_date('2020/12/31 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+and   jhdate >to_date('2020/11/10 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and  jhdate<to_date('2021/11/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
  and t.id=s.id
 
   select   sum(sjsl)/sum(yssl)  from t_agv_rw_xt_bak2 where lxbh='FH'
- and xjrq<to_date('2019/12/26 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+ and xjrq<to_date('2021/11/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
  and 
- xjrq >to_date('2019/01/01 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+ xjrq >to_date('2020/11/20 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
 99.731667027705
  sum(sjsl)/sum(yssl)
  
   select  sum(s.jhcs)/sum(yssl)  from T_AGV_RW_XT_BAK b, t_hykcsl_bak s where lxbh='ST'
   and jxfs='AD'
- and xjrq<to_date('2019/12/26 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
+ and xjrq<to_date('2021/11/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
  and 
- xjrq >to_date('2019/01/01 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+ xjrq >to_date('2020/11/20 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
  and b.flowid_xj=s.flowid
  
 
@@ -96,8 +103,8 @@ and  jhdate<to_date('2020/12/31 00:00:00', 'yyyy/mm/dd hh24:mi:ss')
 
 --动销率
    select count(distinct id) from t_fhmx  where 
-dbrq>to_date('2019/11/27 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
-and dbrq<to_date('2020/11/19 00:00:00', 'yyyy/mm/dd hh24:mi:ss')  ;
+dbrq>to_date('2020/11/20 00:00:00', 'yyyy/mm/dd hh24:mi:ss') 
+and dbrq<to_date('2021/11/21 00:00:00', 'yyyy/mm/dd hh24:mi:ss')  
 --157416
   --162570
   
