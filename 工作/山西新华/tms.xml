@@ -14,7 +14,7 @@
 		发运回告查询，生成交接单
 		承付计划，按发运计划批次做 生成承付批次
 	</desc>
-	<一键理货>
+	<一键理货 f="JGWL.WindowsForm.Tms.Form_yjlh">
 		<u_dw1 d="d_dfbj_yjlh">
 			Select 
 			'0' as xz,
@@ -141,7 +141,7 @@
 							and ywlx = :p_ywlx)
 				order by stationmc, station
 		</按发运路线筛选到站>
-		<生成出库单>
+		<生成出库单 d="每个店生成一个p_ckpch">
 			Update t_dfbj set ktpch = :p_ckpch,ktrq = sysdate 
 			where bjlsh in (Select  rpad(Column_Value,12,' ') From Table(Split_Str2(:p_bjlsh, ',')))
 		</生成出库单>
@@ -308,6 +308,8 @@
 				Update t_dfbj Set zzbh = p_zzdh Where ktpch = p_ckpch And contract_id_root Is Null;
 			</设置中转店 >
 			<制定运输计划 p="proc_fyjh_ckpch">
+			    前台勾选ktpch ，设置 t_dfbj.bjzy_czy 
+				按 ktpch内 每个dh,ywbmbh 生成合同
 				Select dh,ywbmbh From t_Dfbj Where Contract_Id_Root Is Null 
 						And BJZY_CZY = p_cjr And ktpch = out_ckpch.ckpch  and fyjhpc='X'
 								Group By dh,ywbmbh
@@ -323,6 +325,7 @@
 									v_station,Sysdate,p_mode_id,v_mode_id,v_dh,v_dm,v_dz,v_tel,v_lxr,
 									v_zzl,p_bz,out_ckpch.ywlx,v_zzbj,p_cjr,Sysdate,p_flowid_car,v_jhpc,sysdate,v_zcs,nvl(v_zsy,0),v_yh,
 									(select trim(dm) from t_dm where dh=p_ywbmbh),v_zzbh);
+
 
 			</制定运输计划>
 		</发运计划>
@@ -777,7 +780,7 @@
 		</托盘交接>
 	</rf包件交接>
 
-	<中转交接>
+	<中转交接 f="JGWL.WindowsForm.Tms.Form_zzjj">
 		<u_dw1 w="d_ht_zzjj">
 			Select contract_id,
 			fyjhpc,
@@ -812,8 +815,85 @@
 		And fyrq > to_date(:p_rq1, 'yyyy-mm-dd')
 		And fyrq < to_date(:p_rq2, 'yyyy-mm-dd') + 1
 
+
+		//Station_Id_Md = '2005'  榆次的到站编号
+		 //2007 侯马 
 		</u_dw1>
+
+		<u_dw2 d="d_ht_zzjj_mx">
+			Select bjlsh,
+				dh,
+				Decode(Ywlx,
+						'FH',
+						Decode(Bjlx,
+								'1',
+								(Select Dm From t_dm_jc_all Where Dh = a.Dh),
+								'0',
+								(Select Dm From t_Dm Where Dh = a.Dh),
+								'3',
+								Decode(Ywbmxd,
+										'TS',
+										(Select Dm From t_Dm Where Dh = a.Dh),
+										'JC',
+										(Select Dm From t_dm_jc_all Where Dh = a.Dh),
+										(Select Dm From t_Dm_3f Where Dh = a.Dh))),
+						(Select Mc From t_Ghdw Where Bh = a.Dh)) As Dm,
+				bzjs,
+				
+				round(zzl / 1000, 2) zzl,
+				yh
+			From t_dfbj a
+			Where contract_id_root = :p_contract_id
+		</u_dw2>
+		<交接 p="proc_tms_zzjj">
+			Update t_dfbj Set jjbj = '1',jjrq = Sysdate,lhbj= '0',lhrq = Null,wcbj='1',jsbmbh = v_user.bmbh,
+			fyjhpc1 = fyjhpc,cybh = v_user.bmbh,zzbh = dh,fhbmbh = v_user.bmbh
+				Where bjlsh = c2.bjlsh;
+
+			Update t_dfbj Set fyjhpc = 'X',fyjhrq = Null,ktpch= '',ktrq = Null,contract_id_root=Null ,jhpch=''  
+				Where bjlsh = c2.bjlsh;
+
+			Update t_ht Set jjbj = '1' Where contract_id = c1.contract_id;
+		</交接>
 	</中转交接>
+	
+	<第三方供货商 d="d_ghdw_3f">
+			Select bh,
+			trim(mc) mc,
+			py,
+			lxr,
+			tele,
+			trim(dz) dz,
+			station,
+			flxbh fylx,
+			(Select trim(mc)
+				From t_fylx
+				where bh = flxbh
+				and cybh = a.cybh) fylxmc,
+			(Select trim(mc) From t_station where bh = a.station) stationmc
+		From t_ghdw_3f a
+		Where bh = nvl(:p_bh, bh)
+		And cybh = :p_cybh
+	</第三方供货商>
+	
+	<第三方客户 d="d_dm_3f">
+		SELECT Trim(dh) DH,
+			Trim(dm) DM,
+			Trim(py) PY,
+			Trim(tele) TELE,
+			trim(addr) ADDR,
+			trim(flxbh) fylx,
+			(Select trim(mc)
+				From t_fylx
+				where bh = flxbh
+				and cybh = a.cybh) fylxmc,
+			station,
+			(Select trim(mc) From t_station where bh = a.station) stationmc,
+			Trim(lxr) lxr
+		FROM T_DM_3F a
+		Where dh = nvl(:p_dh, dh)
+		and cybh = :p_cybh
+	</第三方客户>
 </root>
 
 
